@@ -807,13 +807,13 @@ tbody tr:hover td{background:rgba(255,255,255,.025);}
 // CONFIG
 // ═══════════════════════════════════════════════════
 const SHEET_ID   = '1jClQQmwVHg4Eg3WGda0R3w7_B_qwuRE5_W4QGxvabIE';
-const DEPT_TARGET  = 35000;
+const DEPT_TARGET  = 36000;
 const MEM_TARGET   = 1100;   // প্রতিটি member এর individual target
 const TEAM_TARGETS = {       // team card-এ দেখানোর জন্য (manual)
   'GEO Rankers':  6000,
-  'Rank Riser':  11000,
-  'Search Apex': 10000,
-  'Dark Rankers': 8000,
+  'Rank Riser':  12000,
+  'Search Apex':  9000,
+  'Dark Rankers': 9000,
 };
 const COL = {date:3,client:10,order_num:13,order_link:14,assign:18,status:19,service:20,del_by:21,del_date:22,amount_x:23,op_dept:21};
 // Sheet-এর Op. Department column থেকে team match করার জন্য mapping
@@ -1183,7 +1183,10 @@ function processRows(rows){
 function reAggregate(monthFilter,statusFilter){
   return APP.allMembers.map(m=>{
     let projs=m.projects;
-    if(monthFilter!=='all') projs=projs.filter(p=>p.date.startsWith(monthFilter));
+    if(monthFilter!=='all') projs=projs.filter(p=>{
+      const effectiveDate=(p.status==='Delivered'&&p.deliveredDate&&p.deliveredDate.length>=7)?p.deliveredDate:p.date;
+      return effectiveDate.startsWith(monthFilter);
+    });
     if(statusFilter==='Delivered') projs=projs.filter(p=>p.status==='Delivered');
     else if(statusFilter==='WIP') projs=projs.filter(p=>p.status==='WIP'||p.status==='Revision');
     else if(statusFilter==='Cancelled') projs=projs.filter(p=>p.status==='Cancelled');
@@ -1206,9 +1209,9 @@ function reAggregate(monthFilter,statusFilter){
 // ═══════════════════════════════════════════════════
 // REFRESH DATA (cascade)
 // ═══════════════════════════════════════════════════
-async function refreshData(){
+async function refreshData(silent=false){
   const icon=document.getElementById('rfIcon');
-  icon.classList.add('spin');
+  if(!silent) icon.classList.add('spin');
   // 1) Google Sheets
   try{
     const r=await fetchSheets();
@@ -1216,7 +1219,7 @@ async function refreshData(){
     document.getElementById('liveMode').textContent='🔴 Live';
     document.getElementById('footerMode').textContent='Google Sheets Live';
     buildMonthOptions();buildTeamOptions();applyFilters(true);
-    showToast('✅ Google Sheets থেকে live data!','#10b981');
+    if(!silent) showToast('✅ Google Sheets থেকে live data!','#10b981');
     startRfCountdown();icon.classList.remove('spin');return;
   }catch(e){console.warn('Sheets:',e.message);}
   // 2) Flask API
@@ -1235,7 +1238,7 @@ async function refreshData(){
       document.getElementById('liveMode').textContent='🟢 API';
       document.getElementById('footerMode').textContent='Flask API';
       buildMonthOptions();buildTeamOptions();applyFilters(true);
-      showToast('✅ Flask API থেকে data!','#10b981');
+      if(!silent) showToast('✅ Flask API থেকে data!','#10b981');
       startRfCountdown();icon.classList.remove('spin');return;
     }}
   }catch(e){}
@@ -1247,7 +1250,7 @@ async function refreshData(){
       document.getElementById('liveMode').textContent='🟡 JSON';
       document.getElementById('footerMode').textContent='geo_data.json';
       buildMonthOptions();applyFilters(true);
-      showToast('📄 geo_data.json থেকে loaded','#f59e0b');
+      if(!silent) showToast('📄 geo_data.json থেকে loaded','#f59e0b');
       startRfCountdown();icon.classList.remove('spin');return;
     }}
   }catch(e){}
@@ -1271,7 +1274,10 @@ async function refreshData(){
 // ═══════════════════════════════════════════════════
 function buildMonthOptions(){
   const months=new Set();
-  APP.allMembers.forEach(m=>m.projects.forEach(p=>{if(p.date&&p.date.length>=7) months.add(p.date.substring(0,7));}));
+  APP.allMembers.forEach(m=>m.projects.forEach(p=>{
+    const d=(p.status==='Delivered'&&p.deliveredDate&&p.deliveredDate.length>=7)?p.deliveredDate:p.date;
+    if(d&&d.length>=7) months.add(d.substring(0,7));
+  }));
   const sel=document.getElementById('monthSel');
   const cur=APP.monthFilter||sel.value;
   sel.innerHTML='<option value="all">📅 All Time</option>';
@@ -2043,10 +2049,10 @@ window.addEventListener('load',()=>{
 });
 refreshData();
 
-// AUTO-SYNC EVERY 30 SECONDS
+// AUTO-SYNC EVERY 30 SECONDS (silent — no toast, no spinner)
 setInterval(() => {
-  if(!document.hidden) refreshData();
-}, 30000); // 30 seconds
+  if(!document.hidden) refreshData(true);
+}, 30000);
 </script>
 </body>
 </html>

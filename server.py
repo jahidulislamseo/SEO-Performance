@@ -14,7 +14,7 @@ MEM_TARGET   = 1100   # per-member individual target
 TEAM_TARGETS = {      # team-level display targets
     "GEO Rankers":  6000,
     "Rank Riser":  12000,
-    "Search Apex": 9000,
+    "Search Apex":  9000,
     "Dark Rankers": 9000,
 }
 MANAGEMENT  = {
@@ -99,6 +99,7 @@ MEMBER_LOOKUP = {m["name"].strip().lower(): m["name"] for m in ALL_MEMBERS}
 def normalize_assignee_token(token):
     token = re.sub(r"\([^)]*\)", "", token or "")
     token = re.sub(r"\b\d+%?\b", "", token)
+    token = re.sub(r"%", "", token)  # remove leftover % after digit removal
     token = re.sub(r"\s+", " ", token).strip(" -")
     return token.strip()
 
@@ -212,24 +213,19 @@ def process_data(rows, member_list):
         if not matched_names:
             continue
 
-        # Team tag filter: only count members whose team matches the row's Op. Department
-        row_team_tag = str(row[COL["op_dept"]]).strip() if len(row) > COL["op_dept"] else ""
-        if row_team_tag:
-            def match_team(m_team, r_tag):
-                if not r_tag: return True
-                return str(m_team).lower().replace(" ", "").replace("_", "") == str(r_tag).lower().replace("_", "").replace(" ", "")
-
-            team_matched = [
-                name for name in matched_names
-                if match_team(next((m["team"] for m in member_list if m["name"] == name), ""), row_team_tag)
-            ]
-            if not team_matched:
-                continue
-            matched_names = team_matched
-
         matched_any = False
         row_teams = set()
+        # Share is always divided equally among ALL matched assignees
         share_x = round(amt_x / len(matched_names), 2)
+
+        # Resolve del_by tag → team name for team amount credit
+        del_by_team = None
+        del_by_norm = str(del_by).lower().replace("_","").replace(" ","")
+        for t_name in team_sums:
+            if t_name.lower().replace(" ","") == del_by_norm:
+                del_by_team = t_name
+                break
+
         for name in matched_names:
             matched_any = True
             member = next((m for m in member_list if m["name"] == name), None)
@@ -252,18 +248,27 @@ def process_data(rows, member_list):
                 stats[name]["wipAmt"] += share_x
             elif status == "Cancelled":
                 stats[name]["cancelled"] += 1
-        
+
         if matched_any:
             if order and order != "N/A":
                 unique_orders.add(order)
-            # Add to team aggregates
-            for t in row_teams:
+            # Team amount credit → Delivered By team gets full amt_x
+            if del_by_team:
                 if status == "Delivered":
-                    team_sums[t]["amt"] += amt_x / len(row_teams) # Simple split for team vs team view
-                    team_sums[t]["delivered"] += 1
+                    team_sums[del_by_team]["amt"] += amt_x
+                    team_sums[del_by_team]["delivered"] += 1
                 elif status in ["WIP", "Revision"]:
-                    team_sums[t]["wip"] += 1
-                team_sums[t]["projects"] += 1
+                    team_sums[del_by_team]["wip"] += 1
+                team_sums[del_by_team]["projects"] += 1
+            else:
+                # Fallback: split by member teams if del_by not matched
+                for t in row_teams:
+                    if status == "Delivered":
+                        team_sums[t]["amt"] += amt_x / len(row_teams)
+                        team_sums[t]["delivered"] += 1
+                    elif status in ["WIP", "Revision"]:
+                        team_sums[t]["wip"] += 1
+                    team_sums[t]["projects"] += 1
 
     result = []
     total_delivered_amt = 0
