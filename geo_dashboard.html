@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SEO Performance Hub — GEO Rankers</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#09111f;--card:rgba(14,24,38,0.97);--card2:rgba(10,18,30,0.96);
+  --gb:rgba(148,163,184,0.18);--glass:rgba(255,255,255,0.035);
+  --accent:#2f5d8a;--a2:#5f85a2;
+  --green:#0f766e;--yellow:#c28a2c;--red:#b94a48;--blue:#3d6f9b;--cyan:#4f8ea6;--pink:#7b8794;
+  --text:#e7edf5;--muted:#7f8ea3;--m2:#a5b3c5;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'Manrope',sans-serif;background:
+  radial-gradient(circle at top left,rgba(61,111,155,.14),transparent 32%),
+  radial-gradient(circle at bottom right,rgba(15,118,110,.08),transparent 28%),
+  linear-gradient(180deg,#09111f 0%,#0d1727 55%,#0a1320 100%);
+  color:var(--text);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;
+  background-image:linear-gradient(rgba(95,133,162,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(95,133,162,.03) 1px,transparent 1px);
+  background-size:50px 50px;pointer-events:none;z-index:0;}
+.g1{position:fixed;top:-250px;left:-150px;width:700px;height:700px;background:radial-gradient(circle,rgba(61,111,155,.16) 0%,transparent 70%);pointer-events:none;z-index:0;}
+.g2{position:fixed;bottom:-200px;right:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(15,118,110,.1) 0%,transparent 70%);pointer-events:none;z-index:0;}
+.g3{position:fixed;top:50%;left:60%;width:500px;height:500px;background:radial-gradient(circle,rgba(194,138,44,.07) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+/* ── HEADER ── */
+.hdr{position:sticky;top:0;z-index:50;height:68px;padding:0 32px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:rgba(9,17,31,.88);backdrop-filter:blur(24px);border-bottom:1px solid var(--gb);}
+.hl{display:flex;align-items:center;gap:12px;}
+.logo{width:42px;height:42px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,#2f5d8a,#5f85a2);display:flex;align-items:center;justify-content:center;font-size:19px;
+  box-shadow:0 14px 28px rgba(18,33,54,.35);}
+.ht h1{font-size:18px;font-weight:900;letter-spacing:-.5px;
+  background:linear-gradient(135deg,#f8fafc 20%,#c7d3df 55%,#6f879c 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.ht p{font-size:11px;color:var(--m2);}
+.hr{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hbtn{padding:6px 12px;border-radius:9px;background:rgba(61,111,155,.12);border:1px solid rgba(95,133,162,.28);
+  color:#c4d4e2;font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;font-family:inherit;
+  display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.hbtn:hover{background:rgba(61,111,155,.2);border-color:rgba(95,133,162,.45);}
+.hbtn.green{background:rgba(15,118,110,.12);border-color:rgba(15,118,110,.28);color:#7ed2c7;}
+.hbtn.green:hover{background:rgba(15,118,110,.22);}
+.hbtn.yellow{background:rgba(194,138,44,.12);border-color:rgba(194,138,44,.3);color:#e7c98e;}
+.hbtn.yellow:hover{background:rgba(194,138,44,.22);}
+.hbtn.manager{background:rgba(123,135,148,.13);border-color:rgba(123,135,148,.3);color:#d2d9e1;}
+.hbtn.manager:hover{background:rgba(123,135,148,.24);}
+.live-badge{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:50px;
+  background:rgba(15,118,110,.12);border:1px solid rgba(15,118,110,.32);font-size:11px;font-weight:700;color:#89d8cf;}
+.ldot{width:6px;height:6px;border-radius:50%;background:#7ed2c7;box-shadow:0 0 8px rgba(126,210,199,.7);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.5);}}
+.spin{animation:rspin 1s linear infinite;}
+@keyframes rspin{to{transform:rotate(360deg);}}
+.clock{font-size:12px;font-weight:700;color:var(--m2);font-variant-numeric:tabular-nums;}
+
+/* ── MONTH COUNTDOWN BANNER ── */
+.countdown-bar{position:relative;z-index:5;padding:10px 32px;
+  background:linear-gradient(90deg,rgba(47,93,138,.14),rgba(95,133,162,.08),rgba(15,118,110,.1));
+  border-bottom:1px solid var(--gb);display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;}
+.cd-left{display:flex;align-items:center;gap:20px;}
+.cd-item{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--m2);}
+.cd-item b{color:var(--text);font-size:14px;font-weight:800;}
+.cd-month-track{flex:1;max-width:200px;height:5px;background:rgba(255,255,255,.06);border-radius:50px;overflow:hidden;}
+.cd-month-fill{height:100%;background:linear-gradient(90deg,#2f5d8a,#4f8ea6);border-radius:50px;transition:width .5s;}
+.cd-right{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--m2);}
+.cd-next{font-size:11px;color:var(--m2);}
+
+/* ── MASTER NAV ── */
+.page-nav{position:sticky;top:68px;z-index:24;padding:10px 32px;
+  background:rgba(9,17,31,.86);backdrop-filter:blur(18px);border-bottom:1px solid var(--gb);}
+.page-nav-inner{max-width:1700px;margin:0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.page-nav-btn{padding:8px 12px;border-radius:999px;border:1px solid var(--gb);background:var(--glass);
+  color:var(--m2);font-size:11px;font-weight:800;letter-spacing:.2px;cursor:pointer;font-family:inherit;transition:all .2s;}
+.page-nav-btn:hover{color:var(--text);border-color:rgba(95,133,162,.4);}
+.page-nav-btn.active{background:rgba(47,93,138,.2);color:#d5e2ee;border-color:rgba(95,133,162,.34);}
+.dash-section{scroll-margin-top:128px;}
+
+/* ── MAIN ── */
+.main{position:relative;z-index:5;padding:24px 32px;max-width:1700px;margin:0 auto;}
+
+/* ── DEPT CARD ── */
+.dept-card{background:var(--card);border:1px solid var(--gb);border-radius:22px;padding:24px 28px;
+  margin-bottom:20px;position:relative;overflow:hidden;}
+.dept-card::before{content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(47,93,138,.12) 0%,rgba(95,133,162,.06) 50%,transparent 100%);}
+.dept-inner{position:relative;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;}
+.dept-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:var(--m2);margin-bottom:5px;}
+.dept-heading{font-size:24px;font-weight:900;letter-spacing:-1px;
+  background:linear-gradient(135deg,#f3f6fa,#c6d2de,#879caf);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2px;}
+.dept-sub{font-size:12px;color:var(--m2);margin-bottom:14px;}
+.dept-track{height:10px;background:rgba(255,255,255,.05);border-radius:50px;overflow:hidden;margin-bottom:6px;position:relative;}
+.dept-fill{height:100%;border-radius:50px;background:linear-gradient(90deg,#2f5d8a,#5f85a2,#4f8ea6);
+  transition:width 1.8s cubic-bezier(.4,0,.2,1);position:relative;overflow:hidden;}
+.dept-fill::after{content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shimmer 2.5s linear infinite;}
+@keyframes shimmer{from{transform:translateX(-100%);}to{transform:translateX(200%);}}
+.dept-tlabels{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);}
+.dept-kpis{display:flex;gap:24px;margin-top:16px;flex-wrap:wrap;}
+.dkpi{display:flex;flex-direction:column;}
+.dkpi-val{font-size:20px;font-weight:900;}
+.dkpi-lbl{font-size:10px;color:var(--m2);text-transform:uppercase;letter-spacing:.6px;margin-top:1px;}
+.dkpi-val.gn{color:#7ed2c7;text-shadow:none;}
+.dkpi-val.yw{color:#e7c98e;}
+.dkpi-val.bl{color:#8eb5d4;}
+.dkpi-val.pu{color:#c8d4df;}
+.dept-ring-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;}
+.dept-ring-container{position:relative;width:96px;height:96px;}
+.dept-ring-container svg{transform:rotate(-90deg);}
+.dept-ring-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.dept-ring-pct{font-size:19px;font-weight:900;color:#c8d4df;}
+.dept-ring-lbl{font-size:9px;color:var(--m2);text-transform:uppercase;letter-spacing:.5px;}
+
+/* ── SPOTLIGHT ── */
+.spotlight{margin-bottom:20px;}
+.stitle{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.8px;color:var(--m2);
+  margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.stitle::after{content:'';flex:1;height:1px;background:var(--gb);}
+.spot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+.spot-card{border-radius:20px;padding:20px;position:relative;overflow:hidden;
+  border:1px solid var(--gb);transition:transform .25s,box-shadow .25s;}
+.spot-card:hover{transform:translateY(-4px);box-shadow:0 20px 50px rgba(0,0,0,.4);}
+.spot-card.rank-1{background:linear-gradient(135deg,rgba(245,158,11,.12),rgba(245,158,11,.04));border-color:rgba(245,158,11,.3);}
+.spot-card.rank-2{background:linear-gradient(135deg,rgba(148,163,184,.1),rgba(148,163,184,.03));border-color:rgba(148,163,184,.25);}
+.spot-card.rank-3{background:linear-gradient(135deg,rgba(180,83,9,.1),rgba(180,83,9,.03));border-color:rgba(180,83,9,.25);}
+.spot-medal{font-size:32px;margin-bottom:10px;display:block;}
+.spot-rank-num{position:absolute;top:16px;right:16px;font-size:11px;font-weight:800;color:var(--m2);
+  background:var(--glass);border:1px solid var(--gb);padding:3px 9px;border-radius:20px;}
+.spot-avatar{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:900;margin-bottom:10px;}
+.spot-name{font-size:18px;font-weight:900;letter-spacing:-.3px;margin-bottom:2px;}
+.spot-full{font-size:11px;color:var(--m2);margin-bottom:10px;}
+.spot-amt{font-size:24px;font-weight:900;margin-bottom:4px;}
+.spot-card.rank-1 .spot-amt{color:#f59e0b;text-shadow:0 0 24px rgba(245,158,11,.5);}
+.spot-card.rank-2 .spot-amt{color:#94a3b8;}
+.spot-card.rank-3 .spot-amt{color:#b87333;}
+.spot-prog-bar{height:5px;background:rgba(255,255,255,.06);border-radius:50px;overflow:hidden;margin-bottom:6px;}
+.spot-prog-fill{height:100%;border-radius:50px;transition:width 1.5s ease;}
+.spot-stats{display:flex;gap:14px;font-size:11px;color:var(--m2);}
+.spot-stats b{color:var(--text);font-weight:700;}
+.spot-confetti-icon{position:absolute;top:12px;left:50%;transform:translateX(-50%);font-size:16px;opacity:.5;}
+
+/* ── CHARTS ROW ── */
+.charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+.chart-card{background:var(--card);border:1px solid var(--gb);border-radius:20px;padding:20px 24px;}
+.chart-title{font-size:13px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+.chart-canvas-wrap{position:relative;height:220px;}
+
+/* ── KPI STRIP / STATUS ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px;}
+.kpi-card{background:var(--card);border:1px solid var(--gb);border-radius:18px;padding:16px 18px;position:relative;overflow:hidden;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,rgba(95,133,162,.8),rgba(15,118,110,.75));}
+.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:800;margin-bottom:8px;}
+.kpi-value{font-size:24px;font-weight:900;letter-spacing:-.5px;color:var(--text);}
+.kpi-sub{font-size:11px;color:var(--m2);margin-top:4px;}
+.status-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:18px;}
+.status-card{background:var(--card);border:1px solid var(--gb);border-radius:18px;padding:14px 18px;}
+.status-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
+.status-title{font-size:12px;font-weight:800;color:var(--text);}
+.status-pills{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.spill{padding:5px 10px;border-radius:999px;border:1px solid var(--gb);background:var(--glass);font-size:11px;font-weight:700;color:var(--m2);}
+.sp-source{color:#d5e2ee;border-color:rgba(95,133,162,.35);background:rgba(47,93,138,.14);}
+.sp-live{color:#89d8cf;border-color:rgba(15,118,110,.35);background:rgba(15,118,110,.14);}
+.sp-warn{color:#e7c98e;border-color:rgba(194,138,44,.35);background:rgba(194,138,44,.14);}
+.audit-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+.audit-mini{background:var(--card2);border:1px solid var(--gb);border-radius:12px;padding:10px 12px;}
+.audit-mini b{display:block;font-size:16px;color:var(--text);margin-bottom:2px;}
+.audit-mini span{font-size:10px;color:var(--m2);text-transform:uppercase;letter-spacing:.6px;}
+
+/* ── TEAM CARDS ── */
+.team-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.tc{background:var(--card);border:1px solid var(--gb);border-radius:18px;padding:16px;
+  cursor:pointer;position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s,border-color .25s;--tcol:#6366f1;}
+.tc:hover{transform:translateY(-3px);box-shadow:0 18px 45px rgba(0,0,0,.4);}
+.tc.active{border-color:var(--tcol);box-shadow:0 0 0 2px color-mix(in srgb,var(--tcol) 35%,transparent);}
+.tc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--tcol);}
+.tc-glow{position:absolute;top:-25px;right:-25px;width:100px;height:100px;
+  background:radial-gradient(circle,var(--tcol) 0%,transparent 70%);opacity:.12;pointer-events:none;}
+.tc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.tc-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;
+  background:color-mix(in srgb,var(--tcol) 18%,transparent);border:1px solid color-mix(in srgb,var(--tcol) 28%,transparent);}
+.tc-cnt{font-size:10px;color:var(--m2);background:var(--glass);border:1px solid var(--gb);padding:2px 7px;border-radius:20px;}
+.tc-name{font-size:13px;font-weight:800;margin-bottom:1px;}
+.tc-leader{font-size:10px;color:var(--m2);}
+.tc-flags{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:8px;margin-bottom:2px;}
+.tc-flag{padding:3px 8px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.35px;border:1px solid;}
+.tc-flag.top{background:rgba(194,138,44,.14);color:#e7c98e;border-color:rgba(194,138,44,.3);}
+.tc-flag.good{background:rgba(15,118,110,.15);color:#89d8cf;border-color:rgba(15,118,110,.3);}
+.tc-flag.warn{background:rgba(194,138,44,.14);color:#e7c98e;border-color:rgba(194,138,44,.3);}
+.tc-flag.risk{background:rgba(185,74,72,.15);color:#efb2af;border-color:rgba(185,74,72,.3);}
+.tc-amt-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 6px;}
+.tc-amt{font-size:20px;font-weight:900;color:var(--tcol);text-shadow:0 0 20px color-mix(in srgb,var(--tcol) 45%,transparent);}
+.tc-hit{padding:4px 9px;border-radius:999px;font-size:9px;font-weight:800;letter-spacing:.3px;
+  background:rgba(15,118,110,.16);color:#89d8cf;border:1px solid rgba(15,118,110,.34);}
+.tc-target{font-size:10px;color:var(--m2);margin:-2px 0 10px;}
+.tc-target strong{color:var(--text);font-weight:800;}
+.tc-bar{height:7px;background:rgba(255,255,255,.05);border-radius:999px;overflow:hidden;margin-bottom:10px;position:relative;}
+.tc-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--tcol),color-mix(in srgb,var(--tcol) 68%,white));transition:width 1.2s ease;}
+.tc-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.18),transparent);animation:shimmer 2.8s linear infinite;}
+.tc-stats{display:flex;gap:10px;font-size:10px;color:var(--m2);}
+.tc-stats b{color:var(--text);font-weight:700;}
+.tc-stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:4px;}
+.tc-stat-item{background:rgba(255,255,255,.035);border:1px solid var(--gb);border-radius:10px;
+  padding:7px 6px;text-align:center;transition:background .2s;}
+.tc-stat-item:hover{background:rgba(255,255,255,.065);}
+.tc-stat-val{font-size:15px;font-weight:900;color:var(--text);line-height:1;}
+.tc-stat-lbl{font-size:9px;color:var(--m2);margin-top:3px;font-weight:600;letter-spacing:.3px;}
+.tc-stat-del .tc-stat-val{color:#10b981;}
+.tc-stat-wip .tc-stat-val{color:#f59e0b;}
+.tc-stat-rev .tc-stat-val{color:#3b82f6;}
+.tc-stat-can .tc-stat-val{color:#ef4444;}
+.tc-stat-tot .tc-stat-val{color:#a5b4fc;}
+.tc-stat-pct .tc-stat-val{font-size:13px;}
+.tc-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px;}
+.tc-box{background:var(--card2);border:1px solid var(--gb);border-radius:12px;padding:10px 8px;}
+.tc-box-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.45px;margin-bottom:4px;font-weight:700;}
+.tc-box-val{font-size:12px;font-weight:800;color:var(--text);}
+
+/* ── CONTROLS ── */
+.controls{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap;position:sticky;top:82px;z-index:18;
+  background:rgba(9,17,31,.82);backdrop-filter:blur(16px);padding:12px 14px;border:1px solid var(--gb);border-radius:16px;}
+.search-wrap{position:relative;}
+.si{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px;pointer-events:none;}
+.search-input{padding:8px 13px 8px 33px;background:var(--card);border:1px solid var(--gb);border-radius:11px;
+  color:var(--text);font-size:12px;font-family:inherit;width:200px;transition:border-color .2s;}
+.search-input:focus{outline:none;border-color:rgba(95,133,162,.55);}
+.search-input::placeholder{color:var(--muted);}
+.filter-tabs{display:flex;gap:3px;background:rgba(12,20,32,.92);border:1px solid var(--gb);border-radius:11px;padding:3px;}
+.ftab{padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;
+  transition:all .2s;color:var(--m2);border:none;background:none;font-family:inherit;}
+.ftab:hover{color:var(--text);}
+.ftab.active{background:rgba(47,93,138,.22);color:#d5e2ee;}
+.status-filters{display:flex;gap:4px;}
+.sfbtn{padding:6px 11px;border-radius:9px;font-size:11px;font-weight:700;cursor:pointer;
+  border:1px solid var(--gb);background:var(--card);color:var(--m2);font-family:inherit;transition:all .2s;}
+.sfbtn:hover{color:var(--text);}
+.sfbtn.active-all{background:rgba(47,93,138,.16);color:#d5e2ee;border-color:rgba(95,133,162,.32);}
+.sfbtn.active-del{background:rgba(15,118,110,.16);color:#89d8cf;border-color:rgba(15,118,110,.3);}
+.sfbtn.active-wip{background:rgba(194,138,44,.16);color:#e7c98e;border-color:rgba(194,138,44,.3);}
+.sfbtn.active-can{background:rgba(185,74,72,.16);color:#efb2af;border-color:rgba(185,74,72,.3);}
+.month-sel,.sort-sel{padding:7px 11px;background:var(--card);border:1px solid var(--gb);border-radius:10px;
+  color:var(--text);font-size:11px;font-family:inherit;cursor:pointer;}
+.month-sel:focus,.sort-sel:focus{outline:none;}
+.ctrl-right{margin-left:auto;display:flex;align-items:center;gap:8px;}
+.mbadge{font-size:11px;color:var(--m2);}
+.mbadge b{color:var(--text);}
+.seg{display:flex;align-items:center;gap:4px;background:rgba(12,20,32,.92);border:1px solid var(--gb);border-radius:11px;padding:3px;}
+.seg-btn{padding:6px 11px;border-radius:8px;font-size:11px;font-weight:800;border:none;background:none;color:var(--m2);cursor:pointer;font-family:inherit;}
+.seg-btn.active{background:rgba(47,93,138,.22);color:#d5e2ee;}
+
+/* ── MEMBERS TOOLBAR / PAGINATION / TABLE ── */
+.section-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;flex-wrap:wrap;}
+.section-meta{font-size:11px;color:var(--m2);}
+.pager{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px;}
+.pager-btn,.page-chip{padding:7px 11px;border-radius:10px;background:var(--card);border:1px solid var(--gb);color:var(--text);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+.pager-btn:disabled{opacity:.45;cursor:not-allowed;}
+.page-chip.active{background:rgba(47,93,138,.2);border-color:rgba(95,133,162,.35);color:#d5e2ee;}
+.table-wrap{background:var(--card);border:1px solid var(--gb);border-radius:20px;overflow:auto;margin-bottom:20px;}
+.m-table{width:100%;border-collapse:collapse;min-width:980px;}
+.m-table th{padding:12px 14px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--m2);border-bottom:1px solid var(--gb);}
+.m-table td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;vertical-align:middle;}
+.m-table tr:last-child td{border-bottom:none;}
+.m-row:hover{background:rgba(255,255,255,.02);}
+.clickable-row{cursor:pointer;}
+.empty-state{grid-column:1/-1;background:var(--card);border:1px dashed var(--gb);border-radius:18px;padding:38px 18px;text-align:center;}
+.empty-state h3{font-size:18px;margin-bottom:6px;}
+.empty-state p{font-size:12px;color:var(--m2);}
+
+/* ── AUDIT / UNASSIGNED ── */
+.audit-panels{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;margin-bottom:24px;}
+.audit-panel{background:var(--card);border:1px solid var(--gb);border-radius:20px;padding:18px;}
+.audit-panel h3{font-size:14px;font-weight:800;margin-bottom:12px;}
+.audit-list{display:flex;flex-direction:column;gap:10px;}
+.audit-item{background:var(--card2);border:1px solid var(--gb);border-radius:14px;padding:12px 14px;}
+.audit-item-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.audit-assign{font-size:12px;font-weight:800;color:var(--text);}
+.audit-meta{font-size:11px;color:var(--m2);display:flex;gap:10px;flex-wrap:wrap;}
+.audit-note{font-size:11px;color:var(--m2);}
+
+/* ── MEMBER CARDS ── */
+.members-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;margin-bottom:32px;}
+.mc{background:var(--card);border:1px solid var(--gb);border-radius:20px;overflow:hidden;cursor:pointer;
+  transition:transform .25s,box-shadow .25s,border-color .25s;animation:cardIn .4s ease both;}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.mc:hover{transform:translateY(-5px);box-shadow:0 22px 55px rgba(0,0,0,.45);border-color:rgba(95,133,162,.32);}
+.mc.target-hit{border-color:rgba(16,185,129,.4);box-shadow:0 0 0 1px rgba(16,185,129,.2);}
+.mc-head{padding:16px 18px 12px;display:flex;align-items:center;gap:11px;
+  border-bottom:1px solid var(--gb);position:relative;overflow:hidden;}
+.mc-head::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(47,93,138,.09) 0%,transparent 60%);}
+.mc-av{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  font-size:19px;font-weight:900;flex-shrink:0;position:relative;z-index:1;}
+.mc-info{flex:1;position:relative;z-index:1;min-width:0;}
+.mc-name{font-size:15px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:6px;}
+.mc-full{font-size:10px;color:var(--m2);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mc-badges{display:flex;flex-direction:column;align-items:flex-end;gap:4px;position:relative;z-index:1;}
+.midbadge{background:rgba(47,93,138,.14);border:1px solid rgba(95,133,162,.26);
+  padding:2px 8px;border-radius:20px;font-size:9px;font-weight:800;color:#d5e2ee;}
+.tpill{padding:2px 7px;border-radius:20px;font-size:9px;font-weight:800;border:1px solid;}
+.rank-chg{font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;}
+.rank-up{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);}
+.rank-dn{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);}
+.rank-eq{background:rgba(100,116,139,.12);color:var(--m2);border:1px solid var(--gb);}
+.rank-new{background:rgba(47,93,138,.16);color:#d5e2ee;border:1px solid rgba(95,133,162,.32);}
+.hit-badge{font-size:10px;background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);
+  padding:2px 8px;border-radius:20px;font-weight:800;}
+
+.mc-body{padding:16px 18px;}
+/* Ring */
+.ring-row{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.ring-wrap{position:relative;flex-shrink:0;}
+.ring-svg{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:rgba(255,255,255,.06);}
+.ring-fill{fill:none;stroke-linecap:round;transition:stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1);}
+.ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-pct{font-size:14px;font-weight:900;}
+.ring-sub{font-size:7px;color:var(--m2);text-transform:uppercase;letter-spacing:.4px;}
+.ring-details{flex:1;}
+.rd-row{display:flex;justify-content:space-between;margin-bottom:4px;}
+.rd-lbl{font-size:10px;color:var(--m2);}
+.rd-val{font-size:11px;font-weight:700;}
+.mtrack{height:4px;background:rgba(255,255,255,.05);border-radius:50px;overflow:hidden;margin-bottom:5px;}
+.mfill{height:100%;border-radius:50px;transition:width 1.2s ease;}
+/* Service tags */
+.svc-row{display:flex;gap:5px;margin-bottom:12px;}
+.svc-tag{padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;}
+.svc-seo{background:rgba(47,93,138,.15);color:#d5e2ee;border:1px solid rgba(95,133,162,.25);}
+.svc-smm{background:rgba(15,118,110,.15);color:#89d8cf;border:1px solid rgba(15,118,110,.25);}
+/* Metrics */
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:11px;}
+.mbox{background:var(--card2);border:1px solid var(--gb);border-radius:10px;padding:9px 5px;text-align:center;}
+.mval{font-size:19px;font-weight:900;}
+.mlbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-top:1px;font-weight:600;}
+.m-total .mval{color:#c8d4df;}
+.m-wip .mval{color:#e7c98e;}
+.m-del .mval{color:#89d8cf;}
+.m-can .mval{color:#efb2af;}
+/* Amounts */
+.amts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:11px;}
+.abox{background:var(--card2);border:1px solid var(--gb);border-radius:10px;padding:11px 13px;}
+.albl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;font-weight:700;}
+.aval{font-size:16px;font-weight:900;}
+.asub{font-size:9px;color:var(--muted);margin-top:2px;}
+.abox.a-del{border-color:rgba(15,118,110,.22);}
+.abox.a-del .aval{color:#89d8cf;}
+.abox.a-wip{border-color:rgba(194,138,44,.22);}
+.abox.a-wip .aval{color:#e7c98e;}
+.vbtn{width:100%;padding:9px;background:linear-gradient(135deg,rgba(47,93,138,.16),rgba(95,133,162,.1));
+  border:1px solid rgba(95,133,162,.24);border-radius:10px;color:#d5e2ee;font-size:12px;font-weight:700;
+  font-family:inherit;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.vbtn:hover{background:linear-gradient(135deg,rgba(47,93,138,.28),rgba(95,133,162,.16));
+  border-color:rgba(95,133,162,.45);color:#f3f6fa;}
+
+/* ── LEADERBOARD ── */
+.lb-wrap{background:var(--card);border:1px solid var(--gb);border-radius:22px;overflow:hidden;margin-bottom:32px;}
+.lb-head{padding:18px 24px;border-bottom:1px solid var(--gb);
+  display:flex;align-items:center;justify-content:space-between;
+  background:linear-gradient(135deg,rgba(99,102,241,.06) 0%,transparent 50%);}
+.lb-head h2{font-size:15px;font-weight:800;}
+.lb-acts{display:flex;gap:8px;}
+table{width:100%;border-collapse:collapse;}
+thead th{padding:10px 16px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--m2);border-bottom:1px solid var(--gb);background:rgba(255,255,255,.01);}
+tbody td{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover td{background:rgba(255,255,255,.025);}
+.rnum{font-size:15px;font-weight:900;}
+.r1{color:#f59e0b;text-shadow:0 0 12px rgba(245,158,11,.5);}
+.r2{color:#94a3b8;}
+.r3{color:#b87333;}
+.mbar{width:70px;height:4px;background:rgba(255,255,255,.05);border-radius:50px;overflow:hidden;display:inline-block;}
+.mbar-fill{height:100%;border-radius:50px;}
+
+/* ── MODALS ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);backdrop-filter:blur(14px);
+  z-index:100;display:none;align-items:center;justify-content:center;padding:20px;}
+.overlay.open{display:flex;}
+.modal{background:#090f1d;border:1px solid var(--gb);border-radius:26px;
+  width:100%;max-width:860px;max-height:90vh;overflow:hidden;
+  display:flex;flex-direction:column;box-shadow:0 40px 100px rgba(0,0,0,.65);
+  animation:mIn .3s cubic-bezier(.4,0,.2,1);}
+@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(18px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.m-hdr{padding:20px 24px 0;border-bottom:1px solid var(--gb);}
+.m-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;}
+.m-av-wrap{display:flex;align-items:center;gap:12px;flex:1;}
+.m-av{width:50px;height:50px;border-radius:13px;display:flex;align-items:center;justify-content:center;
+  font-size:21px;font-weight:900;flex-shrink:0;}
+.m-name{font-size:20px;font-weight:900;letter-spacing:-.5px;}
+.m-sub{font-size:11px;color:var(--m2);margin-top:2px;}
+.m-kpis{display:flex;gap:16px;flex-wrap:wrap;margin-top:6px;}
+.mkpi{text-align:center;}
+.mkpi-val{font-size:17px;font-weight:900;}
+.mkpi-lbl{font-size:9px;color:var(--m2);text-transform:uppercase;letter-spacing:.5px;}
+.close-btn{width:34px;height:34px;border-radius:9px;flex-shrink:0;
+  background:rgba(255,255,255,.05);border:1px solid var(--gb);color:var(--m2);font-size:15px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;font-family:inherit;}
+.close-btn:hover{background:rgba(239,68,68,.15);color:#ef4444;border-color:rgba(239,68,68,.3);}
+.m-tabs{display:flex;gap:0;}
+.mtab{padding:9px 16px;font-size:11px;font-weight:700;cursor:pointer;border:none;background:none;
+  font-family:inherit;color:var(--m2);transition:all .2s;border-bottom:2px solid transparent;}
+.mtab:hover{color:var(--text);}
+.mtab.active{color:#a5b4fc;border-bottom-color:#6366f1;}
+.m-body{overflow-y:auto;flex:1;padding:16px 24px;}
+/* Project cards */
+.pc{background:rgba(255,255,255,.028);border:1px solid var(--gb);border-radius:14px;
+  padding:14px 16px;margin-bottom:8px;transition:border-color .2s;}
+.pc:hover{border-color:rgba(99,102,241,.3);}
+.pc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.pc-ord{font-size:12px;font-weight:800;color:#a5b4fc;font-family:monospace;}
+.st{padding:2px 9px;border-radius:20px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;}
+.st-Delivered{background:rgba(16,185,129,.15);color:#10b981;border:1px solid rgba(16,185,129,.3);}
+.st-WIP{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3);}
+.st-Revision{background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3);}
+.st-Cancelled{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3);}
+.pc-meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;}
+.pm label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:2px;font-weight:700;}
+.pm span{font-size:11px;font-weight:600;}
+.plink{color:#6366f1;text-decoration:none;font-size:11px;font-weight:600;}
+.plink:hover{color:#a5b4fc;}
+.pc-share{display:flex;align-items:center;justify-content:space-between;
+  padding:7px 11px;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.14);border-radius:9px;}
+.ps-l{font-size:10px;color:var(--m2);}
+.ps-c{font-size:9px;color:var(--muted);margin-top:1px;}
+.ps-v{font-size:15px;font-weight:900;color:#10b981;}
+
+/* ── MANAGER MODAL ── */
+.mgr-modal{max-width:1100px;}
+.mgr-body{overflow-y:auto;flex:1;padding:20px 28px;}
+.mgr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.mgr-kpi{background:var(--card2);border:1px solid var(--gb);border-radius:14px;padding:16px;text-align:center;}
+.mgr-kpi-val{font-size:26px;font-weight:900;margin-bottom:4px;}
+.mgr-kpi-lbl{font-size:10px;color:var(--m2);text-transform:uppercase;letter-spacing:.6px;}
+.mgr-team-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:20px;}
+.mgr-team-card{background:var(--card2);border:1px solid var(--gb);border-radius:14px;padding:16px;position:relative;overflow:hidden;}
+.mgr-team-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--tcol,#6366f1);}
+.mgr-team-name{font-size:14px;font-weight:800;margin-bottom:2px;}
+.mgr-team-leader{font-size:11px;color:var(--m2);margin-bottom:10px;}
+.mgr-team-amt{font-size:22px;font-weight:900;margin-bottom:6px;}
+.mgr-tbar{height:5px;background:rgba(255,255,255,.06);border-radius:50px;overflow:hidden;margin-bottom:8px;}
+.mgr-tbar-fill{height:100%;border-radius:50px;transition:width 1.2s ease;}
+.mgr-tstats{display:flex;gap:12px;font-size:11px;color:var(--m2);}
+.mgr-tstats b{color:var(--text);}
+.mgr-alert{padding:12px 16px;border-radius:12px;margin-bottom:8px;font-size:12px;font-weight:600;
+  display:flex;align-items:center;gap:10px;}
+.mgr-alert.warn{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:#f59e0b;}
+.mgr-alert.good{background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);color:#10b981;}
+.mgr-alert.danger{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#ef4444;}
+.mgr-rank-table{width:100%;border-collapse:collapse;}
+.mgr-rank-table th{padding:9px 14px;text-align:left;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--m2);border-bottom:1px solid var(--gb);}
+.mgr-rank-table td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px;}
+.mgr-rank-table tr:last-child td{border-bottom:none;}
+
+/* ── TOAST ── */
+.toast-box{position:fixed;bottom:20px;right:20px;z-index:300;display:flex;flex-direction:column;gap:7px;}
+.toast{padding:11px 16px;border-radius:11px;background:rgba(13,20,42,.97);border:1px solid var(--gb);
+  backdrop-filter:blur(16px);font-size:12px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:7px;animation:tIn .3s ease,tOut .3s ease 3.7s forwards;}
+@keyframes tIn{from{opacity:0;transform:translateY(12px) scale(.95);}to{opacity:1;transform:translateY(0) scale(1);}}
+@keyframes tOut{to{opacity:0;transform:translateY(8px) scale(.95);}}
+
+/* ── CONFETTI ── */
+#confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:200;}
+
+/* ── FOOTER ── */
+.footer{text-align:center;padding:20px 32px;border-top:1px solid var(--gb);
+  color:var(--muted);font-size:11px;position:relative;z-index:5;
+  display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;}
+
+/* ── PRINT ── */
+@media print{
+  .hdr,.countdown-bar,.controls,.toast-box,.overlay,.hbtn,.vbtn,.pager,.audit-panels{display:none!important;}
+  body{background:#fff;color:#000;}
+  .main{padding:10px;}
+  .dept-card,.mc,.spot-card,.chart-card,.tc,.lb-wrap,.kpi-card,.status-card,.table-wrap{background:#fff;border:1px solid #ddd;box-shadow:none;break-inside:avoid;}
+  .dept-heading,.mc-name,.spot-name,.spot-amt,.dkpi-val{color:#000!important;-webkit-text-fill-color:#000!important;}
+  .dept-tag,.dkpi-lbl,.m2,.muted{color:#666!important;}
+  .members-grid{grid-template-columns:repeat(3,1fr);}
+  .spot-grid{grid-template-columns:repeat(3,1fr);}
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:1200px){.kpi-strip{grid-template-columns:repeat(3,1fr);}.status-row,.audit-panels,.team-grid{grid-template-columns:repeat(2,1fr);}.charts-row{grid-template-columns:1fr;}.mgr-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:900px){.main{padding:14px 16px;}.hdr{padding:0 16px;}.page-nav{padding:10px 16px;}.spot-grid{grid-template-columns:1fr 1fr;}.dept-inner{grid-template-columns:1fr;}.dept-ring-wrap{display:none;}.status-row,.audit-panels{grid-template-columns:1fr;}.kpi-strip{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:600px){.members-grid{grid-template-columns:1fr;}.team-grid,.kpi-strip{grid-template-columns:1fr 1fr;}.spot-grid{grid-template-columns:1fr;}.charts-row{grid-template-columns:1fr;}.controls{flex-direction:column;align-items:stretch;top:118px;}.hr{gap:5px;}.hbtn span:not(.spin){display:none;}.section-bar,.ctrl-right,.status-head{align-items:stretch;}.audit-grid,.tc-summary{grid-template-columns:1fr 1fr;}.page-nav{top:68px;}}
+</style>
+</head>
+<body>
+<div class="g1"></div><div class="g2"></div><div class="g3"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hl">
+    <div class="logo">🌍</div>
+    <div class="ht">
+      <h1>SEO Performance Hub</h1>
+      <p id="hdrSub">GEO Rankers Department · April 2026</p>
+    </div>
+  </div>
+  <div class="hr">
+    <div class="live-badge"><div class="ldot"></div><span id="liveMode">Live</span></div>
+    <button class="hbtn manager" onclick="openManager()">👤 <span>Manager View</span></button>
+    <button class="hbtn yellow" onclick="downloadCSV()">📊 <span>CSV</span></button>
+    <button class="hbtn green" onclick="downloadPDF()">🖨️ <span>PDF</span></button>
+    <button class="hbtn" onclick="refreshData()" id="rfBtn"><span id="rfIcon">↻</span> <span>Refresh</span></button>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<!-- COUNTDOWN BANNER -->
+<div class="countdown-bar">
+  <div class="cd-left">
+    <div class="cd-item">📅 <b id="cdMonth">April 2026</b></div>
+    <div class="cd-item">⏳ <b id="cdDays">—</b> days left</div>
+    <div class="cd-month-track"><div class="cd-month-fill" id="cdFill" style="width:0%"></div></div>
+    <div class="cd-item">📈 Month: <b id="cdPct">—</b>% elapsed</div>
+  </div>
+  <div class="cd-right">
+    <span class="cd-next" id="cdNext"></span>
+  </div>
+</div>
+
+<!-- MASTER DASHBOARD NAV -->
+<div class="page-nav">
+  <div class="page-nav-inner">
+    <button class="page-nav-btn active" data-target="overview-section" onclick="jumpSection('overview-section')">Overview</button>
+    <button class="page-nav-btn" data-target="performers-section" onclick="jumpSection('performers-section')">Top Performers</button>
+    <button class="page-nav-btn" data-target="charts-section" onclick="jumpSection('charts-section')">Charts</button>
+    <button class="page-nav-btn" data-target="teams-section" onclick="jumpSection('teams-section')">Teams</button>
+    <button class="page-nav-btn" data-target="members-section" onclick="jumpSection('members-section')">Members</button>
+    <button class="page-nav-btn" data-target="audit-section" onclick="jumpSection('audit-section')">Audit</button>
+    <button class="page-nav-btn" data-target="leaderboard-section" onclick="jumpSection('leaderboard-section')">Leaderboard</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- DEPT OVERVIEW -->
+<section class="dash-section" id="overview-section">
+<div class="dept-card">
+  <div class="dept-inner">
+    <div>
+      <div class="dept-tag">Department Overview</div>
+      <div class="dept-heading" id="deptHeading">Loading...</div>
+      <div class="dept-sub" id="deptSub">Fetching live data...</div>
+      <div class="dept-track"><div class="dept-fill" id="deptFill" style="width:0%"></div></div>
+      <div class="dept-tlabels"><span>$0</span><span id="deptTgt">Target: $35,000</span></div>
+      <div class="dept-kpis" id="deptKpis"></div>
+    </div>
+    <div class="dept-ring-wrap">
+      <div class="dept-ring-container">
+        <svg width="96" height="96" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="42" stroke="rgba(255,255,255,.06)" stroke-width="8" fill="none"/>
+          <circle id="dRing" fill="none" cx="50" cy="50" r="42" stroke="#6366f1" stroke-width="8"
+            stroke-dasharray="263.9" stroke-dashoffset="263.9" stroke-linecap="round"
+            style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1.8s ease;"/>
+        </svg>
+        <div class="dept-ring-inner">
+          <div class="dept-ring-pct" id="dRingPct">0%</div>
+          <div class="dept-ring-lbl">Done</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--m2);font-weight:600;">Dept Progress</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip" id="kpiStrip"></div>
+
+<!-- STATUS / AUDIT -->
+<div class="status-row">
+  <div class="status-card">
+    <div class="status-head">
+      <div class="status-title">Live Data Status</div>
+      <div class="status-pills">
+        <span class="spill sp-source" id="sourcePill">Source: Checking...</span>
+        <span class="spill" id="syncPill">Last Sync: --</span>
+        <span class="spill sp-live" id="filterPill">SEO/SMM Only</span>
+      </div>
+    </div>
+    <div class="audit-grid">
+      <div class="audit-mini"><b id="auditRows">--</b><span>SEO/SMM Rows</span></div>
+      <div class="audit-mini"><b id="auditMatched">--</b><span>Matched Rows</span></div>
+      <div class="audit-mini"><b id="auditUnmatched">--</b><span>Unmatched Rows</span></div>
+      <div class="audit-mini"><b id="auditProjects">--</b><span>Unique Orders</span></div>
+    </div>
+  </div>
+  <div class="status-card">
+    <div class="status-head">
+      <div class="status-title">Current View</div>
+      <div class="status-pills">
+        <span class="spill" id="viewPill">Cards</span>
+      </div>
+    </div>
+    <div class="audit-grid">
+      <div class="audit-mini"><b id="viewMembers">--</b><span>Visible Members</span></div>
+      <div class="audit-mini"><b id="viewTeams">--</b><span>Visible Teams</span></div>
+      <div class="audit-mini"><b id="viewPage">--</b><span>Current Page</span></div>
+      <div class="audit-mini"><b id="viewRange">--</b><span>Shown Range</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SPOTLIGHT -->
+<section class="dash-section" id="performers-section">
+<div class="spotlight">
+  <div class="stitle">🏆 Top Performers</div>
+  <div class="spot-grid" id="spotGrid"></div>
+</div>
+</section>
+
+<!-- CHARTS -->
+<section class="dash-section" id="charts-section">
+<div class="charts-row">
+  <div class="chart-card">
+    <div class="chart-title">📊 Team vs Team — Delivered $</div>
+    <div class="chart-canvas-wrap"><canvas id="teamChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">🍩 Department Status Breakdown</div>
+    <div class="chart-canvas-wrap"><canvas id="deptChart"></canvas></div>
+  </div>
+</div>
+</section>
+
+<!-- TEAM CARDS -->
+<section class="dash-section" id="teams-section">
+<div class="team-grid" id="teamGrid"></div>
+</section>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="search-wrap">
+    <span class="si">🔍</span>
+    <input class="search-input" id="srch" placeholder="Search member..." oninput="APP.page=1;applyFilters()"/>
+  </div>
+  <div class="filter-tabs" id="teamTabs">
+    <button class="ftab active" onclick="setTeam('All',this)">All</button>
+  </div>
+  <div class="status-filters">
+    <button class="sfbtn active-all" id="sf-all"  onclick="setStatus('all',this)">All</button>
+    <button class="sfbtn" id="sf-del"  onclick="setStatus('Delivered',this)">✅ Done</button>
+    <button class="sfbtn" id="sf-wip"  onclick="setStatus('WIP',this)">⏳ WIP</button>
+    <button class="sfbtn" id="sf-can"  onclick="setStatus('Cancelled',this)">❌ Cancel</button>
+  </div>
+  <select class="month-sel" id="monthSel" onchange="setMonth()">
+    <option value="all">📅 All Time</option>
+  </select>
+  <div class="ctrl-right">
+    <div class="seg" id="viewSeg">
+      <button class="seg-btn active" id="view-cards" onclick="setView('cards',this)">Cards</button>
+      <button class="seg-btn" id="view-table" onclick="setView('table',this)">Table</button>
+    </div>
+    <select class="sort-sel" id="pageSizeSel" onchange="setPageSize()">
+      <option value="12">12 / page</option>
+      <option value="24">24 / page</option>
+      <option value="48">48 / page</option>
+    </select>
+    <select class="sort-sel" id="sortSel" onchange="APP.page=1;applyFilters()">
+      <option value="deliveredAmt">Delivered $</option>
+      <option value="progress">Progress %</option>
+      <option value="delivered">Delivered Count</option>
+      <option value="wipAmt">WIP Pipeline $</option>
+      <option value="name">Name A-Z</option>
+    </select>
+    <div class="mbadge" id="mbadge"></div>
+  </div>
+</div>
+
+<!-- MEMBERS -->
+<section class="dash-section" id="members-section">
+<div class="stitle">👥 Team Members</div>
+<div class="section-bar">
+  <div class="section-meta" id="memberSectionMeta">Showing members</div>
+  <div class="section-meta" id="savedViewMeta">URL-synced filters active</div>
+</div>
+<div class="members-grid" id="membersGrid"></div>
+<div class="table-wrap" id="membersTableWrap" style="display:none">
+  <table class="m-table">
+    <thead>
+      <tr>
+        <th>Rank</th><th>Member</th><th>Team</th><th>Delivered</th><th>WIP</th><th>Cancelled</th><th>Delivered $</th><th>WIP $</th><th>Progress</th>
+      </tr>
+    </thead>
+    <tbody id="membersTableBody"></tbody>
+  </table>
+</div>
+<div class="pager" id="pager"></div>
+</section>
+
+<!-- AUDIT PANELS -->
+<section class="dash-section" id="audit-section">
+<div class="audit-panels">
+  <div class="audit-panel">
+    <h3>Data Quality & Unassigned Work</h3>
+    <div class="audit-note" id="auditSummaryNote">Checking assignment quality...</div>
+    <div class="audit-list" id="auditList"></div>
+  </div>
+  <div class="audit-panel">
+    <h3>Saved Views</h3>
+    <div class="audit-list">
+      <div class="audit-item clickable-row" onclick="applyPreset('manager')">
+        <div class="audit-item-top"><div class="audit-assign">Manager Focus</div><div class="spill">Best/Worst</div></div>
+        <div class="audit-meta"><span>All teams</span><span>Delivered $</span><span>Cards</span></div>
+      </div>
+      <div class="audit-item clickable-row" onclick="applyPreset('wip')">
+        <div class="audit-item-top"><div class="audit-assign">Pipeline Watch</div><div class="spill sp-warn">WIP</div></div>
+        <div class="audit-meta"><span>All teams</span><span>Active work</span><span>Table</span></div>
+      </div>
+      <div class="audit-item clickable-row" onclick="applyPreset('dark')">
+        <div class="audit-item-top"><div class="audit-assign">Dark Rankers View</div><div class="spill">Team</div></div>
+        <div class="audit-meta"><span>Dark Rankers</span><span>Delivered $</span><span>Cards</span></div>
+      </div>
+      <div class="audit-item clickable-row" onclick="applyPreset('target')">
+        <div class="audit-item-top"><div class="audit-assign">Target Tracker</div><div class="spill sp-live">Progress</div></div>
+        <div class="audit-meta"><span>All teams</span><span>Progress %</span><span>Cards</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- LEADERBOARD -->
+<section class="dash-section" id="leaderboard-section">
+<div class="stitle">🏆 Performance Leaderboard</div>
+<div class="lb-wrap">
+  <div class="lb-head">
+    <h2>Full Ranking — Delivered $</h2>
+    <div class="lb-acts">
+      <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#a5b4fc;">Target: $1,100/member</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th><th>Change</th><th>Member</th><th>Team</th>
+        <th>Delivered</th><th>WIP</th><th>Cancel</th>
+        <th>Delivered $</th><th>WIP $</th><th>Progress</th>
+      </tr>
+    </thead>
+    <tbody id="lbBody"></tbody>
+  </table>
+</div>
+</section>
+
+</main>
+
+<!-- PROJECT MODAL -->
+<div class="overlay" id="projOverlay" onclick="handleOC(event,'projOverlay')">
+  <div class="modal">
+    <div class="m-hdr">
+      <div class="m-top">
+        <div class="m-av-wrap">
+          <div class="m-av" id="mAv"></div>
+          <div class="m-title-blk">
+            <div class="m-name" id="mName"></div>
+            <div class="m-sub" id="mSub"></div>
+            <div class="m-kpis" id="mKpis"></div>
+          </div>
+        </div>
+        <button class="close-btn" onclick="closeOverlay('projOverlay')">✕</button>
+      </div>
+      <div class="m-tabs">
+        <button class="mtab active" onclick="setMTab('all',this)">All</button>
+        <button class="mtab" onclick="setMTab('Delivered',this)">✅ Delivered</button>
+        <button class="mtab" onclick="setMTab('WIP',this)">⏳ WIP</button>
+        <button class="mtab" onclick="setMTab('Revision',this)">🔄 Revision</button>
+        <button class="mtab" onclick="setMTab('Cancelled',this)">❌ Cancelled</button>
+      </div>
+    </div>
+    <div class="m-body" id="mBody"></div>
+  </div>
+</div>
+
+<!-- MANAGER MODAL -->
+<div class="overlay" id="mgrOverlay" onclick="handleOC(event,'mgrOverlay')">
+  <div class="modal mgr-modal">
+    <div class="m-hdr">
+      <div class="m-top">
+        <div class="m-av-wrap">
+          <div class="m-av" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">👤</div>
+          <div class="m-title-blk">
+            <div class="m-name">Manager Dashboard</div>
+            <div class="m-sub" id="mgrSub">Department Overview — Full View</div>
+          </div>
+        </div>
+        <button class="close-btn" onclick="closeOverlay('mgrOverlay')">✕</button>
+      </div>
+    </div>
+    <div class="mgr-body" id="mgrBody"></div>
+  </div>
+</div>
+
+<div class="toast-box" id="toastBox"></div>
+<footer class="footer">
+  <span>SEO Performance Hub</span>·<span>GEO Rankers Dept</span>·<span id="footerDate"></span>·<span id="footerMode">Fetching...</span>
+</footer>
+
+<script>
+// ═══════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════
+const SHEET_ID   = '1jClQQmwVHg4Eg3WGda0R3w7_B_qwuRE5_W4QGxvabIE';
+const DEPT_TARGET  = 35000;
+const MEM_TARGET   = 1100;   // প্রতিটি member এর individual target
+const TEAM_TARGETS = {       // team card-এ দেখানোর জন্য (manual)
+  'GEO Rankers':  6000,
+  'Rank Riser':  11000,
+  'Search Apex': 10000,
+  'Dark Rankers': 8000,
+};
+const COL = {date:3,client:10,order_num:13,order_link:14,assign:18,status:19,service:20,del_by:21,del_date:22,amount_x:23,op_dept:26};
+// Sheet-এর Op. Department column থেকে team match করার জন্য mapping
+let ALL_MEMBERS = [
+  // Fallback if sheet fetch fails
+  {name:'Jahidul',fullName:'Md. Jahidul Islam',id:'17137',team:'GEO Rankers',target:MEM_TARGET},
+  {name:'Sushant',fullName:'Shosunth Chakarborty',id:'17294',team:'Rank Riser',target:MEM_TARGET},
+  {name:'Rezwan',fullName:'Rezwan Ahmed',id:'17492',team:'Search Apex',target:MEM_TARGET},
+  {name:'Alamin',fullName:'Al Amin',id:'17236',team:'Dark Rankers',target:MEM_TARGET},
+];
+
+const MEMBER_LOOKUP = {}; 
+function updateMemberLookup(){
+  for(let m of ALL_MEMBERS){ MEMBER_LOOKUP[m.name.trim().toLowerCase()] = m.name; }
+}
+updateMemberLookup();
+
+const TEAM_TAG_MAP = {
+  'GEO Rankers':  'Geo_Rankers',
+  'Rank Riser':   'Rank_Riser',
+  'Search Apex':  'Search_Apex',
+  'Dark Rankers': 'Dark_Rankers',
+};
+const MGMT = {
+  manager:{name:'Mehedi Hassan',title:'Project Manager'},
+  leaders:{
+    'GEO Rankers': {name:'Md. Jahidul Islam',   title:'Team Leader'},
+    'Rank Riser':  {name:'Gazi Fahim Hasan',    title:'Team Leader'},
+    'Search Apex': {name:'Shihadul Islam Tihim',title:'Team Leader'},
+    'Dark Rankers':{name:'Istiak',              title:'Team Leader'},
+  }
+};
+const TC={
+  'GEO Rankers':{color:'#6366f1',bg:'rgba(99,102,241,.15)',border:'rgba(99,102,241,.3)',icon:'🌍'},
+  'Rank Riser':{color:'#10b981',bg:'rgba(16,185,129,.15)',border:'rgba(16,185,129,.3)',icon:'📈'},
+  'Search Apex':{color:'#f59e0b',bg:'rgba(245,158,11,.15)',border:'rgba(245,158,11,.3)',icon:'🔍'},
+  'Dark Rankers':{color:'#ec4899',bg:'rgba(236,72,153,.15)',border:'rgba(236,72,153,.3)',icon:'🌑'},
+};
+const MC=[['#6366f1','#8b5cf6'],['#10b981','#06b6d4'],['#f59e0b','#ef4444'],
+  ['#3b82f6','#6366f1'],['#ec4899','#8b5cf6'],['#14b8a6','#3b82f6'],
+  ['#8b5cf6','#ec4899'],['#06b6d4','#10b981'],['#ef4444','#f59e0b']];
+
+// ═══════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════
+let STATIC_DATA=null;
+try{STATIC_DATA=__DATA_PLACEHOLDER__;}catch(e){}
+let APP={allMembers:[],members:[],filteredMembers:[],pageMembers:[],loaded:false,monthFilter:'2026-04',statusFilter:'all',teamFilter:'All',prevRanks:{},view:'cards',page:1,pageSize:12,source:'Initializing',audit:{seoSmmRows:0,matchedRows:0,unmatchedRows:0,uniqueOrders:0,unmatchedItems:[]}};
+let modalMember=null,mTab='all',cdInterval=null,rfInterval=null,rfCountdown=300;
+let charts={team:null,dept:null};
+
+// ═══════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════
+const fmt=n=>'$'+Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtK=n=>n>=1000?'$'+(n/1000).toFixed(1)+'K':fmt(n);
+const pctC=p=>p>=100?'#10b981':p>=75?'#3b82f6':p>=50?'#f59e0b':p>0?'#ef4444':'#64748b';
+const pctG=p=>p>=100?'linear-gradient(90deg,#10b981,#06b6d4)':p>=75?'linear-gradient(90deg,#3b82f6,#10b981)':p>=50?'linear-gradient(90deg,#f59e0b,#3b82f6)':p>0?'linear-gradient(90deg,#ef4444,#f59e0b)':'linear-gradient(90deg,#374151,#4b5563)';
+const memberPalette=name=>{
+  const gi=ALL_MEMBERS.findIndex(x=>x.name===name);
+  return MC[((gi>=0?gi:0)%MC.length)];
+};
+const normalizeAssigneeToken=token=>String(token||'')
+  .replace(/\([^)]*\)/g,'')
+  .replace(/\b\d+%?\b/g,'')
+  .replace(/\s+/g,' ')
+  .trim()
+  .replace(/^[-\s]+|[-\s]+$/g,'');
+const parseAssignees=assignText=>{
+  const parts=String(assignText||'').split(/[\/,]/).map(v=>v.trim()).filter(Boolean);
+  const seen=new Set(), exact=[];
+  parts.forEach(part=>{
+    const key=normalizeAssigneeToken(part).toLowerCase();
+    if(MEMBER_LOOKUP[key]&&!seen.has(key)){ exact.push(MEMBER_LOOKUP[key]); seen.add(key); }
+  });
+  return exact;
+};
+const teamHealth=p=>p>=100?['Target Hit','good']:p>=70?['On Track','good']:p>=40?['Needs Push','warn']:['At Risk','risk'];
+const escapeHTML=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function formatSheetDate(v){
+  const raw=String(v||'').trim();
+  if(!raw) return '';
+  const m=raw.match(/^Date\((\d{4}),\s*(\d{1,2}),\s*(\d{1,2})/);
+  if(m){
+    const d=new Date(Number(m[1]),Number(m[2]),Number(m[3]));
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  const d=new Date(raw);
+  if(!Number.isNaN(d.getTime())) {
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  }
+  return raw;
+}
+
+function syncControlsFromState(){
+  const month=document.getElementById('monthSel'); if(month) month.value=APP.monthFilter;
+  const sort=document.getElementById('sortSel'); if(sort && !sort.value) sort.value='deliveredAmt';
+  const pageSel=document.getElementById('pageSizeSel'); if(pageSel) pageSel.value=String(APP.pageSize);
+  const viewBtns=document.querySelectorAll('.seg-btn'); viewBtns.forEach(b=>b.classList.remove('active'));
+  const active=document.getElementById(`view-${APP.view}`); if(active) active.classList.add('active');
+  document.querySelectorAll('.ftab').forEach((b)=>{
+    b.classList.toggle('active', b.textContent.trim() === APP.teamFilter || (APP.teamFilter === 'All' && b.textContent.trim() === 'All'));
+  });
+  document.querySelectorAll('.sfbtn').forEach(b=>b.className='sfbtn');
+  const sid=APP.statusFilter==='all'?'all':APP.statusFilter==='Delivered'?'del':APP.statusFilter==='WIP'?'wip':'can';
+  const sbtn=document.getElementById(`sf-${sid}`); if(sbtn) sbtn.className=`sfbtn active-${sid}`;
+}
+function applyUrlState(){
+  try{
+    const qs=new URLSearchParams(location.search);
+    APP.monthFilter=qs.get('month')||APP.monthFilter;
+    APP.statusFilter=qs.get('status')||APP.statusFilter;
+    APP.teamFilter=qs.get('team')||APP.teamFilter;
+    APP.view=qs.get('view')||APP.view;
+    APP.page=Math.max(parseInt(qs.get('page')||APP.page,10)||1,1);
+    APP.pageSize=Math.max(parseInt(qs.get('size')||APP.pageSize,10)||12,1);
+    const sort=qs.get('sort'); if(sort){ const el=document.getElementById('sortSel'); if(el) el.value=sort; }
+    const q=qs.get('q'); if(q){ const input=document.getElementById('srch'); if(input) input.value=q; }
+  }catch(e){}
+}
+function updateUrlState(){
+  try{
+    const params=new URLSearchParams();
+    if(APP.monthFilter!=='all') params.set('month',APP.monthFilter);
+    if(APP.statusFilter!=='all') params.set('status',APP.statusFilter);
+    if(APP.teamFilter!=='All') params.set('team',APP.teamFilter);
+    if(APP.view!=='cards') params.set('view',APP.view);
+    if(APP.page!==1) params.set('page',String(APP.page));
+    if(APP.pageSize!==12) params.set('size',String(APP.pageSize));
+    const sort=document.getElementById('sortSel')?.value||'deliveredAmt';
+    if(sort!=='deliveredAmt') params.set('sort',sort);
+    const q=(document.getElementById('srch')?.value||'').trim();
+    if(q) params.set('q',q);
+    const url=`${location.pathname}${params.toString()?'?'+params.toString():''}`;
+    history.replaceState(null,'',url);
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════
+// CLOCK + COUNTDOWN
+// ═══════════════════════════════════════════════════
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=n.toLocaleTimeString('en-US',{hour12:false});
+  document.getElementById('footerDate').textContent=n.toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+}
+setInterval(updateClock,1000);updateClock();
+
+function updateCountdown(){
+  const now=new Date();
+  const end=new Date(now.getFullYear(),now.getMonth()+1,0,23,59,59);
+  const start=new Date(now.getFullYear(),now.getMonth(),1);
+  const daysLeft=Math.ceil((end-now)/(1000*60*60*24));
+  const totalDays=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const elapsed=Math.round(((now-start)/((end-start)))*100);
+  document.getElementById('cdMonth').textContent=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  document.getElementById('cdDays').textContent=daysLeft;
+  document.getElementById('cdPct').textContent=elapsed;
+  document.getElementById('cdFill').style.width=elapsed+'%';
+}
+updateCountdown();setInterval(updateCountdown,60000);
+
+let lastUpdated=null;
+function startRfCountdown(){
+  clearInterval(rfInterval);
+  lastUpdated=new Date();
+  try{renderStatusCards();}catch(e){}
+  rfInterval=setInterval(()=>{
+    if(!lastUpdated) return;
+    const sec=Math.floor((new Date()-lastUpdated)/1000);
+    const m=Math.floor(sec/60),s=sec%60;
+    const el=document.getElementById('cdNext');
+    if(el) el.textContent=`Last updated: ${m}m ${s}s ago`;
+  },1000);
+}
+
+// ═══════════════════════════════════════════════════
+// RANK TRACKING (localStorage)
+// ═══════════════════════════════════════════════════
+function saveRanks(sorted){
+  const ranks={};sorted.forEach((m,i)=>ranks[m.name]=i+1);
+  try{localStorage.setItem('seo_prev_ranks',JSON.stringify(ranks));}catch(e){}
+  return ranks;
+}
+function loadPrevRanks(){
+  try{const r=localStorage.getItem('seo_prev_ranks');return r?JSON.parse(r):{};} catch(e){return {};}
+}
+function rankChangeHTML(name,currentRank){
+  const prev=APP.prevRanks[name];
+  if(!prev) return '<span class="rank-chg rank-new">NEW</span>';
+  const diff=prev-currentRank;
+  if(diff>0) return `<span class="rank-chg rank-up">↑${diff}</span>`;
+  if(diff<0) return `<span class="rank-chg rank-dn">↓${Math.abs(diff)}</span>`;
+  return '<span class="rank-chg rank-eq">—</span>';
+}
+
+function jumpSection(id){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelectorAll('.page-nav-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.target===id));
+  try{history.replaceState(null,'',`#${id}`);}catch(e){}
+}
+function updateSectionNav(){
+  const sections=[...document.querySelectorAll('.dash-section')];
+  let activeId=sections[0]?.id||'';
+  sections.forEach(sec=>{
+    const r=sec.getBoundingClientRect();
+    if(r.top<=150&&r.bottom>150) activeId=sec.id;
+  });
+  document.querySelectorAll('.page-nav-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.target===activeId));
+}
+
+// ═══════════════════════════════════════════════════
+// GOOGLE SHEETS FETCH
+// ═══════════════════════════════════════════════════
+async function fetchMembers(){
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=All+Member+Data&t=${Date.now()}`;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    const text = await res.text();
+    const m = text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);\s*$/);
+    if (!m) return null;
+    const raw = JSON.parse(m[1]);
+    const rows = raw.table.rows || [];
+    const members = [];
+    rows.forEach(r => {
+      const c = r.c || [];
+      if (c.length > 6 && c[2] && c[2].v && c[6] && c[6].v) {
+        members.push({
+          name: String(c[2].v).trim(),
+          fullName: (c[1] && c[1].v) ? String(c[1].v).trim() : String(c[2].v),
+          id: (c[0] && c[0].f) ? String(c[0].f) : (c[0] ? String(c[0].v) : ''),
+          team: String(c[6].v).trim(),
+          target: MEM_TARGET
+        });
+      }
+    });
+    return members.length ? members : null;
+  } catch (e) { console.warn('Member fetch failed', e); return null; }
+}
+
+async function fetchSheets(){
+  // Try to refresh members first
+  const liveMembers = await fetchMembers();
+  if (liveMembers) {
+    ALL_MEMBERS = liveMembers;
+    updateMemberLookup();
+  }
+
+  // Then fetch project performance
+  const attempts=[
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=Kam+Data&t=${Date.now()}`,
+    `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=0&t=${Date.now()}`,
+  ];
+  let lastErr='';
+  for(const url of attempts){
+    try{
+      const res=await fetch(url);
+      if(!res.ok) continue;
+      const text=await res.text();
+      const m=text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);\s*$/);
+      if(!m) continue;
+      const raw=JSON.parse(m[1]);
+      if(raw.status==='error'){ lastErr=raw.errors?.[0]?.message||'Sheet error'; continue; }
+      const rows=(raw.table.rows||[]).map(r=>(r.c||[]).map(c=>(c&&c.v!=null)?String(c.v):''));
+      const result=processRows(rows);
+      if(result.members.some(m=>m.total>0)) return result; // only accept if data found
+    }catch(e){ lastErr=e.message; }
+  }
+  throw new Error('Sheet fetch failed: '+lastErr);
+}
+
+function processRows(rows){
+  const dataRows=rows.slice(1);
+  const stats={};
+  ALL_MEMBERS.forEach(m=>{stats[m.name]={...m,wip:0,revision:0,delivered:0,cancelled:0,total:0,deliveredAmt:0,wipAmt:0,projects:[]};});
+  const sf=v=>{try{return parseFloat(String(v).replace(/[$,]/g,'').trim())||0;}catch(e){return 0;}};
+  const uniqueOrders=new Set();
+  let seoSmmRows=0,matchedRows=0;
+  const unmatchedItems=[];
+
+  dataRows.forEach(row=>{
+    while(row.length<=COL.amount_x) row.push('');
+    const assign=(row[COL.assign]||'').trim();
+    const status=(row[COL.status]||'').trim();
+    const service=(row[COL.service]||'').trim().toUpperCase();
+    if(!service.includes('SEO')&&!service.includes('SMM')) return;
+    seoSmmRows++;
+    const matchedNames=parseAssignees(assign);
+    if(!matchedNames.length){
+      unmatchedItems.push({
+        assign:assign||'Unassigned',
+        status:status||'N/A',
+        service:service||'N/A',
+        order:(row[COL.order_num]||'').trim(),
+        client:(row[COL.client]||'').trim()
+      });
+      return;
+    }
+    matchedRows++;
+    const amtX=sf(row[COL.amount_x]);
+    const order=(row[COL.order_num]||'').trim();
+    const proj={
+      order,link:(row[COL.order_link]||'').trim(),client:(row[COL.client]||'').trim(),
+      assign,service,status,amtX,share:0,
+      date:formatSheetDate(row[COL.date]||''),
+      deliveredDate:formatSheetDate(row[COL.del_date]||''),
+      deliveredBy:(row[COL.del_by]||'').trim(),
+    };
+    // Sheet-এর Op. Department (col 26) থেকে team tag পড়া
+    const rowTeamTag=(row[COL.op_dept]||'').trim();
+
+    // শুধু সেই member-দের count করব যাদের team match করে row-এর team tag-এর সাথে
+    const teamMatchedNames=matchedNames.filter(name=>{
+      const member=ALL_MEMBERS.find(m=>m.name===name);
+      if(!member) return false;
+      if(!rowTeamTag) return true;
+      const mt=String(member.team).toLowerCase().replace(/[\s_]/g,'');
+      const rt=String(rowTeamTag).toLowerCase().replace(/[\s_]/g,'');
+      return mt===rt;
+    });
+
+    // কোনো team-matched member না থাকলে unmatched হিসেবে log করো
+    if(!teamMatchedNames.length){
+      // (original matchedNames ছিল কিন্তু team match হয়নি — cross-team assignment)
+      return;
+    }
+
+    let matched=false;
+    const share=Math.round((amtX/teamMatchedNames.length)*100)/100;
+    teamMatchedNames.forEach(name=>{
+      matched=true;
+      const p={...proj,share};
+      const s=stats[name];
+      s.projects.push(p);s.total++;
+      if(status==='Delivered'){s.delivered++;s.deliveredAmt+=p.share;}
+      else if(status==='WIP'){s.wip++;s.wipAmt+=p.share;}
+      else if(status==='Revision'){s.revision++;s.wipAmt+=p.share;}
+      else if(status==='Cancelled') s.cancelled++;
+    });
+    if(matched&&order) uniqueOrders.add(order);
+  });
+
+  let totalDel=0,totalWip=0;
+  const members=ALL_MEMBERS.map(m=>{
+    const s=stats[m.name];
+    const del=Math.round(s.deliveredAmt*100)/100;
+    const wip=Math.round(s.wipAmt*100)/100;
+    totalDel+=del;totalWip+=wip;
+    return{name:s.name,fullName:s.fullName,id:s.id,team:s.team,target:MEM_TARGET,
+      total:s.total,wip:s.wip,revision:s.revision,delivered:s.delivered,cancelled:s.cancelled,
+      deliveredAmt:del,wipAmt:wip,
+      remaining:Math.round((del-s.target)*100)/100,
+      progress:s.target>0?Math.round((del/s.target)*10000)/100:0,
+      projects:s.projects};
+  });
+  const summary={dept:{target:DEPT_TARGET,achieved:Math.round(totalDel*100)/100,
+    remaining:Math.round((DEPT_TARGET-totalDel)*100)/100,
+    progress:Math.round((totalDel/DEPT_TARGET)*10000)/100,
+    uniqueProjects:uniqueOrders.size,wipAmt:Math.round(totalWip*100)/100}};
+  return{members,summary,audit:{seoSmmRows,matchedRows,unmatchedRows:unmatchedItems.length,uniqueOrders:uniqueOrders.size,unmatchedItems:unmatchedItems.slice(0,12)}};
+}
+
+// Month-aware re-aggregate
+function reAggregate(monthFilter,statusFilter){
+  return APP.allMembers.map(m=>{
+    let projs=m.projects;
+    if(monthFilter!=='all') projs=projs.filter(p=>p.date.startsWith(monthFilter));
+    if(statusFilter==='Delivered') projs=projs.filter(p=>p.status==='Delivered');
+    else if(statusFilter==='WIP') projs=projs.filter(p=>p.status==='WIP'||p.status==='Revision');
+    else if(statusFilter==='Cancelled') projs=projs.filter(p=>p.status==='Cancelled');
+    let wip=0,revision=0,delivered=0,cancelled=0,deliveredAmt=0,wipAmt=0;
+    projs.forEach(p=>{
+      if(p.status==='Delivered'){delivered++;deliveredAmt+=p.share;}
+      else if(p.status==='WIP'){wip++;wipAmt+=p.share;}
+      else if(p.status==='Revision'){revision++;wipAmt+=p.share;}
+      else if(p.status==='Cancelled') cancelled++;
+    });
+    const del=Math.round(deliveredAmt*100)/100;
+    const wam=Math.round(wipAmt*100)/100;
+    return{...m,projects:projs,wip,revision,delivered,cancelled,total:projs.length,
+      deliveredAmt:del,wipAmt:wam,
+      remaining:Math.round((del-m.target)*100)/100,
+      progress:m.target>0?Math.round((del/m.target)*10000)/100:0};
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// REFRESH DATA (cascade)
+// ═══════════════════════════════════════════════════
+async function refreshData(){
+  const icon=document.getElementById('rfIcon');
+  icon.classList.add('spin');
+  // 1) Google Sheets
+  try{
+    const r=await fetchSheets();
+    APP.allMembers=r.members;APP.loaded=true;APP.audit=r.audit||APP.audit;APP.source='Google Sheets Live';
+    document.getElementById('liveMode').textContent='🔴 Live';
+    document.getElementById('footerMode').textContent='Google Sheets Live';
+    buildMonthOptions();buildTeamOptions();applyFilters(true);
+    showToast('✅ Google Sheets থেকে live data!','#10b981');
+    startRfCountdown();icon.classList.remove('spin');return;
+  }catch(e){console.warn('Sheets:',e.message);}
+  // 2) Flask API
+  try{
+    const res=await fetch('/api/data',{cache:'no-store'});
+    if(res.ok){      const data=await res.json();
+      if(data.status==='ok'){
+        if (data.memberCount > 4) {
+          ALL_MEMBERS = data.data.map(m => ({
+            name: m.name, fullName: m.fullName, id: m.id, team: m.team, target: m.target
+          }));
+          updateMemberLookup();
+        }
+        APP.allMembers=data.data;
+        APP.summary=data.summary;APP.source='Flask API';
+      document.getElementById('liveMode').textContent='🟢 API';
+      document.getElementById('footerMode').textContent='Flask API';
+      buildMonthOptions();buildTeamOptions();applyFilters(true);
+      showToast('✅ Flask API থেকে data!','#10b981');
+      startRfCountdown();icon.classList.remove('spin');return;
+    }}
+  }catch(e){}
+  // 3) geo_data.json
+  try{
+    const res2=await fetch('geo_data.json?t='+Date.now());
+    if(res2.ok){const j2=await res2.json();if(Array.isArray(j2)&&j2.length){
+      APP.allMembers=j2;APP.loaded=true;APP.source='geo_data.json';
+      document.getElementById('liveMode').textContent='🟡 JSON';
+      document.getElementById('footerMode').textContent='geo_data.json';
+      buildMonthOptions();applyFilters(true);
+      showToast('📄 geo_data.json থেকে loaded','#f59e0b');
+      startRfCountdown();icon.classList.remove('spin');return;
+    }}
+  }catch(e){}
+  // 4) Static
+  if(STATIC_DATA&&STATIC_DATA.length){
+    APP.allMembers=STATIC_DATA;APP.loaded=true;APP.source='Embedded Static Data';
+    document.getElementById('liveMode').textContent='⚪ Static';
+    document.getElementById('footerMode').textContent='Static Data';
+    buildMonthOptions();applyFilters(true);
+    showToast('📦 Static data ব্যবহার হচ্ছে','#94a3b8');
+  } else if(!APP.loaded){
+    document.getElementById('deptHeading').textContent='Data পাওয়া যায়নি';
+    document.getElementById('deptSub').textContent='Sheet টি publicly shared করুন অথবা python server.py চালান';
+    showToast('❌ কোনো data source নেই','#ef4444');
+  } else{showToast('⚠️ Refresh ব্যর্থ','#f59e0b');}
+  icon.classList.remove('spin');
+}
+
+// ═══════════════════════════════════════════════════
+// MONTH OPTIONS
+// ═══════════════════════════════════════════════════
+function buildMonthOptions(){
+  const months=new Set();
+  APP.allMembers.forEach(m=>m.projects.forEach(p=>{if(p.date&&p.date.length>=7) months.add(p.date.substring(0,7));}));
+  const sel=document.getElementById('monthSel');
+  const cur=APP.monthFilter||sel.value;
+  sel.innerHTML='<option value="all">📅 All Time</option>';
+  [...months].sort().reverse().forEach(mo=>{
+    const d=new Date(mo+'-01');
+    const lbl=d.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+    sel.innerHTML+=`<option value="${mo}">${lbl}</option>`;
+  });
+  sel.value=cur==='all'||months.has(cur)?cur:'all';
+}
+
+function buildTeamOptions(){
+  const teams = new Set();
+  APP.allMembers.forEach(m => { if(m.team) teams.add(m.team); });
+  const tArr = ['All', ...[...teams].sort()];
+  const tabWrap = document.getElementById('teamTabs');
+  if(tabWrap) {
+    tabWrap.innerHTML = tArr.map(t => `<button class="ftab ${APP.teamFilter===t?'active':''}" onclick="setTeam('${t}',this)">${t}</button>`).join('');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// FILTERS
+// ═══════════════════════════════════════════════════
+function setTeam(team,btn){
+  APP.teamFilter=team;
+  APP.page=1;
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  applyFilters();
+}
+function setStatus(s,btn){
+  APP.statusFilter=s;
+  APP.page=1;
+  document.querySelectorAll('.sfbtn').forEach(b=>{b.className='sfbtn';});
+  if(btn) btn.className='sfbtn active-'+(s==='all'?'all':s==='Delivered'?'del':s==='WIP'?'wip':'can');
+  applyFilters(true);
+}
+function setMonth(){APP.monthFilter=document.getElementById('monthSel').value;APP.page=1;applyFilters(true);}
+function setView(view,btn){
+  APP.view=view;APP.page=1;
+  document.querySelectorAll('.seg-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  applyFilters();
+}
+function setPageSize(){APP.pageSize=parseInt(document.getElementById('pageSizeSel').value,10)||12;APP.page=1;applyFilters();}
+function goPage(p){APP.page=Math.max(1,p);applyFilters();}
+function applyPreset(kind){
+  if(kind==='manager'){ APP.teamFilter='All'; APP.statusFilter='all'; APP.view='cards'; document.getElementById('sortSel').value='deliveredAmt'; }
+  if(kind==='wip'){ APP.teamFilter='All'; APP.statusFilter='WIP'; APP.view='table'; document.getElementById('sortSel').value='wipAmt'; }
+  if(kind==='dark'){ APP.teamFilter='Dark Rankers'; APP.statusFilter='all'; APP.view='cards'; document.getElementById('sortSel').value='deliveredAmt'; }
+  if(kind==='target'){ APP.teamFilter='All'; APP.statusFilter='all'; APP.view='cards'; document.getElementById('sortSel').value='progress'; }
+  APP.page=1;
+  document.querySelectorAll('.ftab').forEach(b=>b.classList.remove('active'));
+  const tabs=document.querySelectorAll('.ftab');
+  let matchedBtn = [...tabs].find(b=>b.textContent===APP.teamFilter);
+  if(matchedBtn) matchedBtn.classList.add('active'); else if(tabs[0]) tabs[0].classList.add('active');
+  document.querySelectorAll('.sfbtn').forEach(b=>{b.className='sfbtn';});
+  const sbtn=document.getElementById(`sf-${APP.statusFilter==='all'?'all':APP.statusFilter==='Delivered'?'del':APP.statusFilter==='WIP'?'wip':'can'}`); if(sbtn) sbtn.className='sfbtn active-'+(APP.statusFilter==='all'?'all':APP.statusFilter==='Delivered'?'del':APP.statusFilter==='WIP'?'wip':'can');
+  syncControlsFromState();
+  if(APP.statusFilter==='all') applyFilters(true); else applyFilters(true);
+}
+
+function applyFilters(reAgg=false){
+  if(reAgg) APP.members=reAggregate(APP.monthFilter,APP.statusFilter);
+  const srch=document.getElementById('srch').value.toLowerCase();
+  const sort=document.getElementById('sortSel').value;
+  let filtered=APP.members.filter(m=>{
+    if(APP.teamFilter!=='All'&&m.team!==APP.teamFilter) return false;
+    if(srch&&!m.name.toLowerCase().includes(srch)&&!m.fullName.toLowerCase().includes(srch)) return false;
+    return true;
+  });
+  if(sort==='name') filtered.sort((a,b)=>a.name.localeCompare(b.name));
+  else filtered.sort((a,b)=>(b[sort]||0)-(a[sort]||0));
+  APP.filteredMembers=filtered;
+  const totalPages=Math.max(1,Math.ceil(filtered.length/APP.pageSize));
+  APP.page=Math.min(APP.page,totalPages);
+  const start=(APP.page-1)*APP.pageSize;
+  APP.pageMembers=filtered.slice(start,start+APP.pageSize);
+  document.getElementById('mbadge').innerHTML=`Showing <b>${filtered.length}</b> of ${APP.members.length}`;
+  document.getElementById('membersGrid').style.display=APP.view==='cards'?'grid':'none';
+  document.getElementById('membersTableWrap').style.display=APP.view==='table'?'block':'none';
+  document.getElementById('viewPill').textContent=APP.view==='cards'?'Cards View':'Table View';
+  syncControlsFromState();
+  updateUrlState();
+  try{renderDept();}catch(e){console.warn('renderDept',e);}
+  try{renderKpiStrip();}catch(e){console.warn('renderKpiStrip',e);}
+  try{renderStatusCards();}catch(e){console.warn('renderStatusCards',e);}
+  try{renderSpotlight();}catch(e){console.warn('renderSpotlight',e);}
+  try{renderCharts();}catch(e){console.warn('renderCharts',e);}
+  try{renderTeams();}catch(e){console.warn('renderTeams',e);}
+  try{renderMembers(APP.pageMembers);}catch(e){console.warn('renderMembers',e);}
+  try{renderMembersTable(APP.pageMembers);}catch(e){console.warn('renderMembersTable',e);}
+  try{renderPager(filtered.length,totalPages);}catch(e){console.warn('renderPager',e);}
+  try{renderAuditPanels();}catch(e){console.warn('renderAuditPanels',e);}
+  try{renderLeaderboard();}catch(e){console.warn('renderLeaderboard',e);}
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER — DEPT
+// ═══════════════════════════════════════════════════
+function renderDept(){
+  const ms=APP.members;
+  let totDel=0,totWip=0;
+  ms.forEach(m=>{totDel+=m.deliveredAmt;totWip+=m.wipAmt;});
+  const pct=Math.min((totDel/DEPT_TARGET)*100,100);
+  const rem=DEPT_TARGET-totDel;
+  const uniquePSet=new Set(ms.flatMap(m=>m.projects.map(p=>p.order).filter(o=>o&&o!=='N/A')));
+  const uniqueP=uniquePSet.size;
+  document.getElementById('deptHeading').textContent=fmtK(totDel)+' / '+fmtK(DEPT_TARGET);
+  document.getElementById('deptSub').textContent=`Department monthly target — ${ms.length} members, ${APP.monthFilter==='all'?'All Time':APP.monthFilter}`;
+  document.getElementById('deptTgt').textContent=`Target: ${fmt(DEPT_TARGET)}`;
+  setTimeout(()=>{
+    document.getElementById('deptFill').style.width=pct+'%';
+    const circ=2*Math.PI*42,off=circ*(1-pct/100);
+    document.getElementById('dRing').style.strokeDashoffset=off;
+    document.getElementById('dRingPct').textContent=pct.toFixed(1)+'%';
+  },100);
+  document.getElementById('deptKpis').innerHTML=`
+    <div class="dkpi"><div class="dkpi-val gn">${fmt(totDel)}</div><div class="dkpi-lbl">Achieved</div></div>
+    <div class="dkpi"><div class="dkpi-val ${rem>0?'yw':'gn'}">${rem>0?'-'+fmt(rem):'+'+fmt(Math.abs(rem))}</div><div class="dkpi-lbl">Remaining</div></div>
+    <div class="dkpi"><div class="dkpi-val yw">${fmt(totWip)}</div><div class="dkpi-lbl">WIP Pipeline</div></div>
+    <div class="dkpi"><div class="dkpi-val pu">${uniqueP}</div><div class="dkpi-lbl">Unique Orders</div></div>
+  `;
+}
+
+function renderKpiStrip(){
+  const ms=APP.members;
+  const delivered=ms.reduce((a,m)=>a+m.deliveredAmt,0);
+  const wip=ms.reduce((a,m)=>a+m.wipAmt,0);
+  const cancelled=ms.reduce((a,m)=>a+m.cancelled,0);
+  const total=ms.reduce((a,m)=>a+m.total,0);
+  const bestMember=[...APP.filteredMembers].sort((a,b)=>b.deliveredAmt-a.deliveredAmt)[0];
+  // Best Team = highest progress % (deliveredAmt / teamTarget × 100)
+  const allTeams = [...new Set(APP.members.map(m=>m.team))].filter(Boolean);
+  const teamScores=allTeams.map(team=>{
+    const ms=APP.members.filter(m=>m.team===team);
+    const amt=ms.reduce((a,m)=>a+m.deliveredAmt,0);
+    const tgt=TEAM_TARGETS[team]||(ms.length*MEM_TARGET); // Fallback to team members * 1100
+    const pct=tgt>0?Math.round((amt/tgt)*10000)/100:0;
+    return{team,amt,pct};
+  }).sort((a,b)=>b.pct-a.pct);
+  const bestTeam=teamScores[0];
+  const uniqueP=new Set(APP.members.flatMap(m=>m.projects.map(p=>p.order).filter(o=>o&&o!=='N/A'))).size;
+  document.getElementById('kpiStrip').innerHTML=`
+    <div class="kpi-card"><div class="kpi-label">SEO/SMM Projects</div><div class="kpi-value">${uniqueP}</div><div class="kpi-sub">Unique orders from current filter</div></div>
+    <div class="kpi-card"><div class="kpi-label">Delivered Revenue</div><div class="kpi-value">${fmtK(delivered)}</div><div class="kpi-sub">Across ${APP.members.length} active members</div></div>
+    <div class="kpi-card"><div class="kpi-label">WIP Revenue</div><div class="kpi-value">${fmtK(wip)}</div><div class="kpi-sub">Pipeline still in progress</div></div>
+    <div class="kpi-card"><div class="kpi-label">Cancelled Orders</div><div class="kpi-value">${cancelled}</div><div class="kpi-sub">Current filtered cancellation count</div></div>
+    <div class="kpi-card"><div class="kpi-label">Best Team 🏆</div><div class="kpi-value">${escapeHTML(bestTeam?.team||'—')}</div><div class="kpi-sub">${bestTeam?bestTeam.pct.toFixed(1)+'% of target · '+fmt(bestTeam.amt):'No data'}</div></div>
+    <div class="kpi-card"><div class="kpi-label">Best Performer</div><div class="kpi-value">${escapeHTML(bestMember?.name||'—')}</div><div class="kpi-sub">${bestMember?fmt(bestMember.deliveredAmt):'No data'}</div></div>
+  `;
+}
+
+function renderStatusCards(){
+  document.getElementById('sourcePill').textContent=`Source: ${APP.source}`;
+  document.getElementById('syncPill').textContent=`Last Sync: ${lastUpdated?lastUpdated.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}):'--'}`;
+  document.getElementById('auditRows').textContent=APP.audit.seoSmmRows||0;
+  document.getElementById('auditMatched').textContent=APP.audit.matchedRows||0;
+  document.getElementById('auditUnmatched').textContent=APP.audit.unmatchedRows||0;
+  document.getElementById('auditProjects').textContent=APP.audit.uniqueOrders||0;
+  const visibleTeams=new Set(APP.filteredMembers.map(m=>m.team)).size;
+  const start=APP.filteredMembers.length?((APP.page-1)*APP.pageSize)+1:0;
+  const end=Math.min(APP.page*APP.pageSize,APP.filteredMembers.length);
+  document.getElementById('viewMembers').textContent=APP.filteredMembers.length;
+  document.getElementById('viewTeams').textContent=visibleTeams;
+  document.getElementById('viewPage').textContent=`${APP.page} / ${Math.max(1,Math.ceil(APP.filteredMembers.length/APP.pageSize))}`;
+  document.getElementById('viewRange').textContent=APP.filteredMembers.length?`${start}-${end}`:'0';
+  document.getElementById('memberSectionMeta').textContent=`Showing ${start||0}${APP.filteredMembers.length?`-${end}`:''} of ${APP.filteredMembers.length} filtered members`;
+  document.getElementById('savedViewMeta').textContent=`URL synced · ${APP.teamFilter} · ${APP.statusFilter} · ${APP.monthFilter==='all'?'All Time':APP.monthFilter}`;
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER — SPOTLIGHT (Top 3)
+// ═══════════════════════════════════════════════════
+function renderSpotlight(){
+  const sorted=[...APP.filteredMembers].sort((a,b)=>b.deliveredAmt-a.deliveredAmt).slice(0,3);
+  const medals=['🥇','🥈','🥉'],rankClass=['rank-1','rank-2','rank-3'];
+  document.getElementById('spotGrid').innerHTML=sorted.map((m,i)=>{
+    const [c1,c2]=memberPalette(m.name);
+    const pct=Math.min(m.progress,100);
+    const hit=m.progress>=100;
+    return `
+    <div class="spot-card ${rankClass[i]}">
+      ${hit?'<div class="spot-confetti-icon">🎉</div>':''}
+      <span class="spot-medal">${medals[i]}</span>
+      <div class="spot-rank-num">#${i+1}</div>
+      <div class="spot-avatar" style="background:linear-gradient(135deg,${c1},${c2});box-shadow:0 4px 16px ${c1}55">${m.name[0]}</div>
+      <div class="spot-name">${m.name}</div>
+      <div class="spot-full">${m.fullName} · <span style="color:${TC[m.team]?.color||'#a5b4fc'}">${m.team}</span></div>
+      <div class="spot-amt">${fmt(m.deliveredAmt)}</div>
+      <div class="spot-prog-bar"><div class="spot-prog-fill" style="width:${pct}%;background:${pctG(m.progress)}"></div></div>
+      <div class="spot-stats">
+        <span><b>${m.delivered}</b> delivered</span>
+        <span><b>${m.progress.toFixed(1)}%</b> target</span>
+        ${hit?'<span style="color:#10b981;font-weight:800">✅ Target Hit!</span>':''}
+      </div>
+    </div>`;
+  }).join('');
+  APP.members.filter(m=>m.progress>=100).forEach(m=>launchConfetti());
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER — CHARTS
+// ═══════════════════════════════════════════════════
+function renderCharts(){
+  if(typeof Chart==='undefined'){
+    document.querySelectorAll('.chart-canvas-wrap').forEach(el=>{
+      el.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--m2);font-size:12px;">Chart.js লোড হয়নি — internet connection চেক করুন</div>';
+    });
+    return;
+  }
+  const allTeams=[...new Set(APP.members.map(m=>m.team))].filter(Boolean).sort();
+  const teamColors=allTeams.map(t=>TC[t]?.color||'#6366f1');
+  const teamAmts=allTeams.map(t=>APP.members.filter(m=>m.team===t).reduce((a,m)=>a+m.deliveredAmt,0));
+  const teamWips=allTeams.map(t=>APP.members.filter(m=>m.team===t).reduce((a,m)=>a+m.wipAmt,0));
+
+  if(charts.team) charts.team.destroy();
+  const tctx=document.getElementById('teamChart').getContext('2d');
+  charts.team=new Chart(tctx,{
+    type:'bar',
+    data:{
+      labels:allTeams,
+      datasets:[
+        {label:'Delivered $',data:teamAmts,backgroundColor:teamColors.map(c=>c+'cc'),borderColor:teamColors,borderWidth:1.5,borderRadius:6},
+        {label:'WIP Pipeline $',data:teamWips,backgroundColor:teamColors.map(c=>c+'55'),borderColor:teamColors.map(c=>c+'88'),borderWidth:1,borderRadius:6},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{labels:{color:'#94a3b8',font:{size:11,family:'Inter'}}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`}}},
+      scales:{
+        x:{ticks:{color:'#94a3b8',font:{size:10,family:'Inter'}},grid:{color:'rgba(255,255,255,.04)'}},
+        y:{ticks:{color:'#94a3b8',font:{size:10,family:'Inter'},callback:v=>'$'+v.toLocaleString()},grid:{color:'rgba(255,255,255,.04)'}},
+      }
+    }
+  });
+
+  const totDel=APP.members.reduce((a,m)=>a+m.delivered,0);
+  const totWip=APP.members.reduce((a,m)=>a+(m.wip+m.revision),0);
+  const totCan=APP.members.reduce((a,m)=>a+m.cancelled,0);
+  if(charts.dept) charts.dept.destroy();
+  const dctx=document.getElementById('deptChart').getContext('2d');
+  charts.dept=new Chart(dctx,{
+    type:'doughnut',
+    data:{
+      labels:['Delivered','WIP / Revision','Cancelled'],
+      datasets:[{data:[totDel,totWip,totCan],
+        backgroundColor:['rgba(16,185,129,.75)','rgba(245,158,11,.75)','rgba(239,68,68,.75)'],
+        borderColor:['#10b981','#f59e0b','#ef4444'],borderWidth:1.5}]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,cutout:'68%',
+      plugins:{legend:{position:'right',labels:{color:'#94a3b8',font:{size:11,family:'Inter'},padding:14}}}
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER — TEAMS
+// ═══════════════════════════════════════════════════
+function renderTeams(){
+  const teamOrder = [...new Set(APP.members.map(m=>m.team))].filter(Boolean).sort();
+  const topTeam=teamOrder.map(team=>{
+    const ms=APP.members.filter(m=>m.team===team);
+    const amt=ms.reduce((a,m)=>a+m.deliveredAmt,0);
+    const tgt=TEAM_TARGETS[team]||(ms.length*MEM_TARGET);
+    const pct=tgt>0?(amt/tgt)*100:0;
+    return{team,pct};
+  }).sort((a,b)=>b.pct-a.pct)[0]?.team;
+
+  const COLORS = ['#6366f1','#10b981','#f59e0b','#ec4899','#8b5cf6','#14b8a6','#f43f5e','#84cc16'];
+  document.getElementById('teamGrid').innerHTML=teamOrder.map((tname, idx)=>{
+    const defaultColor = COLORS[idx % COLORS.length];
+    const tc=TC[tname]||{color:defaultColor,bg:`color-mix(in srgb,${defaultColor} 15%,transparent)`,icon:'🏢'};
+    const ms=APP.members.filter(m=>m.team===tname);
+    const del=ms.reduce((a,m)=>a+m.deliveredAmt,0);
+    const wip=ms.reduce((a,m)=>a+m.wipAmt,0);
+    const uniqueOrdersInTeam=new Set(ms.flatMap(m=>m.projects.map(p=>p.order).filter(o=>o&&o!=='N/A')));
+    const proj=uniqueOrdersInTeam.size;
+    const delivered=ms.reduce((a,m)=>a+m.delivered,0);
+    const wipCount=ms.reduce((a,m)=>a+(m.wip||0),0);
+    const revCount=ms.reduce((a,m)=>a+(m.revision||0),0);
+    const canCount=ms.reduce((a,m)=>a+m.cancelled,0);
+    const tgt=TEAM_TARGETS[tname]||(ms.length*MEM_TARGET);
+    const remaining=Math.max(tgt-del,0);
+    const pct=tgt>0?Math.min((del/tgt)*100,100):0;
+    const hit=del>=tgt&&tgt>0;
+    const [healthText,healthCls]=teamHealth(pct);
+    const leader=MGMT.leaders[tname]?.name||'';
+    return `
+    <div class="tc${APP.teamFilter===tname?' active':''}" style="--tcol:${tc.color}" data-team="${tname}" onclick="setTeamClick('${tname}')">
+      <div class="tc-glow"></div>
+      <div class="tc-head">
+        <div class="tc-icon">${tc.icon}</div>
+        <div class="tc-cnt">${ms.length} members</div>
+      </div>
+      <div class="tc-name">${tname}</div>
+      ${leader?`<div class="tc-leader">👤 ${leader}</div>`:''}
+      <div class="tc-flags">
+        ${topTeam===tname?'<span class="tc-flag top">Top Team</span>':''}
+        <span class="tc-flag ${healthCls}">${healthText}</span>
+      </div>
+      <div class="tc-amt-row">
+        <div class="tc-amt">${fmtK(del)}</div>
+        ${hit?'<div class="tc-hit">Target Hit</div>':''}
+      </div>
+      <div class="tc-target"><strong>Achieved</strong> ${fmtK(del)} · <strong>Target</strong> ${fmtK(tgt)} · <strong>WIP</strong> ${fmtK(wip)}</div>
+      <div class="tc-summary">
+        <div class="tc-box">
+          <div class="tc-box-lbl">Achieved</div>
+          <div class="tc-box-val">${fmtK(del)}</div>
+        </div>
+        <div class="tc-box">
+          <div class="tc-box-lbl">Target</div>
+          <div class="tc-box-val">${fmtK(tgt)}</div>
+        </div>
+        <div class="tc-box">
+          <div class="tc-box-lbl">Remaining</div>
+          <div class="tc-box-val">${fmtK(remaining)}</div>
+        </div>
+      </div>
+      <div class="tc-bar"><div class="tc-fill" style="width:0%" data-w="${pct}"></div></div>
+      <div class="tc-stat-grid">
+        <div class="tc-stat-item tc-stat-del">
+          <div class="tc-stat-val">${delivered}</div>
+          <div class="tc-stat-lbl">✅ Delivery</div>
+        </div>
+        <div class="tc-stat-item tc-stat-wip">
+          <div class="tc-stat-val">${wipCount}</div>
+          <div class="tc-stat-lbl">🔄 WIP</div>
+        </div>
+        <div class="tc-stat-item tc-stat-rev">
+          <div class="tc-stat-val">${revCount}</div>
+          <div class="tc-stat-lbl">🔁 Revision</div>
+        </div>
+        <div class="tc-stat-item tc-stat-can">
+          <div class="tc-stat-val">${canCount}</div>
+          <div class="tc-stat-lbl">❌ Cancel</div>
+        </div>
+        <div class="tc-stat-item tc-stat-tot">
+          <div class="tc-stat-val">${proj}</div>
+          <div class="tc-stat-lbl">📦 Total</div>
+        </div>
+        <div class="tc-stat-item tc-stat-pct">
+          <div class="tc-stat-val" style="color:${pct>=100?'#10b981':pct>=70?'#3b82f6':pct>=40?'#f59e0b':'#ef4444'}">${pct.toFixed(0)}%</div>
+          <div class="tc-stat-lbl">🎯 Complete</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  setTimeout(()=>document.querySelectorAll('.tc-fill').forEach(el=>el.style.width=el.dataset.w+'%'),150);
+}
+function setTeamClick(t){
+  const tabs=document.querySelectorAll('.ftab');
+  let matchedBtn = [...tabs].find(b=>b.textContent===t);
+  tabs.forEach(b=>b.classList.remove('active'));
+  if(matchedBtn) matchedBtn.classList.add('active');
+  setTeam(t,null);
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER — MEMBERS
+// ═══════════════════════════════════════════════════
+function renderMembers(list){
+  const grid=document.getElementById('membersGrid');
+  if(!list.length){
+    grid.innerHTML='<div class="empty-state"><h3>No matching records found</h3><p>Try changing team, month, status, or search filters to see more members.</p></div>';
+    return;
+  }
+  const sortedForRank=[...APP.filteredMembers].sort((a,b)=>b.deliveredAmt-a.deliveredAmt);
+  const currentRanks={};sortedForRank.forEach((m,i)=>currentRanks[m.name]=i+1);
+
+  grid.innerHTML=list.map((m,i)=>{
+    const [c1,c2]=memberPalette(m.name);
+    const tc=TC[m.team]||{color:'#6366f1',bg:'rgba(99,102,241,.15)',border:'rgba(99,102,241,.3)'};
+    const pct=Math.min(m.progress||0,100);
+    const pc=pctC(m.progress);
+    const r=40,circ=2*Math.PI*r;
+    const off=circ*(1-pct/100);
+    const hit=m.progress>=100;
+    const seoCount=m.projects.filter(p=>p.service.includes('SEO')).length;
+    const smmCount=m.projects.filter(p=>p.service.includes('SMM')).length;
+    const rankNum=currentRanks[m.name]||'—';
+    return `
+    <div class="mc${hit?' target-hit':''}" style="animation-delay:${i*.04}s" onclick="openProj('${m.name}')">
+      <div class="mc-head">
+        <div class="mc-av" style="background:linear-gradient(135deg,${c1},${c2});box-shadow:0 4px 14px ${c1}55">${m.name[0]}</div>
+        <div class="mc-info">
+          <div class="mc-name">${m.name}${hit?' <span style="font-size:14px">🎯</span>':''}</div>
+          <div class="mc-full">${m.fullName}</div>
+        </div>
+        <div class="mc-badges">
+          <div class="midbadge">#${m.id}</div>
+          <div class="tpill" style="background:${tc.bg};color:${tc.color};border-color:${tc.border}">${m.team.split(' ')[0]}</div>
+          ${rankChangeHTML(m.name,rankNum)}
+        </div>
+      </div>
+      <div class="mc-body">
+        <div class="ring-row">
+          <div class="ring-wrap">
+            <svg class="ring-svg" width="76" height="76" viewBox="0 0 100 100">
+              <circle class="ring-bg" cx="50" cy="50" r="${r}" stroke-width="10"/>
+              <circle class="ring-fill" cx="50" cy="50" r="${r}" stroke-width="10"
+                stroke="${pc}" stroke-dasharray="${circ.toFixed(1)}"
+                stroke-dashoffset="${circ.toFixed(1)}" data-off="${off.toFixed(1)}"/>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-pct" style="color:${pc}">${pct.toFixed(0)}%</div>
+              <div class="ring-sub">Done</div>
+            </div>
+          </div>
+          <div class="ring-details">
+            <div class="rd-row"><span class="rd-lbl">Target</span><span class="rd-val">$${m.target.toLocaleString()}</span></div>
+            <div class="rd-row"><span class="rd-lbl">Delivered</span><span class="rd-val" style="color:#10b981">${fmt(m.deliveredAmt)}</span></div>
+            <div class="mtrack"><div class="mfill" style="width:0%;background:${pctG(m.progress)}" data-w="${pct}"></div></div>
+            <div class="rd-row"><span class="rd-lbl">${m.remaining<=0?'Surplus':'Remaining'}</span><span class="rd-val" style="color:${m.remaining<=0?'#10b981':'#f59e0b'}">${fmt(Math.abs(m.remaining))}</span></div>
+          </div>
+        </div>
+        ${(seoCount||smmCount)?`<div class="svc-row">${seoCount?`<span class="svc-tag svc-seo">SEO · ${seoCount}</span>`:''}${smmCount?`<span class="svc-tag svc-smm">SMM · ${smmCount}</span>`:''}</div>`:''}
+        <div class="metrics">
+          <div class="mbox m-total"><div class="mval">${m.total}</div><div class="mlbl">Total</div></div>
+          <div class="mbox m-wip"><div class="mval">${(m.wip||0)+(m.revision||0)}</div><div class="mlbl">WIP</div></div>
+          <div class="mbox m-del"><div class="mval">${m.delivered}</div><div class="mlbl">Done</div></div>
+          <div class="mbox m-can"><div class="mval">${m.cancelled}</div><div class="mlbl">Cancel</div></div>
+        </div>
+        <div class="amts">
+          <div class="abox a-del"><div class="albl">Delivered $</div><div class="aval">${fmt(m.deliveredAmt)}</div><div class="asub">${m.delivered} project${m.delivered!==1?'s':''}</div></div>
+          <div class="abox a-wip"><div class="albl">WIP Pipeline</div><div class="aval">${fmt(m.wipAmt)}</div><div class="asub">${(m.wip||0)+(m.revision||0)} active</div></div>
+        </div>
+        <button class="vbtn" onclick="event.stopPropagation();openProj('${m.name}')">📋 View Projects (${m.projects.length})</button>
+      </div>
+    </div>`;
+  }).join('');
+  setTimeout(()=>{
+    document.querySelectorAll('.ring-fill').forEach(el=>el.style.strokeDashoffset=el.dataset.off);
+    document.querySelectorAll('.mfill').forEach(el=>el.style.width=el.dataset.w+'%');
+  },200);
+}
+
+function renderMembersTable(list){
+  const body=document.getElementById('membersTableBody');
+  if(!list.length){
+    body.innerHTML=`<tr><td colspan="9" style="text-align:center;color:var(--m2);padding:26px 14px">No matching records found for the current filters.</td></tr>`;
+    return;
+  }
+  const sortedForRank=[...APP.filteredMembers].sort((a,b)=>b.deliveredAmt-a.deliveredAmt);
+  const currentRanks={};sortedForRank.forEach((m,i)=>currentRanks[m.name]=i+1);
+  body.innerHTML=list.map(m=>{
+    const rank=currentRanks[m.name]||'—';
+    const tc=TC[m.team]||{color:'#6366f1',bg:'rgba(99,102,241,.15)',border:'rgba(99,102,241,.3)'};
+    return `<tr class="m-row clickable-row" onclick="openProj('${m.name}')">
+      <td>#${rank}</td>
+      <td><strong>${escapeHTML(m.name)}</strong><div style="font-size:10px;color:var(--m2)">#${m.id} · ${escapeHTML(m.fullName)}</div></td>
+      <td><span style="padding:3px 8px;border-radius:999px;background:${tc.bg};color:${tc.color};border:1px solid ${tc.border};font-size:10px;font-weight:700">${escapeHTML(m.team)}</span></td>
+      <td>${m.delivered}</td>
+      <td>${(m.wip||0)+(m.revision||0)}</td>
+      <td>${m.cancelled}</td>
+      <td style="font-weight:800;color:#89d8cf">${fmt(m.deliveredAmt)}</td>
+      <td style="color:#e7c98e">${fmt(m.wipAmt)}</td>
+      <td><strong style="color:${pctC(m.progress)}">${(m.progress||0).toFixed(1)}%</strong></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPager(total,totalPages){
+  const pager=document.getElementById('pager');
+  const start=total?((APP.page-1)*APP.pageSize)+1:0;
+  const end=Math.min(APP.page*APP.pageSize,total);
+  const chips=[];
+  for(let p=Math.max(1,APP.page-2);p<=Math.min(totalPages,APP.page+2);p++){
+    chips.push(`<button class="page-chip ${p===APP.page?'active':''}" onclick="goPage(${p})">${p}</button>`);
+  }
+  pager.innerHTML=`
+    <span class="section-meta">Showing ${start}${total?`-${end}`:''} of ${total}</span>
+    <button class="pager-btn" ${APP.page<=1?'disabled':''} onclick="goPage(${APP.page-1})">Previous</button>
+    ${chips.join('')}
+    <button class="pager-btn" ${APP.page>=totalPages?'disabled':''} onclick="goPage(${APP.page+1})">Next</button>
+  `;
+}
+
+function renderAuditPanels(){
+  const note=APP.audit.unmatchedRows
+    ? `${APP.audit.unmatchedRows} row(s) could not be assigned to tracked members. Review them below.`
+    : 'All SEO/SMM rows are assigned to tracked members for the current source.';
+  document.getElementById('auditSummaryNote').textContent=note;
+  const list=document.getElementById('auditList');
+  if(!APP.audit.unmatchedItems?.length){
+    list.innerHTML=`<div class="audit-item"><div class="audit-assign">No unmatched items</div><div class="audit-note">Assignments currently look clean for tracked members.</div></div>`;
+    return;
+  }
+  list.innerHTML=APP.audit.unmatchedItems.map(item=>`
+    <div class="audit-item">
+      <div class="audit-item-top">
+        <div class="audit-assign">${escapeHTML(item.assign||'Unassigned')}</div>
+        <div class="spill sp-warn">${escapeHTML(item.service)}</div>
+      </div>
+      <div class="audit-meta">
+        <span>Status: ${escapeHTML(item.status||'N/A')}</span>
+        <span>Order: ${escapeHTML(item.order||'N/A')}</span>
+        <span>Client: ${escapeHTML(item.client||'N/A')}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// RENDER — LEADERBOARD
+// ═══════════════════════════════════════════════════
+function renderLeaderboard(){
+  const sorted=[...APP.filteredMembers].sort((a,b)=>b.deliveredAmt-a.deliveredAmt);
+  APP.prevRanks=saveRanks(sorted);
+  const ri=i=>i===0?'<span class="rnum r1">🥇</span>':i===1?'<span class="rnum r2">🥈</span>':i===2?'<span class="rnum r3">🥉</span>':`<span class="rnum" style="color:var(--m2)">${i+1}</span>`;
+  document.getElementById('lbBody').innerHTML=sorted.map((m,i)=>{
+    const [c1,c2]=memberPalette(m.name);
+    const tc=TC[m.team]||{color:'#6366f1',bg:'rgba(99,102,241,.15)',border:'rgba(99,102,241,.3)'};
+    const pct=Math.min(m.progress||0,100);
+    const prev=APP.prevRanks[m.name];
+    const diff=prev?(prev-(i+1)):null;
+    const chg=diff===null?'<span class="rank-chg rank-new">NEW</span>':diff>0?`<span class="rank-chg rank-up">↑${diff}</span>`:diff<0?`<span class="rank-chg rank-dn">↓${Math.abs(diff)}</span>`:'<span class="rank-chg rank-eq">—</span>';
+    return `<tr>
+      <td>${ri(i)}</td>
+      <td>${chg}</td>
+      <td><div style="display:flex;align-items:center;gap:9px">
+        <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,${c1},${c2});display:flex;align-items:center;justify-content:center;font-weight:900;font-size:12px;flex-shrink:0">${m.name[0]}</div>
+        <div><div style="font-weight:700;font-size:12px">${m.name}</div><div style="font-size:10px;color:var(--m2)">#${m.id}</div></div>
+      </div></td>
+      <td><span style="padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700;background:${tc.bg};color:${tc.color};border:1px solid ${tc.border}">${m.team}</span></td>
+      <td style="color:#10b981;font-weight:800">${m.delivered}</td>
+      <td style="color:#f59e0b;font-weight:700">${(m.wip||0)+(m.revision||0)}</td>
+      <td style="color:#ef4444;font-weight:700">${m.cancelled}</td>
+      <td style="font-weight:900;font-size:13px;color:#10b981">${fmt(m.deliveredAmt)}</td>
+      <td style="color:#f59e0b;font-weight:600">${fmt(m.wipAmt)}</td>
+      <td><div style="display:flex;align-items:center;gap:7px">
+        <div class="mbar"><div class="mbar-fill" style="width:${pct}%;background:${pctG(m.progress)}"></div></div>
+        <span style="font-size:11px;font-weight:800;color:${pctC(m.progress)}">${(m.progress||0).toFixed(1)}%</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════
+// PROJECT MODAL
+// ═══════════════════════════════════════════════════
+function openProj(name){
+  modalMember=APP.members.find(x=>x.name===name)||APP.allMembers.find(x=>x.name===name);
+  if(!modalMember) return;
+  mTab='all';
+  document.querySelectorAll('.mtab').forEach((t,i)=>t.classList.toggle('active',i===0));
+  renderProjModal();
+  openOverlay('projOverlay');
+}
+function renderProjModal(){
+  const m=modalMember;
+  const [c1,c2]=memberPalette(m.name);
+  document.getElementById('mAv').style.background=`linear-gradient(135deg,${c1},${c2})`;
+  document.getElementById('mAv').style.boxShadow=`0 4px 18px ${c1}55`;
+  document.getElementById('mAv').textContent=m.name[0];
+  document.getElementById('mName').textContent=m.name;
+  document.getElementById('mSub').textContent=m.fullName+' · '+m.team+' · #'+m.id;
+  document.getElementById('mKpis').innerHTML=`
+    <div class="mkpi"><div class="mkpi-val" style="color:#a5b4fc">${m.total}</div><div class="mkpi-lbl">Total</div></div>
+    <div class="mkpi"><div class="mkpi-val" style="color:#10b981">${m.delivered}</div><div class="mkpi-lbl">Delivered</div></div>
+    <div class="mkpi"><div class="mkpi-val" style="color:#f59e0b">${(m.wip||0)+(m.revision||0)}</div><div class="mkpi-lbl">WIP</div></div>
+    <div class="mkpi"><div class="mkpi-val" style="color:#10b981">${fmt(m.deliveredAmt)}</div><div class="mkpi-lbl">Delivered $</div></div>
+    <div class="mkpi"><div class="mkpi-val" style="color:#f59e0b">${fmt(m.wipAmt)}</div><div class="mkpi-lbl">WIP $</div></div>
+  `;
+  const projs=(m.projects||[]).filter(p=>{
+    if(mTab==='all') return true;
+    if(mTab==='WIP') return p.status==='WIP'||p.status==='Revision';
+    return p.status===mTab;
+  });
+  const body=document.getElementById('mBody');
+  if(!projs.length){body.innerHTML='<div style="text-align:center;padding:40px;color:var(--m2)">এই category-তে কোনো project নেই।</div>';return;}
+  body.innerHTML=projs.map(p=>{
+    const sc=(p.assign.match(/\//g)||[]).length+1;
+    const hasOrderLink=!!(p.link&&p.link!=='#'&&p.link!=='None');
+    const link=hasOrderLink?`<a class="plink" href="${p.link}" target="_blank">Open Order</a>`:'';
+    const showShare=p.status!=='Cancelled';
+    return `<div class="pc">
+      <div class="pc-top"><span class="pc-ord">${p.order||'N/A'}</span><span class="st st-${p.status}">${p.status}</span></div>
+      <div class="pc-meta">
+        <div class="pm"><label>Client</label><span>${p.client||'N/A'}</span></div>
+        <div class="pm"><label>Service</label><span>${p.service||'N/A'}</span></div>
+        <div class="pm"><label>Assigned</label><span style="font-size:10px;color:var(--m2)">${p.assign||'—'}</span></div>
+        <div class="pm"><label>Order Date</label><span>${p.date||'N/A'}</span></div>
+        <div class="pm"><label>Delivered</label><span>${p.deliveredDate||'—'}</span></div>
+        ${hasOrderLink?`<div class="pm"><label>Order Link</label>${link}</div>`:''}
+      </div>
+      ${showShare?`<div class="pc-share"><div class="ps-l">Amount Share<div class="ps-c">$${p.amtX} ÷ ${sc} person${sc>1?'s':''}</div></div><div class="ps-v">${fmt(p.share)}</div></div>`:''}
+    </div>`;
+  }).join('');
+}
+function setMTab(tab,btn){
+  mTab=tab;document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderProjModal();
+}
+
+// ═══════════════════════════════════════════════════
+// MANAGER VIEW
+// ═══════════════════════════════════════════════════
+function openManager(){
+  const ms=APP.members;
+  let totDel=0,totWip=0,totProj=0,hitTarget=0,totTgt=0;
+  const allTeams=[...new Set(APP.allMembers.map(m=>m.team))].filter(Boolean).sort();
+  ms.forEach(m=>{totDel+=m.deliveredAmt;totWip+=m.wipAmt;totProj+=m.total;if(m.progress>=100)hitTarget++;});
+  allTeams.forEach(t=>{const tms=APP.allMembers.filter(m=>m.team===t);totTgt+=(TEAM_TARGETS[t]||(tms.length*MEM_TARGET));});
+  const pct=totTgt>0?Math.min((totDel/totTgt)*100,100):0;
+  const sorted=[...ms].sort((a,b)=>b.deliveredAmt-a.deliveredAmt);
+
+  const alerts=[];
+  if(pct<50) alerts.push({type:'danger',msg:`⚠️ Department progress ${pct.toFixed(1)}% — মাস শেষ হওয়ার আগে target miss হতে পারে`});
+  else if(pct<75) alerts.push({type:'warn',msg:`📊 Department ${pct.toFixed(1)}% complete — আরও push দরকার`});
+  else alerts.push({type:'good',msg:`✅ Department on track — ${pct.toFixed(1)}% achieved`});
+  ms.filter(m=>m.total===0).forEach(m=>alerts.push({type:'warn',msg:`⚠️ ${m.name} (${m.team}) — এখনও কোনো project নেই`}));
+  ms.filter(m=>m.progress>=100).forEach(m=>alerts.push({type:'good',msg:`🎯 ${m.name} target hit করেছে — ${fmt(m.deliveredAmt)}`}));
+
+  document.getElementById('mgrSub').textContent=`Manager: ${MGMT.manager.name} · ${APP.monthFilter==='all'?'All Time':APP.monthFilter}`;
+  document.getElementById('mgrBody').innerHTML=`
+    <div class="mgr-grid">
+      <div class="mgr-kpi"><div class="mgr-kpi-val" style="color:#6366f1">${fmtK(totDel)}</div><div class="mgr-kpi-lbl">Total Delivered</div></div>
+      <div class="mgr-kpi"><div class="mgr-kpi-val" style="color:#10b981">${fmtK(totTgt)}</div><div class="mgr-kpi-lbl">Combined Target</div></div>
+      <div class="mgr-kpi"><div class="mgr-kpi-val" style="color:#a5b4fc">${totProj}</div><div class="mgr-kpi-lbl">Total Projects</div></div>
+      <div class="mgr-kpi"><div class="mgr-kpi-val" style="color:#10b981">${hitTarget} / ${ms.length}</div><div class="mgr-kpi-lbl">Target Hitters</div></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:12px;color:var(--m2);margin-bottom:6px">Department Progress: <b style="color:#a5b4fc">${pct.toFixed(1)}%</b> of ${fmt(totTgt)}</div>
+      <div style="height:8px;background:rgba(255,255,255,.05);border-radius:50px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,#6366f1,#06b6d4);border-radius:50px;transition:width 1s ease"></div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px">${alerts.map(a=>`<div class="mgr-alert ${a.type}">${a.msg}</div>`).join('')}</div>
+    <div class="stitle" style="margin-bottom:14px">Team Summary</div>
+    <div class="mgr-team-grid">
+      ${allTeams.map(tname=>{
+        const tms=APP.allMembers.filter(m=>m.team===tname);
+        const tDel=tms.reduce((a,m)=>a+m.deliveredAmt,0);
+        const tWip=tms.reduce((a,m)=>a+m.wipAmt,0);
+        const tgt=TEAM_TARGETS[tname]||(tms.length*MEM_TARGET);
+        const pct=tgt>0?Math.min((tDel/tgt)*100,100):0;
+        const tc=TC[tname]||{color:'#6366f1'};
+        const leader=MGMT.leaders[tname]?.name||'';
+        return `<div class="mgr-team-card" style="--tcol:${tc.color}">
+          <div class="mgr-team-name">${tname}</div>
+          <div class="mgr-team-leader">👤 ${leader} · ${tms.length} members</div>
+          <div class="mgr-team-amt" style="color:${tc.color}">${fmt(tDel)}</div>
+          <div class="mgr-tbar"><div class="mgr-tbar-fill" style="width:${pct}%;background:${tc.color}"></div></div>
+          <div class="mgr-tstats">
+            <span><b>${tms.reduce((a,m)=>a+m.delivered,0)}</b> delivered</span>
+            <span><b>${fmt(tWip)}</b> WIP</span>
+            <span><b>${pct.toFixed(0)}%</b> target</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="stitle" style="margin-bottom:12px">Individual Ranking</div>
+    <table class="mgr-rank-table">
+      <thead><tr><th>Rank</th><th>Member</th><th>Team</th><th>Delivered $</th><th>WIP $</th><th>Progress</th><th>Status</th></tr></thead>
+      <tbody>${sorted.map((m,i)=>{
+        const tc=TC[m.team]||{color:'#6366f1'};
+        const icon=i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
+        const statusLabel=m.progress>=100?'<span style="color:#10b981;font-weight:800">✅ Hit</span>':m.progress>=75?'<span style="color:#3b82f6;font-weight:700">🔵 Close</span>':m.progress>=50?'<span style="color:#f59e0b;font-weight:700">🟡 Mid</span>':'<span style="color:#ef4444;font-weight:700">🔴 Behind</span>';
+        return `<tr>
+          <td style="font-weight:900">${icon}</td>
+          <td style="font-weight:700">${m.name}<div style="font-size:10px;color:var(--m2)">${m.fullName}</div></td>
+          <td><span style="color:${tc.color};font-weight:700;font-size:11px">${m.team}</span></td>
+          <td style="font-weight:800;color:#10b981">${fmt(m.deliveredAmt)}</td>
+          <td style="color:#f59e0b">${fmt(m.wipAmt)}</td>
+          <td style="font-weight:700;color:${pctC(m.progress)}">${m.progress.toFixed(1)}%</td>
+          <td>${statusLabel}</td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+  `;
+  openOverlay('mgrOverlay');
+}
+
+// ═══════════════════════════════════════════════════
+// OVERLAY HELPERS
+// ═══════════════════════════════════════════════════
+function openOverlay(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden';}
+function closeOverlay(id){document.getElementById(id).classList.remove('open');document.body.style.overflow='';}
+function handleOC(e,id){if(e.target===document.getElementById(id)) closeOverlay(id);}
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeOverlay('projOverlay');closeOverlay('mgrOverlay');}});
+
+// ═══════════════════════════════════════════════════
+// CONFETTI
+// ═══════════════════════════════════════════════════
+let confettiRunning=false;
+function launchConfetti(){
+  if(confettiRunning) return;
+  confettiRunning=true;
+  const canvas=document.getElementById('confetti-canvas');
+  const ctx=canvas.getContext('2d');
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;
+  const pieces=Array.from({length:80},()=>({
+    x:Math.random()*canvas.width,y:Math.random()*canvas.height-canvas.height,
+    w:6+Math.random()*6,h:6+Math.random()*6,
+    color:['#6366f1','#10b981','#f59e0b','#ec4899','#06b6d4','#a5b4fc'][Math.floor(Math.random()*6)],
+    speed:2+Math.random()*4,angle:Math.random()*Math.PI*2,spin:Math.random()*.2-.1,alpha:1
+  }));
+  let frame=0;
+  const animate=()=>{
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    pieces.forEach(p=>{
+      p.y+=p.speed;p.angle+=p.spin;p.alpha-=.008;
+      if(p.alpha<=0) return;
+      ctx.save();ctx.globalAlpha=p.alpha;ctx.fillStyle=p.color;
+      ctx.translate(p.x,p.y);ctx.rotate(p.angle);
+      ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h);ctx.restore();
+    });
+    frame++;
+    if(frame<200) requestAnimationFrame(animate);
+    else{ctx.clearRect(0,0,canvas.width,canvas.height);confettiRunning=false;}
+  };
+  requestAnimationFrame(animate);
+}
+
+// ═══════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════
+function downloadCSV(){
+  const ms=[...APP.members].sort((a,b)=>b.deliveredAmt-a.deliveredAmt);
+  const headers=['Rank','Name','Full Name','ID','Team','Target $','Delivered $','WIP $','Progress %','Delivered Count','WIP Count','Cancelled','Total Projects'];
+  const rows=ms.map((m,i)=>[
+    i+1,m.name,m.fullName,m.id,m.team,m.target,
+    m.deliveredAmt.toFixed(2),m.wipAmt.toFixed(2),m.progress.toFixed(1),
+    m.delivered,m.wip+m.revision,m.cancelled,m.total
+  ]);
+  const csv=[headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`SEO_Performance_${APP.monthFilter==='all'?'AllTime':APP.monthFilter}_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();URL.revokeObjectURL(url);
+  showToast('📊 CSV download শুরু হয়েছে!','#10b981');
+}
+function downloadPDF(){
+  showToast('🖨️ Print dialog খুলছে...','#a5b4fc');
+  setTimeout(()=>window.print(),400);
+}
+
+// ═══════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════
+function showToast(msg,color='#a5b4fc'){
+  const box=document.getElementById('toastBox');
+  const t=document.createElement('div');
+  t.className='toast';t.style.borderColor=color+'44';t.style.color=color;t.textContent=msg;
+  box.appendChild(t);setTimeout(()=>t.remove(),4200);
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+APP.prevRanks=loadPrevRanks();
+applyUrlState();
+if(STATIC_DATA&&STATIC_DATA.length){
+  APP.allMembers=STATIC_DATA;APP.loaded=true;APP.source='Embedded Static Data';
+  buildMonthOptions();applyFilters(true);
+}
+syncControlsFromState();
+window.addEventListener('scroll',updateSectionNav,{passive:true});
+window.addEventListener('load',()=>{
+  updateSectionNav();
+  const hid=(location.hash||'').replace('#','');
+  if(hid&&document.getElementById(hid)) setTimeout(()=>jumpSection(hid),120);
+});
+refreshData();
+
+// AUTO-SYNC EVERY 30 SECONDS
+setInterval(() => {
+  if(!document.hidden) refreshData();
+}, 30000); // 30 seconds
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python extract_data.py)",
+      "Bash(python build_dashboard.py)"
+    ]
+  }
+}
