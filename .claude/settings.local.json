@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(python extract_data.py)",
-      "Bash(python build_dashboard.py)"
+      "Bash(python build_dashboard.py)",
+      "Bash(python count_teams.py)",
+      "Bash(python -c ' *)"
     ]
   }
 }
