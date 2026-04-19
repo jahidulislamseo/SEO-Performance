@@ -1,0 +1,12 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Sensitive Data
+credentials.json
+
+# Local Data Files
+*.xlsx
+geo_data.json
+geo_dashboard.html

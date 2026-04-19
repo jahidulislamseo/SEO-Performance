@@ -2,12 +2,22 @@ import openpyxl
 import json
 import sys
 import re
+import openpyxl, json, sys, re, os
 sys.stdout.reconfigure(encoding='utf-8')
 
 wb = openpyxl.load_workbook(
     r'c:\Users\Jahidul Islam\Downloads\jahidul\Employee Performance Evalution Sheet.xlsx',
     data_only=True
 )
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+EXCEL_FILE = os.path.join(BASE_DIR, 'Employee Performance Evalution Sheet.xlsx')
+DATA_OUTPUT = os.path.join(BASE_DIR, 'geo_data.json')
+
+if not os.path.exists(EXCEL_FILE):
+    print(f"❌ Error: {EXCEL_FILE} not found.")
+    sys.exit(1)
+
+wb = openpyxl.load_workbook(EXCEL_FILE, data_only=True)
 ws = wb['Kam Data']
 
 geo_members = [
@@ -162,6 +172,7 @@ for m in geo_members:
     })
 
 with open(r'c:\Users\Jahidul Islam\Downloads\jahidul\geo_data.json', 'w', encoding='utf-8') as f:
+with open(DATA_OUTPUT, 'w', encoding='utf-8') as f:
     json.dump(output, f, ensure_ascii=False, indent=2)
 
 print("✅ geo_data.json saved successfully!")

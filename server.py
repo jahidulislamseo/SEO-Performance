@@ -39,7 +39,7 @@ COL = {
     "order_link":   14,   # O
     "client":       10,   # K
     "date":         3,    # D
-    "op_dept":      26,   # AA — Op. Department (team tag)
+    "op_dept":      21,   # V — Delivered By (team tag)
 }
 
 # Sheet team tag → dashboard team name mapping
