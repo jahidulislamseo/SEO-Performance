@@ -198,7 +198,10 @@ async function refreshData(silent = false) {
     if (res.ok) {
       const data = await res.json();
       if (data.status === 'ok') {
-        APP.allMembers = data.data; APP.summary = data.summary; APP.source = 'Flask API';
+        APP.allMembers = data.data; 
+        APP.summary = data.summary; 
+        APP.audit = data.audit || APP.audit;
+        APP.source = 'Flask API';
         APP.loaded = true;
         document.getElementById('liveMode').textContent  = '🟢 API';
         document.getElementById('footerMode').textContent = 'Flask API';
@@ -404,17 +407,23 @@ function renderKpiStrip() {
   const ms      = APP.members;
   const summary = APP.summary?.dept || {};
   const audit   = APP.audit || {};
+  
+  // Calculate counts and values from the current filtered members (ms)
+  // this ensures the counts match the grid when filters are applied.
+  // Using unique project order IDs for counts (delC, wipC, canC)
+  const allProjs = ms.flatMap(m => m.projects);
   const mData   = {
-    projC: summary.uniqueProjects || 0,
-    projV: (summary.achieved || 0) + (summary.wipAmt || 0),
-    runC:  (audit.matchedRows || 0) - (audit.deliveredRows || 0),
-    runV:  summary.wipAmt || 0,
-    delC:  audit.deliveredRows || 0,
-    delV:  summary.achieved || 0,
-    wipC:  audit.wipRows || 0,
-    wipV:  summary.wipAmt || 0,
-    canC:  audit.cancelledRows || 0,
+    projC: new Set(allProjs.map(p => p.order)).size,
+    projV: ms.reduce((a, m) => a + m.deliveredAmt + m.wipAmt, 0),
+    runC:  new Set(allProjs.filter(p => p.status === 'WIP' || p.status === 'Revision').map(p => p.order)).size,
+    runV:  ms.reduce((a, m) => a + m.wipAmt, 0),
+    delC:  new Set(allProjs.filter(p => p.status === 'Delivered').map(p => p.order)).size,
+    delV:  ms.reduce((a, m) => a + m.deliveredAmt, 0),
+    wipC:  new Set(allProjs.filter(p => p.status === 'WIP' || p.status === 'Revision').map(p => p.order)).size,
+    wipV:  ms.reduce((a, m) => a + m.wipAmt, 0),
+    canC:  new Set(allProjs.filter(p => p.status === 'Cancelled').map(p => p.order)).size,
   };
+  
   const bestMember = [...APP.filteredMembers].sort((a, b) => b.deliveredAmt - a.deliveredAmt)[0];
   const allTeams   = [...new Set(ms.map(m => m.team))].filter(Boolean);
   const teamScores = allTeams.map(t => {
@@ -495,12 +504,12 @@ function renderSpotlight() {
 
 // ── RENDER — CHARTS ───────────────────────────────────────────────
 function renderCharts() {
-  if (typeof Chart === 'undefined') {
-    document.querySelectorAll('.chart-canvas-wrap').forEach(el => {
-      el.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--m2);font-size:12px;">Chart.js লোড হয়নি — internet connection চেক করুন</div>';
-    });
-    return;
-  }
+  if (typeof Chart === 'undefined') return;
+  
+  const teamCanvas = document.getElementById('teamChart');
+  const deptCanvas = document.getElementById('deptChart');
+  if (!teamCanvas || !deptCanvas) return;
+
   const allTeams   = [...new Set(APP.members.map(m => m.team))].filter(Boolean).sort();
   const teamColors = allTeams.map(t => TC[t]?.color || '#6366f1');
   const teamAmts   = allTeams.map(t => APP.members.filter(m => m.team === t).reduce((a, m) => a + m.deliveredAmt, 0));

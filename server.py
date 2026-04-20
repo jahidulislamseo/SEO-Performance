@@ -161,11 +161,23 @@ def api_data():
             "management": MANAGEMENT()
         }
         
+        # Add audit info from dept summary if available
+        audit = {
+            "seoSmmRows": dept_sum_doc.get("seoSmmRows", 0) if dept_sum_doc else 0,
+            "matchedRows": dept_sum_doc.get("matchedRows", 0) if dept_sum_doc else 0,
+            "deliveredRows": dept_sum_doc.get("deliveredRows", 0) if dept_sum_doc else 0,
+            "wipRows": dept_sum_doc.get("wipRows", 0) if dept_sum_doc else 0,
+            "cancelledRows": dept_sum_doc.get("cancelledRows", 0) if dept_sum_doc else 0,
+            "unmatchedRows": dept_sum_doc.get("unmatchedRows", 0) if dept_sum_doc else 0,
+            "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0) if dept_sum_doc else 0,
+        }
+        
         return jsonify({
             "status": "ok", 
             "mode": "mongodb_atlas_summary_table", 
             "data": member_docs,
             "summary": summary,
+            "audit": audit,
             "projectCount": dept_sum_doc.get("uniqueProjects", 0) if dept_sum_doc else 0,
             "memberCount": len(member_docs),
             "lastSync": dept_sum_doc.get("last_updated", 0) if dept_sum_doc else 0

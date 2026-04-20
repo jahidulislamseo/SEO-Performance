@@ -71,6 +71,7 @@ function processRows(rows) {
   const sf = v => { try { return parseFloat(String(v).replace(/[$,]/g, '').trim()) || 0; } catch (e) { return 0; } };
   const uniqueOrders = new Set();
   let seoSmmRows = 0, matchedRows = 0;
+  const uniqueDelivered = new Set(), uniqueWip = new Set(), uniqueCancelled = new Set();
   const unmatchedItems = [];
 
   dataRows.forEach(row => {
@@ -78,8 +79,16 @@ function processRows(rows) {
     const assign  = (row[COL.assign]  || '').trim();
     const status  = (row[COL.status]  || '').trim();
     const service = (row[COL.service] || '').trim().toUpperCase();
+    const order   = (row[COL.order_num] || '').trim();
     if (!service.includes('SEO') && !service.includes('SMM')) return;
     seoSmmRows++;
+    
+    if (order) {
+      if (status === 'Delivered') uniqueDelivered.add(order);
+      else if (status === 'WIP' || status === 'Revision') uniqueWip.add(order);
+      else if (status === 'Cancelled') uniqueCancelled.add(order);
+    }
+
     const matchedNames = parseAssignees(assign);
     if (!matchedNames.length) {
       unmatchedItems.push({
@@ -182,7 +191,7 @@ function processRows(rows) {
   };
   return {
     members, summary,
-    audit: { seoSmmRows, matchedRows, unmatchedRows: unmatchedItems.length, uniqueOrders: uniqueOrders.size, unmatchedItems: unmatchedItems.slice(0, 12) },
+    audit: { seoSmmRows, matchedRows, deliveredRows: uniqueDelivered.size, wipRows: uniqueWip.size, cancelledRows: uniqueCancelled.size, unmatchedRows: unmatchedItems.length, uniqueOrders: uniqueOrders.size, unmatchedItems: unmatchedItems.slice(0, 12) },
   };
 }
 

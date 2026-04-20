@@ -155,9 +155,18 @@ def process_and_save(df, db):
     edf = pd.DataFrame(expanded_rows)
     
     # 4. Global Stats
+    print("Calculating Global stats...")
     total_delivered_amt = df[df['status'] == 'Delivered']['amount_x'].sum() if not df.empty else 0
     total_wip_amt = df[df['status'].isin(['WIP', 'Revision'])]['amount_x'].sum() if not df.empty else 0
     unique_projects = df[df['order_num'].str.strip() != "N/A"]['order_num'].nunique() if not df.empty else 0
+    
+    # Audit counts for the current month (Unique by Order Number)
+    seoSmmRows = len(df)
+    deliveredRows = df[df['status'] == 'Delivered']['order_num'].nunique()
+    wipRows = df[df['status'].isin(['WIP', 'Revision'])]['order_num'].nunique()
+    cancelledRows = df[df['status'] == 'Cancelled']['order_num'].nunique()
+    matchedRows = edf['order_num'].nunique() if not edf.empty else 0
+    unmatchedRows = seoSmmRows - (df[df['order_num'].isin(edf['order_num'])]['order_num'].nunique() if not edf.empty else 0)
 
     # 5. Member Stats
     print("Calculating Member stats...")
@@ -258,6 +267,12 @@ def process_and_save(df, db):
         "achieved": round(total_delivered_amt, 2),
         "wipAmt": round(total_wip_amt, 2),
         "uniqueProjects": unique_projects,
+        "seoSmmRows": seoSmmRows,
+        "matchedRows": matchedRows,
+        "deliveredRows": deliveredRows,
+        "wipRows": wipRows,
+        "cancelledRows": cancelledRows,
+        "unmatchedRows": unmatchedRows,
         "last_updated": time.time()
     })
     
