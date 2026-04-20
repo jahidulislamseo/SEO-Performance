@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>SEO Performance Hub — GEO Rankers</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<link rel="stylesheet" href="/static/css/base.css" />
+<link rel="stylesheet" href="/static/css/dashboard.css" />
+</head>
+<body>
+<div class="g1"></div><div class="g2"></div><div class="g3"></div>
+<canvas id="confetti-canvas"></canvas>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hl">
+    <div class="logo">🌍</div>
+    <div class="ht">
+      <h1>SEO Performance Hub</h1>
+      <p id="hdrSub">GEO Rankers Department · April 2026</p>
+    </div>
+  </div>
+  <div class="hr">
+    <div class="live-badge"><div class="ldot"></div><span id="liveMode">Live</span></div>
+    <button class="hbtn manager" onclick="openManager()">👤 <span>Manager View</span></button>
+    <button class="hbtn yellow" onclick="downloadCSV()">📊 <span>CSV</span></button>
+    <button class="hbtn green" onclick="downloadPDF()">🖨️ <span>PDF</span></button>
+    <button class="hbtn" onclick="refreshData()" id="rfBtn"><span id="rfIcon">↻</span> <span>Refresh</span></button>
+    <div class="clock" id="clock">--:--:--</div>
+  </div>
+</header>
+
+<!-- COUNTDOWN BANNER -->
+<div class="countdown-bar">
+  <div class="cd-left">
+    <div class="cd-item">📅 <b id="cdMonth">April 2026</b></div>
+    <div class="cd-item">⏳ <b id="cdDays">—</b> days left</div>
+    <div class="cd-month-track"><div class="cd-month-fill" id="cdFill" style="width:0%"></div></div>
+    <div class="cd-item">📈 Month: <b id="cdPct">—</b>% elapsed</div>
+  </div>
+  <div class="cd-right">
+    <span class="cd-next" id="cdNext"></span>
+  </div>
+</div>
+
+<!-- MASTER DASHBOARD NAV -->
+<div class="page-nav">
+  <div class="page-nav-inner">
+    <button class="page-nav-btn active" data-target="overview-section" onclick="jumpSection('overview-section')">Overview</button>
+    <button class="page-nav-btn" data-target="performers-section" onclick="jumpSection('performers-section')">Top Performers</button>
+    <button class="page-nav-btn" data-target="charts-section" onclick="jumpSection('charts-section')">Charts</button>
+    <button class="page-nav-btn" data-target="teams-section" onclick="jumpSection('teams-section')">Teams</button>
+    <button class="page-nav-btn" data-target="members-section" onclick="jumpSection('members-section')">Members</button>
+    <button class="page-nav-btn" data-target="audit-section" onclick="jumpSection('audit-section')">Audit</button>
+    <button class="page-nav-btn" data-target="leaderboard-section" onclick="jumpSection('leaderboard-section')">Leaderboard</button>
+    <button class="page-nav-btn" style="background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:#7ed2c7" onclick="window.open('/delivery-tracker','_blank')">📦 Delivery Tracker ↗</button>
+  </div>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- DEPT OVERVIEW -->
+<section class="dash-section" id="overview-section">
+<div class="dept-card">
+  <div class="dept-inner">
+    <div>
+      <div class="dept-tag">Department Overview</div>
+      <div class="dept-heading" id="deptHeading">Loading...</div>
+      <div class="dept-sub" id="deptSub">Fetching live data...</div>
+      <div class="dept-track"><div class="dept-fill" id="deptFill" style="width:0%"></div></div>
+      <div class="dept-tlabels"><span>$0</span><span id="deptTgt">Target: $35,000</span></div>
+      <div class="dept-kpis" id="deptKpis"></div>
+    </div>
+    <div class="dept-ring-wrap">
+      <div class="dept-ring-container">
+        <svg width="96" height="96" viewBox="0 0 100 100">
+          <circle class="ring-bg" cx="50" cy="50" r="42" stroke="rgba(255,255,255,.06)" stroke-width="8" fill="none"/>
+          <circle id="dRing" fill="none" cx="50" cy="50" r="42" stroke="#6366f1" stroke-width="8"
+            stroke-dasharray="263.9" stroke-dashoffset="263.9" stroke-linecap="round"
+            style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1.8s ease;"/>
+        </svg>
+        <div class="dept-ring-inner">
+          <div class="dept-ring-pct" id="dRingPct">0%</div>
+          <div class="dept-ring-lbl">Done</div>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--m2);font-weight:600;">Dept Progress</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip" id="kpiStrip"></div>
+
+<!-- STATUS / AUDIT -->
+<div class="status-row">
+  <div class="status-card">
+    <div class="status-head">
+      <div class="status-title">Live Data Status</div>
+      <div class="status-pills">
+        <span class="spill sp-source" id="sourcePill">Source: Checking...</span>
+        <span class="spill" id="syncPill">Last Sync: --</span>
+        <span class="spill sp-live" id="filterPill">SEO/SMM Only</span>
+      </div>
+    </div>
+    <div class="audit-grid">
+      <div class="audit-mini"><b id="auditRows">--</b><span>SEO/SMM Rows</span></div>
+      <div class="audit-mini"><b id="auditMatched">--</b><span>Matched Rows</span></div>
+      <div class="audit-mini"><b id="auditUnmatched">--</b><span>Unmatched Rows</span></div>
+      <div class="audit-mini"><b id="auditProjects">--</b><span>Unique Orders</span></div>
+    </div>
+  </div>
+  <div class="status-card">
+    <div class="status-head">
+      <div class="status-title">Current View</div>
+      <div class="status-pills">
+        <span class="spill" id="viewPill">Cards</span>
+      </div>
+    </div>
+    <div class="audit-grid">
+      <div class="audit-mini"><b id="viewMembers">--</b><span>Visible Members</span></div>
+      <div class="audit-mini"><b id="viewTeams">--</b><span>Visible Teams</span></div>
+      <div class="audit-mini"><b id="viewPage">--</b><span>Current Page</span></div>
+      <div class="audit-mini"><b id="viewRange">--</b><span>Shown Range</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- SPOTLIGHT -->
+<section class="dash-section" id="performers-section">
+<div class="spotlight">
+  <div class="stitle">🏆 Top Performers</div>
+  <div class="spot-grid" id="spotGrid"></div>
+</div>
+</section>
+
+<!-- CHARTS -->
+<section class="dash-section" id="charts-section">
+<div class="charts-row">
+  <div class="chart-card">
+    <div class="chart-title">📊 Team vs Team — Delivered $</div>
+    <div class="chart-canvas-wrap"><canvas id="teamChart"></canvas></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">🍩 Department Status Breakdown</div>
+    <div class="chart-canvas-wrap"><canvas id="deptChart"></canvas></div>
+  </div>
+</div>
+</section>
+
+<!-- TEAM CARDS -->
+<section class="dash-section" id="teams-section">
+<div class="team-grid" id="teamGrid"></div>
+</section>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="search-wrap">
+    <span class="si">🔍</span>
+    <input class="search-input" id="srch" placeholder="Search member..." oninput="APP.page=1;applyFilters()"/>
+  </div>
+  <div class="filter-tabs" id="teamTabs">
+    <button class="ftab active" onclick="setTeam('All',this)">All</button>
+  </div>
+  <div class="status-filters">
+    <button class="sfbtn active-all" id="sf-all"  onclick="setStatus('all',this)">All</button>
+    <button class="sfbtn" id="sf-del"  onclick="setStatus('Delivered',this)">✅ Done</button>
+    <button class="sfbtn" id="sf-wip"  onclick="setStatus('WIP',this)">⏳ WIP</button>
+    <button class="sfbtn" id="sf-can"  onclick="setStatus('Cancelled',this)">❌ Cancel</button>
+  </div>
+  <select class="month-sel" id="monthSel" onchange="setMonth()">
+    <option value="all">📅 All Time</option>
+  </select>
+  <div class="ctrl-right">
+    <div class="seg" id="viewSeg">
+      <button class="seg-btn active" id="view-cards" onclick="setView('cards',this)">Cards</button>
+      <button class="seg-btn" id="view-table" onclick="setView('table',this)">Table</button>
+    </div>
+    <select class="sort-sel" id="pageSizeSel" onchange="setPageSize()">
+      <option value="12">12 / page</option>
+      <option value="24">24 / page</option>
+      <option value="48">48 / page</option>
+    </select>
+    <select class="sort-sel" id="sortSel" onchange="APP.page=1;applyFilters()">
+      <option value="deliveredAmt">Delivered $</option>
+      <option value="progress">Progress %</option>
+      <option value="delivered">Delivered Count</option>
+      <option value="wipAmt">WIP Pipeline $</option>
+      <option value="name">Name A-Z</option>
+    </select>
+    <div class="mbadge" id="mbadge"></div>
+  </div>
+</div>
+
+<!-- MEMBERS -->
+<section class="dash-section" id="members-section">
+<div class="stitle">👥 Team Members</div>
+<div class="section-bar">
+  <div class="section-meta" id="memberSectionMeta">Showing members</div>
+  <div class="section-meta" id="savedViewMeta">URL-synced filters active</div>
+</div>
+<div class="members-grid" id="membersGrid"></div>
+<div class="table-wrap" id="membersTableWrap" style="display:none">
+  <table class="m-table">
+    <thead>
+      <tr>
+        <th>Rank</th><th>Member</th><th>Team</th><th>Delivered</th><th>WIP</th><th>Cancelled</th><th>Delivered $</th><th>WIP $</th><th>Progress</th>
+      </tr>
+    </thead>
+    <tbody id="membersTableBody"></tbody>
+  </table>
+</div>
+<div class="pager" id="pager"></div>
+</section>
+
+<!-- AUDIT PANELS -->
+<section class="dash-section" id="audit-section">
+<div class="audit-panels">
+  <div class="audit-panel">
+    <h3>Data Quality & Unassigned Work</h3>
+    <div class="audit-note" id="auditSummaryNote">Checking assignment quality...</div>
+    <div class="audit-list" id="auditList"></div>
+  </div>
+  <div class="audit-panel">
+    <h3>Saved Views</h3>
+    <div class="audit-list">
+      <div class="audit-item clickable-row" onclick="applyPreset('manager')">
+        <div class="audit-item-top"><div class="audit-assign">Manager Focus</div><div class="spill">Best/Worst</div></div>
+        <div class="audit-meta"><span>All teams</span><span>Delivered $</span><span>Cards</span></div>
+      </div>
+      <div class="audit-item clickable-row" onclick="applyPreset('wip')">
+        <div class="audit-item-top"><div class="audit-assign">Pipeline Watch</div><div class="spill sp-warn">WIP</div></div>
+        <div class="audit-meta"><span>All teams</span><span>Active work</span><span>Table</span></div>
+      </div>
+      <div class="audit-item clickable-row" onclick="applyPreset('dark')">
+        <div class="audit-item-top"><div class="audit-assign">Dark Rankers View</div><div class="spill">Team</div></div>
+        <div class="audit-meta"><span>Dark Rankers</span><span>Delivered $</span><span>Cards</span></div>
+      </div>
+      <div class="audit-item clickable-row" onclick="applyPreset('target')">
+        <div class="audit-item-top"><div class="audit-assign">Target Tracker</div><div class="spill sp-live">Progress</div></div>
+        <div class="audit-meta"><span>All teams</span><span>Progress %</span><span>Cards</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- LEADERBOARD -->
+<section class="dash-section" id="leaderboard-section">
+<div class="stitle">🏆 Performance Leaderboard</div>
+<div class="lb-wrap">
+  <div class="lb-head">
+    <h2>Full Ranking — Delivered $</h2>
+    <div class="lb-acts">
+      <span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.25);color:#a5b4fc;">Target: $1,100/member</span>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Rank</th><th>Change</th><th>Member</th><th>Team</th>
+        <th>Delivered</th><th>WIP</th><th>Cancel</th>
+        <th>Delivered $</th><th>WIP $</th><th>Progress</th>
+      </tr>
+    </thead>
+    <tbody id="lbBody"></tbody>
+  </table>
+</div>
+</section>
+
+</main>
+
+<!-- PROJECT MODAL -->
+<div class="overlay" id="projOverlay" onclick="handleOC(event,'projOverlay')">
+  <div class="modal">
+    <div class="m-hdr">
+      <div class="m-top">
+        <div class="m-av-wrap">
+          <div class="m-av" id="mAv"></div>
+          <div class="m-title-blk">
+            <div class="m-name" id="mName"></div>
+            <div class="m-sub" id="mSub"></div>
+            <div class="m-kpis" id="mKpis"></div>
+          </div>
+        </div>
+        <button class="close-btn" onclick="closeOverlay('projOverlay')">✕</button>
+      </div>
+      <div class="m-tabs">
+        <button class="mtab active" onclick="setMTab('all',this)">All</button>
+        <button class="mtab" onclick="setMTab('Delivered',this)">✅ Delivered</button>
+        <button class="mtab" onclick="setMTab('WIP',this)">⏳ WIP</button>
+        <button class="mtab" onclick="setMTab('Revision',this)">🔄 Revision</button>
+        <button class="mtab" onclick="setMTab('Cancelled',this)">❌ Cancelled</button>
+      </div>
+    </div>
+    <div class="m-body" id="mBody"></div>
+  </div>
+</div>
+
+<!-- MANAGER MODAL -->
+<div class="overlay" id="mgrOverlay" onclick="handleOC(event,'mgrOverlay')">
+  <div class="modal mgr-modal">
+    <div class="m-hdr">
+      <div class="m-top">
+        <div class="m-av-wrap">
+          <div class="m-av" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">👤</div>
+          <div class="m-title-blk">
+            <div class="m-name">Manager Dashboard</div>
+            <div class="m-sub" id="mgrSub">Department Overview — Full View</div>
+          </div>
+        </div>
+        <button class="close-btn" onclick="closeOverlay('mgrOverlay')">✕</button>
+      </div>
+    </div>
+    <div class="mgr-body" id="mgrBody"></div>
+  </div>
+</div>
+
+<div class="toast-box" id="toastBox"></div>
+<footer class="footer">
+  <span>SEO Performance Hub</span>·<span>GEO Rankers Dept</span>·<span id="footerDate"></span>·<span id="footerMode">Fetching...</span>
+</footer>
+
+<script src="/static/js/config.js"></script>
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/dashboard.js"></script>
+</body>
+</html>

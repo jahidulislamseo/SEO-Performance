@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Delivery Follow-Up Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/base.css" />
+<link rel="stylesheet" href="/static/css/tracker.css" />
+</head>
+<body>
+<div class="g1"></div><div class="g2"></div>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hl">
+    <div class="logo">📦</div>
+    <div>
+      <div class="htitle">Delivery Follow-Up Tracker</div>
+      <div class="hsub">GEO Rankers Department · Client Follow-up Management</div>
+    </div>
+  </div>
+  <div class="hr">
+    <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:50px;background:rgba(15,118,110,.1);border:1px solid rgba(15,118,110,.28);font-size:11px;font-weight:700;color:#89d8cf;">
+      <div class="live-dot"></div><span id="srcLabel">Loading...</span>
+    </div>
+    <button class="hbtn" onclick="refreshAll()" id="rfBtn"><span id="rfIcon">↻</span> Refresh</button>
+    <a class="hbtn green" href="/" target="_self">← Dashboard</a>
+  </div>
+</header>
+
+<!-- MAIN -->
+<main class="main">
+
+<!-- KPI BAR -->
+<div class="kpi-bar" id="kpiBar">
+  <div class="kpi-box" style="--kc:#a5b4fc"><div class="kpi-num" id="kTotal">—</div><div class="kpi-lbl">Total Delivered</div></div>
+  <div class="kpi-box" style="--kc:#ef4444"><div class="kpi-num" id="kNoFu" style="color:#ef4444">—</div><div class="kpi-lbl">No Follow-up Yet</div></div>
+  <div class="kpi-box" style="--kc:#60a5fa"><div class="kpi-num" id="kInProg" style="color:#60a5fa">—</div><div class="kpi-lbl">In Progress (1-4)</div></div>
+  <div class="kpi-box" style="--kc:#10b981"><div class="kpi-num" id="kDone5" style="color:#10b981">—</div><div class="kpi-lbl">All Done (5/5)</div></div>
+  <div class="kpi-box" style="--kc:#f59e0b"><div class="kpi-num" id="kWithRmk" style="color:#f59e0b">—</div><div class="kpi-lbl">With Remarks</div></div>
+</div>
+
+<!-- CONTROLS -->
+<div class="controls">
+  <div class="srch-wrap">
+    <span class="srch-icon">🔍</span>
+    <input class="srch" id="srch" placeholder="Search client / order / member..." oninput="applyFilters()"/>
+  </div>
+  <select class="sel" id="memberSel" onchange="applyFilters()"><option value="">All Members</option></select>
+  <select class="sel" id="teamSel" onchange="applyFilters()"><option value="">All Teams</option></select>
+  <select class="sel" id="monthSel" onchange="applyFilters()"><option value="">All Months</option></select>
+  <div class="fu-tabs" id="fuTabs">
+    <button class="fu-tab active" data-fu="" onclick="setFuTab(this)">All</button>
+    <button class="fu-tab f0" data-fu="0" onclick="setFuTab(this)">No Follow-up</button>
+    <button class="fu-tab" data-fu="1" onclick="setFuTab(this)">1 Done</button>
+    <button class="fu-tab" data-fu="2" onclick="setFuTab(this)">2 Done</button>
+    <button class="fu-tab" data-fu="3" onclick="setFuTab(this)">3 Done</button>
+    <button class="fu-tab" data-fu="4" onclick="setFuTab(this)">4 Done</button>
+    <button class="fu-tab f5" data-fu="5" onclick="setFuTab(this)">All Done ✓</button>
+  </div>
+  <div class="ctrl-right">
+    <span class="badge" id="badge">Showing <b>—</b></span>
+  </div>
+</div>
+
+<!-- LIST -->
+<div class="dt-list" id="dtList"><div class="empty-state"><h3>📦</h3><p>Loading delivered projects...</p></div></div>
+
+</main>
+
+<!-- MESSAGE MODAL -->
+<div class="msg-overlay" id="msgOverlay" onclick="if(event.target===this)closeMsgModal()">
+  <div class="msg-modal">
+    <div class="msg-title" id="msgTitle">Follow-up Message</div>
+    <div class="msg-sub" id="msgSub">Select which follow-up number to send</div>
+    <div class="msg-steps" id="msgSteps"></div>
+    <textarea class="msg-textarea" id="msgText"></textarea>
+    <div class="msg-actions">
+      <button class="msg-close" onclick="closeMsgModal()">Cancel</button>
+      <button class="msg-copy" onclick="copyMsgText()">📋 Copy Message</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast-box" id="toastBox"></div>
+<footer>SEO Performance Hub · Delivery Tracker · GEO Rankers Dept · <span id="fDate"></span></footer>
+
+<!-- External Scripts -->
+<script src="/static/js/config.js"></script>
+<script src="/static/js/utils.js"></script>
+<script src="/static/js/api.js"></script>
+<script src="/static/js/followups.js"></script>
+<script src="/static/js/tracker.js"></script>
+</body>
+</html>

@@ -4,7 +4,14 @@
       "Bash(python extract_data.py)",
       "Bash(python build_dashboard.py)",
       "Bash(python count_teams.py)",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "Bash(python -c \"import server; print\\('routes:', [str\\(r\\) for r in server.app.url_map.iter_rules\\(\\)]\\)\")",
+      "Bash(netstat -ano)",
+      "Bash(findstr :5000)",
+      "Bash(taskkill /PID 24708 /F)",
+      "PowerShell(Stop-Process -Id 24708 -Force)",
+      "Bash(python server.py)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/delivery-tracker)"
     ]
   }
 }

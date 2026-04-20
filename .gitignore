@@ -5,8 +5,10 @@ __pycache__/
 
 # Sensitive Data
 credentials.json
+.env
 
 # Local Data Files
 *.xlsx
+data/
 geo_data.json
 geo_dashboard.html

@@ -1,116 +1,58 @@
-import json, os, urllib.request, re
-from flask import Flask, jsonify, send_file
+import json, os, urllib.request, re, time
+from flask import Flask, jsonify, send_file, request, render_template
 from flask_cors import CORS
+from shared_utils import (
+    SHEET_ID, MONGO_URI, DB_NAME, DEPT_TARGET, MEM_TARGET, TEAM_TARGETS, MANAGEMENT, COL,
+    get_db, parse_gviz_date, normalize_assignee_token, get_members_from_db, fetch_sheet_data_gviz
+)
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
-
-# ─── CONFIG ───────────────────────────────────────────
-SHEET_ID    = "1jClQQmwVHg4Eg3WGda0R3w7_B_qwuRE5_W4QGxvabIE"
-CREDS_FILE  = os.path.join(os.path.dirname(__file__), "credentials.json")
-
-DEPT_TARGET  = 36000
-MEM_TARGET   = 1100   # per-member individual target
-TEAM_TARGETS = {      # team-level display targets
-    "GEO Rankers":  6000,
-    "Rank Riser":  12000,
-    "Search Apex":  9000,
-    "Dark Rankers": 9000,
-}
-MANAGEMENT  = {
-    "manager": {"name": "Mehedi Hassan", "title": "Project Manager"},
-    "leaders": {
-        "GEO Rankers":  {"name": "Md. Jahidul Islam",    "title": "Team Leader"},
-        "Rank Riser":   {"name": "Gazi Fahim Hasan",     "title": "Team Leader"},
-        "Search Apex":  {"name": "Shihadul Islam Tihim", "title": "Team Leader"},
-        "Dark Rankers": {"name": "Istiak",               "title": "Team Leader"},
-    }
-}
-
-# Column indices (0-indexed)
-COL = {
-    "assign":       18,   # S
-    "status":       19,   # T
-    "service":      20,   # U
-    "del_by":       21,   # V
-    "del_date":     22,   # W
-    "amount_x":     23,   # X
-    "order_num":    13,   # N
-    "order_link":   14,   # O
-    "client":       10,   # K
-    "date":         3,    # D
-    "op_dept":      21,   # V — Delivered By (team tag)
-}
 
 # Sheet team tag → dashboard team name mapping
 TEAM_TAG_MAP = {
     "GEO Rankers":  "Geo_Rankers",
     "Rank Riser":   "Rank_Riser",
     "Search Apex":  "Search_Apex",
-    "Dark Rankers": "Dark_Rankers",
+    "SMM": "SMM",
 }
 
-# Updated ALL_MEMBERS list from 'All Member Data' sheet
-ALL_MEMBERS = [
-    # GEO Rankers
-    {"name":"Jahidul","fullName":"Md. Jahidul Islam",         "id":"17137","team":"GEO Rankers","target":1100},
-    {"name":"Sabit",  "fullName":"MD SAIMUN SABED",           "id":"17384","team":"GEO Rankers","target":1100},
-    {"name":"Komal",  "fullName":"Komal Chandro Roy",         "id":"17066","team":"GEO Rankers","target":1100},
-    {"name":"Hasibul","fullName":"Md. Hasibul Hasan",         "id":"17135","team":"GEO Rankers","target":1100},
-    {"name":"Shourav","fullName":"Shafiul Alam Shourav",      "id":"17524","team":"GEO Rankers","target":1100},
-    {"name":"Roni",   "fullName":"Rony",                      "id":"17490","team":"GEO Rankers","target":1100},
-    # Rank Riser
-    {"name":"Sushant","fullName":"Shosunth Chakarborty",      "id":"17294","team":"Rank Riser", "target":1100},
-    {"name":"Sammi",  "fullName":"Samiel Hembrom",            "id":"17234","team":"Rank Riser", "target":1100},
-    {"name":"Samia",  "fullName":"Samia ahmed",               "id":"17491","team":"Rank Riser", "target":1100},
-    {"name":"Pinky",  "fullName":"Afsana Parvin Pinky",       "id":"17385","team":"Rank Riser", "target":1100},
-    {"name":"Reza",   "fullName":"Ahmed Al Reza",              "id":"17074","team":"Rank Riser", "target":1100},
-    {"name":"Aritri", "fullName":"Aritri Biswas Sneha",       "id":"17541","team":"Rank Riser", "target":1100},
-    {"name":"Robel",  "fullName":"Muhammad Ali Robel",        "id":"17046","team":"Rank Riser", "target":1100},
-    {"name":"Sobuz",  "fullName":"MD.Sobuj Hossain",           "id":"17152","team":"Rank Riser", "target":1100},
-    {"name":"Istiak Ahmed", "fullName":"Istiak Ahmed Soikot", "id":"17383","team":"Rank Riser", "target":1100},
-    {"name":"Wakil",  "fullName":"Waqil Hafiz",                "id":"17488","team":"Rank Riser", "target":1100},
-    {"name":"Rasel",  "fullName":"Rasel Mia",                  "id":"17049","team":"Rank Riser", "target":1100},
-    {"name":"Gazi Fahim", "fullName":"Gazi Fahim Hasan",      "id":"17149","team":"Rank Riser", "target":1100},
-    # Search Apex
-    {"name":"Rezwan", "fullName":"Rezwan Ahmed",               "id":"17492","team":"Search Apex","target":1100},
-    {"name":"Jobaeid","fullName":"Jobaeid Kha",                "id":"17493","team":"Search Apex","target":1100},
-    {"name":"Harun",  "fullName":"Harun",                      "id":"17299","team":"Search Apex","target":1100},
-    {"name":"Babu",   "fullName":"Nishar Farazi Babu",         "id":"17317","team":"Search Apex","target":1100},
-    {"name":"Akash",  "fullName":"ashiqur Rahaman",            "id":"17369","team":"Search Apex","target":1100},
-    {"name":"Sifat",  "fullName":"M A Muyeed Sifat",           "id":"17246","team":"Search Apex","target":1100},
-    {"name":"Imran",  "fullName":"Sheikh Al Imran",            "id":"17301","team":"Search Apex","target":1100},
-    {"name":"Tihim",  "fullName":"Shihadul Islam Tihim",       "id":"17248","team":"Search Apex","target":1100},
-    # Dark Rankers
-    {"name":"Alamin", "fullName":"Al Amin",                    "id":"17236","team":"Dark Rankers","target":1100},
-    {"name":"Ibrahim","fullName":"Ibrahim",                   "id":"17136","team":"Dark Rankers","target":1100},
-    {"name":"Raj",    "fullName":"Atikuzzaman Raj",           "id":"17235","team":"Dark Rankers","target":1100},
-    {"name":"Turjo",  "fullName":"Tohidul Islam Turjo",       "id":"17058","team":"Dark Rankers","target":1100},
-    {"name":"Saiful", "fullName":"Saiful Islam Sagor",        "id":"17318","team":"Dark Rankers","target":1100},
-    {"name":"Romjan", "fullName":"Md Romjanul Islam",         "id":"17233","team":"Dark Rankers","target":1100},
-    {"name":"Istiak", "fullName":"Istiak",                    "id":"17238","team":"Dark Rankers","target":0},
-]
+def get_current_members():
+    """Fetch members from DB, fallback to sheet, then fallback to empty list."""
+    members = get_members_from_db()
+    if not members:
+        # Fallback to fetching from sheet if DB is empty
+        rows = fetch_sheet_data_gviz("All Member Data")
+        if rows:
+            for r in rows:
+                if len(r) > 6 and r[2] and r[6]:
+                    members.append({
+                        "name": str(r[2]).strip(),
+                        "fullName": str(r[1]).strip() if len(r)>1 else str(r[2]),
+                        "id": str(r[0]).strip(),
+                        "team": str(r[6]).strip(),
+                        "target": MEM_TARGET
+                    })
+    else:
+        # Add target if missing from DB
+        for m in members:
+            if "target" not in m: m["target"] = MEM_TARGET
+    return members
 
-# Set per-member target dynamically from team targets
-for _m in ALL_MEMBERS: _m["target"] = MEM_TARGET
+def get_member_lookup(members):
+    lookup = {m["name"].strip().lower(): m["name"] for m in members}
+    lookup["istak"] = "Istiak" 
+    lookup["istak ahamed"] = "Istiak"
+    return lookup
 
-MEMBER_LOOKUP = {m["name"].strip().lower(): m["name"] for m in ALL_MEMBERS}
-
-def normalize_assignee_token(token):
-    token = re.sub(r"\([^)]*\)", "", token or "")
-    token = re.sub(r"\b\d+%?\b", "", token)
-    token = re.sub(r"%", "", token)  # remove leftover % after digit removal
-    token = re.sub(r"\s+", " ", token).strip(" -")
-    return token.strip()
-
-def parse_assignees(assign_text):
+def parse_assignees(assign_text, lookup):
     parts = [p.strip() for p in re.split(r"[/,]", assign_text or "")]
     exact = []
     seen = set()
     for part in parts:
         key = normalize_assignee_token(part).lower()
-        if key in MEMBER_LOOKUP and key not in seen:
-            exact.append(MEMBER_LOOKUP[key])
+        if key in lookup and key not in seen:
+            exact.append(lookup[key])
             seen.add(key)
     return exact
 def get_members_from_sheet(sheet_id):
@@ -177,188 +119,72 @@ def get_public_sheet_data(sheet_id):
             processed_rows.append(row_vals)
         return processed_rows
 
-def process_data(rows, member_list):
-    if not rows: return []
-    data_rows = rows[1:] # Skip header
-    stats = {m["name"]: {**m, "wip":0,"revision":0,"delivered":0,"cancelled":0,
-                             "total":0,"deliveredAmt":0.0,"wipAmt":0.0,"projects":[]}
-                for m in member_list}
-
-    def safe_float(val):
-        try: return float(str(val).replace("$","").replace(",","").strip())
-        except: return 0.0
-
-    unique_orders = set()
-    team_sums = {t: {"amt":0.0, "delivered":0, "wip":0, "projects":0} for t in MANAGEMENT["leaders"].keys()}
-
-    for row in data_rows:
-        while len(row) <= max(COL.values()): row.append("")
-        assign  = str(row[COL["assign"]]).strip()
-        status  = str(row[COL["status"]]).strip()
-        service = str(row[COL["service"]]).strip().upper()
-        
-        # Filter for SEO and SMM
-        if "SEO" not in service and "SMM" not in service:
-            continue
-            
-        amt_x   = safe_float(row[COL["amount_x"]])
-        order   = str(row[COL["order_num"]]).strip()
-        link    = str(row[COL["order_link"]])
-        client  = str(row[COL["client"]])
-        date    = str(row[COL["date"]])[:10]
-        del_date= str(row[COL["del_date"]])[:10]
-        del_by  = str(row[COL["del_by"]])
-
-        all_parts = [p.strip() for p in re.split(r"[/,]", assign or "")]
-        unique_assignees = set()
-        for p in all_parts:
-            token = normalize_assignee_token(p).lower()
-            if token: unique_assignees.add(token)
-        
-        # Share is divided equally among ALL people mentioned in the cell
-        num_assigned = len(unique_assignees) if unique_assignees else 1
-        share_x = round(amt_x / num_assigned, 2)
-
-        matched_names = parse_assignees(assign)
-        if not matched_names:
-            continue
-
-        matched_any = False
-        row_teams = set()
-
-        # Resolve del_by tag → team name for team amount credit
-        del_by_team = None
-        del_by_norm = str(del_by).lower().replace("_","").replace(" ","")
-        for t_name in team_sums:
-            if t_name.lower().replace(" ","") == del_by_norm:
-                del_by_team = t_name
-                break
-
-        for name in matched_names:
-            matched_any = True
-            member = next((m for m in member_list if m["name"] == name), None)
-            if member:
-                row_teams.add(member["team"])
-            proj = {
-                "order": order, "link": link, "client": client,
-                "assign": assign, "service": service, "status": status,
-                "amtX": amt_x, "share": share_x, "date": date,
-                "deliveredDate": del_date, "deliveredBy": del_by,
-            }
-            stats[name]["projects"].append(proj)
-            stats[name]["total"] += 1
-            if status == "Delivered":
-                stats[name]["delivered"] += 1
-                stats[name]["deliveredAmt"] += share_x
-            elif status in ["WIP", "Revision"]:
-                if status == "WIP": stats[name]["wip"] += 1
-                else: stats[name]["revision"] += 1
-                stats[name]["wipAmt"] += share_x
-            elif status == "Cancelled":
-                stats[name]["cancelled"] += 1
-
-        if matched_any:
-            if order and order != "N/A":
-                unique_orders.add(order)
-            
-            # Team amount credit → Delivered By team gets full amt_x
-            if del_by_team:
-                if status == "Delivered":
-                    team_sums[del_by_team]["amt"] += amt_x
-                    team_sums[del_by_team]["delivered"] += 1
-                elif status in ["WIP", "Revision"]:
-                    team_sums[del_by_team]["wip"] += 1
-                team_sums[del_by_team]["projects"] += 1
-            else:
-                # Fallback: split by member teams if del_by not matched
-                for t in row_teams:
-                    if status == "Delivered":
-                        team_sums[t]["amt"] += amt_x / (len(row_teams) if row_teams else 1)
-                        team_sums[t]["delivered"] += 1
-                    elif status in ["WIP", "Revision"]:
-                        team_sums[t]["wip"] += 1
-                    team_sums[t]["projects"] += 1
-
-    result = []
-    total_delivered_amt = 0
-    total_wip_amt = 0
-    
-    for m in ALL_MEMBERS:
-        s = stats[m["name"]]
-        target = s["target"]
-        del_amt = round(s["deliveredAmt"], 2)
-        total_delivered_amt += del_amt
-        total_wip_amt += s["wipAmt"]
-        
-        result.append({
-            "name": s["name"], "fullName": s["fullName"], "id": s["id"],
-            "team": s["team"], "target": target, "total": s["total"],
-            "wip": s["wip"], "revision": s["revision"], "delivered": s["delivered"],
-            "cancelled": s["cancelled"], "deliveredAmt": del_amt,
-            "wipAmt": round(s["wipAmt"], 2), "remaining": round(del_amt - target, 2),
-            "progress": round((del_amt / target) * 100, 1) if target else 0,
-            "projects": s["projects"],
-        })
-    
-    # Final Summary with Dept and Team data
-    team_data = []
-    for t_name, t_info in team_sums.items():
-        team_data.append({
-            "teamName": t_name,
-            "leader": MANAGEMENT["leaders"][t_name]["name"],
-            "deliveredAmt": round(t_info["amt"], 2),
-            "projects": t_info["projects"],
-            "delivered": t_info["delivered"],
-            "wip": t_info["wip"],
-            "target": TEAM_TARGETS.get(t_name, 1100)
-        })
-
-    return {
-        "members": result,
-        "summary": {
-            "dept": {
-                "target": DEPT_TARGET,
-                "achieved": round(total_delivered_amt, 2),
-                "remaining": round(DEPT_TARGET - total_delivered_amt, 2),
-                "progress": round((total_delivered_amt / DEPT_TARGET) * 100, 1) if DEPT_TARGET else 0,
-                "uniqueProjects": len(unique_orders),
-                "wipAmt": round(total_wip_amt, 2)
-            },
-            "teams": team_data,
-            "management": MANAGEMENT
-        }
-    }
-
 @app.route("/")
 def index():
-    return send_file(os.path.join(os.path.dirname(__file__), "geo_dashboard.html"))
+    return render_template("index.html")
+
+@app.route("/delivery-tracker")
+def delivery_tracker():
+    return render_template("delivery-tracker.html")
 
 @app.route("/api/data")
 def api_data():
-    global MEMBER_LOOKUP
     try:
-        # 1. Fetch live members
-        live_members = get_members_from_sheet(SHEET_ID)
-        members_to_use = live_members if live_members else ALL_MEMBERS
+        db = get_db()
         
-        # 2. Update lookup for parse_assignees
-        MEMBER_LOOKUP = {m["name"].strip().lower(): m["name"] for m in members_to_use}
+        # 1. Fetch pre-calculated summaries
+        dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
+        team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
+        member_docs   = list(db["member_summaries"].find({}, {"_id": 0}))
         
-        # 3. Fetch live projects
-        rows = get_public_sheet_data(SHEET_ID)
-        processed = process_data(rows, members_to_use)
+        # Fallback if DB hasn't been recalculated yet
+        if not dept_sum_doc or not team_sum_doc or not member_docs:
+            print("Summary tables empty. Attempting live recalculation...")
+            import agent_engine
+            agent_engine.calculate_summaries()
+            dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
+            team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
+            member_docs   = list(db["member_summaries"].find({}, {"_id": 0}))
+
+        summary = {
+            "dept": dept_sum_doc or {},
+            "teams": team_sum_doc.get("teams", {}) if team_sum_doc else {},
+            "management": MANAGEMENT
+        }
         
         return jsonify({
             "status": "ok", 
-            "mode": "live_public", 
-            "data": processed["members"],
-            "summary": processed["summary"],
-            "rowCount": len(rows),
-            "memberCount": len(members_to_use)
+            "mode": "mongodb_atlas_summary_table", 
+            "data": member_docs,
+            "summary": summary,
+            "projectCount": dept_sum_doc.get("uniqueProjects", 0) if dept_sum_doc else 0,
+            "memberCount": len(member_docs)
         })
     except Exception as e:
         import traceback
         traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/followups", methods=["GET"])
+def get_followups():
+    try:
+        db = get_db()
+        docs = list(db["follow_ups"].find({}, {"_id": 0}))
+        return jsonify(docs)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/followups", methods=["POST"])
+def save_followup():
+    try:
+        data = request.get_json(force=True)
+        if not data or not data.get("key"):
+            return jsonify({"error": "key required"}), 400
+        db = get_db()
+        data["updated_at"] = time.time()
+        db["follow_ups"].update_one({"key": data["key"]}, {"$set": data}, upsert=True)
+        return jsonify({"ok": True})
+    except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/status")

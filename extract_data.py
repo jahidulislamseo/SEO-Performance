@@ -1,57 +1,20 @@
 import json, re, sys, os, time, urllib.request
 sys.stdout.reconfigure(encoding='utf-8')
+from shared_utils import (
+    SHEET_ID, MONGO_URI, DB_NAME, MEM_TARGET,
+    get_db, parse_gviz_date, normalize_assignee_token, fetch_sheet_data_gviz
+)
 
-SHEET_ID   = "1jClQQmwVHg4Eg3WGda0R3w7_B_qwuRE5_W4QGxvabIE"
 BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
-DATA_OUTPUT = os.path.join(BASE_DIR, 'geo_data.json')
-MEM_TARGET  = 1100.0
+DATA_OUTPUT = os.path.join(BASE_DIR, 'data', 'geo_data.json')
 
-geo_members = [
-    {'name': 'Jahidul',     'fullName': 'Md. Jahidul Islam',       'id': '17137', 'team': 'GEO Rankers'},
-    {'name': 'Sabit',       'fullName': 'MD SAIMUN SABED',         'id': '17384', 'team': 'GEO Rankers'},
-    {'name': 'Komal',       'fullName': 'Komal Chandro Roy',       'id': '17066', 'team': 'GEO Rankers'},
-    {'name': 'Hasibul',     'fullName': 'Md. Hasibul Hasan',       'id': '17135', 'team': 'GEO Rankers'},
-    {'name': 'Shourav',     'fullName': 'Shafiul Alam Shourav',    'id': '17524', 'team': 'GEO Rankers'},
-    {'name': 'Roni',        'fullName': 'Rony',                    'id': '17490', 'team': 'GEO Rankers'},
-    {'name': 'Sushant',     'fullName': 'Shosunth Chakarborty',    'id': '17294', 'team': 'Rank Riser'},
-    {'name': 'Sammi',       'fullName': 'Samiel Hembrom',          'id': '17234', 'team': 'Rank Riser'},
-    {'name': 'Samia',       'fullName': 'Samia ahmed',             'id': '17491', 'team': 'Rank Riser'},
-    {'name': 'Pinky',       'fullName': 'Afsana Parvin Pinky',     'id': '17385', 'team': 'Rank Riser'},
-    {'name': 'Reza',        'fullName': 'Ahmed Al Reza',           'id': '17074', 'team': 'Rank Riser'},
-    {'name': 'Aritri',      'fullName': 'Aritri Biswas Sneha',     'id': '17541', 'team': 'Rank Riser'},
-    {'name': 'Robel',       'fullName': 'Muhammad Ali Robel',      'id': '17046', 'team': 'Rank Riser'},
-    {'name': 'Sobuz',       'fullName': 'MD.Sobuj Hossain',        'id': '17152', 'team': 'Rank Riser'},
-    {'name': 'Istiak Ahmed','fullName': 'Istiak Ahmed Soikot',     'id': '17383', 'team': 'Rank Riser'},
-    {'name': 'Wakil',       'fullName': 'Waqil Hafiz',             'id': '17488', 'team': 'Rank Riser'},
-    {'name': 'Rasel',       'fullName': 'Rasel Mia',               'id': '17049', 'team': 'Rank Riser'},
-    {'name': 'Gazi Fahim',  'fullName': 'Gazi Fahim Hasan',        'id': '17149', 'team': 'Rank Riser'},
-    {'name': 'Rezwan',      'fullName': 'Rezwan Ahmed',            'id': '17492', 'team': 'Search Apex'},
-    {'name': 'Jobaeid',     'fullName': 'Jobaeid Kha',             'id': '17493', 'team': 'Search Apex'},
-    {'name': 'Harun',       'fullName': 'Harun',                   'id': '17299', 'team': 'Search Apex'},
-    {'name': 'Babu',        'fullName': 'Nishar Farazi Babu',      'id': '17317', 'team': 'Search Apex'},
-    {'name': 'Akash',       'fullName': 'ashiqur Rahaman',         'id': '17369', 'team': 'Search Apex'},
-    {'name': 'Sifat',       'fullName': 'M A Muyeed Sifat',        'id': '17246', 'team': 'Search Apex'},
-    {'name': 'Imran',       'fullName': 'Sheikh Al Imran',         'id': '17301', 'team': 'Search Apex'},
-    {'name': 'Tihim',       'fullName': 'Shihadul Islam Tihim',    'id': '17248', 'team': 'Search Apex'},
-    {'name': 'Alamin',      'fullName': 'Al Amin',                 'id': '17236', 'team': 'Dark Rankers'},
-    {'name': 'Ibrahim',     'fullName': 'Ibrahim',                 'id': '17136', 'team': 'Dark Rankers'},
-    {'name': 'Raj',         'fullName': 'Atikuzzaman Raj',         'id': '17235', 'team': 'Dark Rankers'},
-    {'name': 'Turjo',       'fullName': 'Tohidul Islam Turjo',     'id': '17058', 'team': 'Dark Rankers'},
-    {'name': 'Saiful',      'fullName': 'Saiful Islam Sagor',      'id': '17318', 'team': 'Dark Rankers'},
-    {'name': 'Romjan',      'fullName': 'Md Romjanul Islam',       'id': '17233', 'team': 'Dark Rankers'},
-    {'name': 'Istiak',      'fullName': 'Istiak',                  'id': '17238', 'team': 'Dark Rankers'},
-]
+def get_current_members():
+    db = get_db()
+    members = list(db["members"].find({}, {"_id": 0}))
+    return members
 
+geo_members = get_current_members()
 member_lookup = {m['name'].strip().lower(): m['name'] for m in geo_members}
-
-def fetch_sheet_rows(sheet_name):
-    url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:json&sheet={sheet_name}&t={int(time.time())}"
-    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-    with urllib.request.urlopen(req) as res:
-        text = res.read().decode('utf-8')
-        match = re.search(r'google\.visualization\.Query\.setResponse\((.*)\);', text)
-        raw = json.loads(match.group(1))
-        return raw['table']['rows']
 
 def parse_gviz_val(cell):
     if not cell or 'v' not in cell or cell['v'] is None:
@@ -66,24 +29,24 @@ def parse_gviz_val(cell):
             pass
     return s
 
-def normalize_token(token):
-    token = re.sub(r'\([^)]*\)', '', token or '')
-    token = re.sub(r'\b\d+%?\b', '', token)
-    token = re.sub(r'\s+', ' ', token).strip(' -')
-    return token.strip()
-
-def parse_assignees(assign_text):
+def parse_assignees_local(assign_text):
     parts = [p.strip() for p in re.split(r'[/,]', assign_text or '')]
     found, seen = [], set()
     for p in parts:
-        key = normalize_token(p).lower()
+        key = normalize_assignee_token(p).lower()
         if key in member_lookup and key not in seen:
             found.append(member_lookup[key])
             seen.add(key)
     return found
 
 print("Fetching live data from Google Sheets...")
-rows = fetch_sheet_rows('Kam+Data')
+rows_raw = fetch_sheet_data_gviz('Kam Data')
+# Convert back to the format this script expects (list of cells)
+rows = []
+for r in rows_raw:
+    row_cells = {'c': [{'v': val} for val in r]}
+    rows.append(row_cells)
+
 print(f"  {len(rows)-1} data rows fetched.")
 
 stats    = {m['name']: {'WIP':0,'Revision':0,'Delivered':0,'Cancelled':0,'Total':0,'DeliveredAmt':0.0,'WIPAmt':0.0} for m in geo_members}
@@ -115,7 +78,7 @@ for r in rows[1:]:
     
     share = round(amt_val / num_assigned, 2)
 
-    matched = parse_assignees(assign)
+    matched = parse_assignees_local(assign)
     if not matched:
         continue
 
