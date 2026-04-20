@@ -200,7 +200,7 @@ async function refreshData(silent = false) {
       if (data.status === 'ok') {
         APP.allMembers = data.data; 
         APP.summary = data.summary; 
-        APP.audit = data.audit || APP.audit;
+        APP.audit = data.summary?.audit || data.audit || APP.audit;
         APP.source = 'Flask API';
         APP.loaded = true;
         document.getElementById('liveMode').textContent  = '🟢 API';

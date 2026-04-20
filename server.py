@@ -158,11 +158,12 @@ def api_data():
         summary = {
             "dept": dept_sum_doc or {},
             "teams": team_sum_doc.get("teams", {}) if team_sum_doc else {},
-            "management": MANAGEMENT()
+            "management": MANAGEMENT(),
+            "audit": {}
         }
         
         # Add audit info from dept summary if available
-        audit = {
+        summary["audit"] = {
             "seoSmmRows": dept_sum_doc.get("seoSmmRows", 0) if dept_sum_doc else 0,
             "matchedRows": dept_sum_doc.get("matchedRows", 0) if dept_sum_doc else 0,
             "deliveredRows": dept_sum_doc.get("deliveredRows", 0) if dept_sum_doc else 0,

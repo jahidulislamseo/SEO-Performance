@@ -59,7 +59,23 @@ async function fetchSheets() {
 }
 
 function processRows(rows) {
-  const dataRows = rows.slice(1);
+  // 0. Detect Header & Column Mapping
+  const headerIdx = rows.findIndex(r => r.some(c => c === 'ID' || c === 'date' || c === 'Order ID'));
+  const headerRow = headerIdx >= 0 ? rows[headerIdx] : rows[0];
+  const dataRows   = rows.slice(headerIdx + 1);
+  
+  // Create dynamic mapping based on header row strings
+  const sheet_col = { ...COL }; // Fallback to config
+  headerRow.forEach((val, idx) => {
+    const v = String(val).toLowerCase().trim();
+    if (v === 'service' || v === 'service type') sheet_col.service = idx;
+    if (v === 'assign' || v === 'assigned to')    sheet_col.assign  = idx;
+    if (v === 'status')                           sheet_col.status  = idx;
+    if (v === 'delivered by')                     sheet_col.del_by  = idx;
+    if (v === 'delivered date')                   sheet_col.del_date = idx;
+    if (v === 'amount' || v === 'amount_x')       sheet_col.amount_x = idx;
+    if (v === 'order' || v === 'order id' || v === 'order_num') sheet_col.order_num = idx;
+  });
   const stats = {};
   const teamStats = {};
   ALL_MEMBERS.forEach(m => {
@@ -75,11 +91,11 @@ function processRows(rows) {
   const unmatchedItems = [];
 
   dataRows.forEach(row => {
-    while (row.length <= COL.amount_x) row.push('');
-    const assign  = (row[COL.assign]  || '').trim();
-    const status  = (row[COL.status]  || '').trim();
-    const service = (row[COL.service] || '').trim().toUpperCase();
-    const order   = (row[COL.order_num] || '').trim();
+    while (row.length <= sheet_col.amount_x) row.push('');
+    const assign  = (row[sheet_col.assign]  || '').trim();
+    const status  = (row[sheet_col.status]  || '').trim();
+    const service = (row[sheet_col.service] || '').trim().toUpperCase();
+    const order   = (row[sheet_col.order_num] || '').trim();
     if (!service.includes('SEO') && !service.includes('SMM')) return;
     seoSmmRows++;
     
@@ -95,25 +111,24 @@ function processRows(rows) {
         assign: assign || 'Unassigned',
         status: status || 'N/A',
         service: service || 'N/A',
-        order: (row[COL.order_num] || '').trim(),
-        client: (row[COL.client]   || '').trim(),
+        order: (row[sheet_col.order_num] || '').trim(),
+        client: (row[sheet_col.client]   || '').trim(),
       });
       return;
     }
     matchedRows++;
-    const amtX  = sf(row[COL.amount_x]);
-    const order = (row[COL.order_num] || '').trim();
+    const amtX  = sf(row[sheet_col.amount_x]);
     const proj  = {
-      order,
-      link:          (row[COL.order_link] || '').trim(),
-      client:        (row[COL.client]     || '').trim(),
+      order:         order,
+      link:          (row[sheet_col.order_link] || '').trim(),
+      client:        (row[sheet_col.client]     || '').trim(),
       assign, service, status, amtX, share: 0,
-      date:          parseGvizDate(row[COL.date]    || ''),
-      deliveredDate: parseGvizDate(row[COL.del_date] || ''),
-      deliveredBy:   (row[COL.del_by]    || '').trim(),
+      date:          parseGvizDate(row[sheet_col.date]    || ''),
+      deliveredDate: parseGvizDate(row[sheet_col.del_date] || ''),
+      deliveredBy:   (row[sheet_col.del_by]    || '').trim(),
     };
 
-    const delBy = (row[COL.del_by] || '').trim().toLowerCase().replace(/[\s_]/g, '');
+    const delBy = (row[sheet_col.del_by] || '').trim().toLowerCase().replace(/[\s_]/g, '');
     let delByTeam = null;
     // Map sheet names to team keys
     const teamMapping = {
