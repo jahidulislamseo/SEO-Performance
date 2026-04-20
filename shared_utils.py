@@ -14,25 +14,41 @@ SHEET_ID = os.getenv("SHEET_ID")
 MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = "seo_dashboard"
 
-DEPT_TARGET = 36000
-MEM_TARGET = 1100
+# Cache for dynamic config
+_CONFIG_CACHE = {"data": None, "last_updated": 0}
+CACHE_TTL = 300 # 5 minutes
 
-TEAM_TARGETS = {
-    "GEO Rankers": 6000,
-    "Rank Riser": 12000,
-    "Search Apex": 9000,
-    "SMM": 7700,
-}
-
-MANAGEMENT = {
-    "manager": {"name": "Mehedi Hassan", "title": "Project Manager"},
-    "leaders": {
-        "GEO Rankers": {"name": "Md. Jahidul Islam", "title": "Team Leader"},
-        "Rank Riser": {"name": "Gazi Fahim Hasan", "title": "Team Leader"},
-        "Search Apex": {"name": "Shihadul Islam Tihim", "title": "Team Leader"},
-        "SMM": {"name": "Istiak", "title": "Team Leader"},
+def get_config():
+    """Fetch configuration from MongoDB with caching."""
+    curr_time = time.time()
+    if _CONFIG_CACHE["data"] and (curr_time - _CONFIG_CACHE["last_updated"] < CACHE_TTL):
+        return _CONFIG_CACHE["data"]
+    
+    try:
+        db = get_db()
+        config = db["config"].find_one({"_id": "app_settings"})
+        if config:
+            _CONFIG_CACHE["data"] = config
+            _CONFIG_CACHE["last_updated"] = curr_time
+            return config
+    except Exception as e:
+        print(f"Error fetching config: {e}")
+        
+    # Return default empty structure if DB fails and no cache exists
+    return _CONFIG_CACHE["data"] or {
+        "dept_target": 35000, 
+        "member_target": 1100, 
+        "team_targets": {}, 
+        "management": {"manager": {}, "leaders": {}},
+        "name_aliases": {}
     }
-}
+
+# Dynamic property helpers
+def DEPT_TARGET(): return get_config().get("dept_target", 35000)
+def MEM_TARGET(): return get_config().get("member_target", 1100)
+def TEAM_TARGETS(): return get_config().get("team_targets", {})
+def MANAGEMENT(): return get_config().get("management", {"manager": {}, "leaders": {}})
+def NAME_ALIASES(): return get_config().get("name_aliases", {})
 
 # Column indices (0-indexed)
 COL = {

@@ -7,7 +7,7 @@ import pandas as pd
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from shared_utils import (
-    SHEET_ID, MONGO_URI, DB_NAME, DEPT_TARGET, MEM_TARGET, TEAM_TARGETS, MANAGEMENT, COL,
+    SHEET_ID, MONGO_URI, DB_NAME, DEPT_TARGET, MEM_TARGET, TEAM_TARGETS, MANAGEMENT, NAME_ALIASES, COL,
     get_db, parse_gviz_date, normalize_name, safe_float, fetch_sheet_data_gviz
 )
 
@@ -91,15 +91,10 @@ def process_and_save(df, db):
         return
     
     member_lookup = {m["name"].strip().lower(): m["name"] for m in members_list}
-    # Add manual aliases for matching accuracy
-    member_lookup["istak"] = "Istiak"
-    member_lookup["istak ahamed"] = "Istiak"
-    member_lookup["gazi fahim"] = "Gazi Fahim"
-    member_lookup["istiak ahmed"] = "Istiak Ahmed"
-    member_lookup["jobaed"] = "Jobaeid"
-    member_lookup["md. jahidul islam"] = "Jahidul"
-    member_lookup["ahsanul haque sabbir"] = "Sabit"
-    member_lookup["md. lavlu hossain"] = "Robel" # Fallback mapping
+    # Add manual aliases from DB for matching accuracy
+    aliases = NAME_ALIASES()
+    for alias, official in aliases.items():
+        member_lookup[alias.lower()] = official
 
     # 2. Clean & Filter
     # Ensure amount is float
@@ -114,16 +109,21 @@ def process_and_save(df, db):
     if 'service' in df.columns:
         df = df[df['service'].str.contains('SEO|SMM', case=False, na=False)]
 
-    # ─── DATE FILTERING (April 2026 Only) ───
+    # ─── DATE FILTERING (Dynamic Month) ───
+    cur_y = time.strftime("%Y")
+    cur_m = time.strftime("%m")
+    cur_month_name = time.strftime("%B")
+    
     def is_in_current_month(row):
         status = str(row.get('status', '')).strip()
         date_val = str(row.get('del_date', '')) if status == 'Delivered' else str(row.get('date', ''))
-        if date_val.startswith("2026-04") or ("April" in date_val and "2026" in date_val):
+        # Match YYYY-MM or "Month YYYY"
+        if date_val.startswith(f"{cur_y}-{cur_m}") or (cur_month_name in date_val and cur_y in date_val):
             return True
         return False
             
     df = df[df.apply(is_in_current_month, axis=1)]
-    print(f"Rows after month filter: {len(df)}")
+    print(f"Rows after month filter ({cur_month_name} {cur_y}): {len(df)}")
 
     # 3. Process Assignees and Splits
     expanded_rows = []
@@ -172,7 +172,7 @@ def process_and_save(df, db):
             
             s = {
                 "name": name, "fullName": m["fullName"], "team": m["team"], "id": m.get("id",""),
-                "target": MEM_TARGET,
+                "target": MEM_TARGET(),
                 "total": len(m_df),
                 "delivered": len(delivered),
                 "wip": len(m_df[m_df['status'] == 'WIP']),
@@ -195,7 +195,7 @@ def process_and_save(df, db):
         else:
             s = {
                 "name": name, "fullName": m["fullName"], "team": m["team"], "id": m.get("id",""),
-                "target": MEM_TARGET, "total": 0, "delivered": 0, "wip": 0, "revision": 0,
+                "target": MEM_TARGET(), "total": 0, "delivered": 0, "wip": 0, "revision": 0,
                 "cancelled": 0, "deliveredAmt": 0.0, "wipAmt": 0.0, "projects": []
             }
         
@@ -206,7 +206,9 @@ def process_and_save(df, db):
     # 6. Team Stats
     print("Calculating Team stats...")
     team_data = {}
-    for team in TEAM_TARGETS.keys():
+    targets = TEAM_TARGETS()
+    mgmt = MANAGEMENT()
+    for team in targets.keys():
         df['norm_del_by'] = df['del_by'].str.lower().str.replace("_","").str.replace(" ","")
         norm_team = team.lower().replace(" ","")
         if norm_team == "smm": # Handle SMM/Dark_Rankers mapping
@@ -231,14 +233,14 @@ def process_and_save(df, db):
             wip_count = len(t_df[t_df['status'] == 'WIP'])
 
         team_data[team] = {
-            "leader": MANAGEMENT["leaders"].get(team, {}).get("name", "N/A"),
+            "leader": mgmt["leaders"].get(team, {}).get("name", "N/A"),
             "amt": round(delivered_amt, 2),
             "deliveredAmt": round(delivered_amt, 2),
             "wipAmt": round(wip_amt, 2),
             "projects": total_projects,
             "delivered": delivered_count,
             "wip": wip_count,
-            "target": TEAM_TARGETS.get(team, 0)
+            "target": targets.get(team, 0)
         }
 
     # 7. Save to MongoDB
@@ -252,7 +254,7 @@ def process_and_save(df, db):
     db["dept_summary"].delete_many({})
     db["dept_summary"].insert_one({
         "_id": "current_stats",
-        "target": DEPT_TARGET,
+        "target": DEPT_TARGET(),
         "achieved": round(total_delivered_amt, 2),
         "wipAmt": round(total_wip_amt, 2),
         "uniqueProjects": unique_projects,

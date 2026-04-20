@@ -174,9 +174,25 @@ function reAggregate(monthFilter, statusFilter) {
 // ── REFRESH DATA ─────────────────────────────────────────────────
 async function refreshData(silent = false) {
   const icon = document.getElementById('rfIcon');
-  if (!silent) icon.classList.add('spin');
+  const btn = document.getElementById('rfBtn');
+  if (!silent) {
+    icon.classList.add('spin');
+    if (btn) btn.style.opacity = '0.5';
+  }
 
-  // 1) Flask API (Prioritize for manual sync verification)
+  // 0) Trigger Server Sync (New: ensures MongoDB has latest from GSheet)
+  if (!silent) {
+    showToast('🔄 Google Sheets থেকে ডাটা সিঙ্ক হচ্ছে...', '#6366f1');
+    try {
+      const syncRes = await fetch('/api/sync');
+      const syncData = await syncRes.json();
+      if (syncData.status === 'ok') {
+        console.log('Sync completed');
+      }
+    } catch (e) { console.warn('Sync failed, trying to read old data:', e); }
+  }
+
+  // 1) Flask API
   try {
     const res = await fetch('/api/data', { cache: 'no-store' });
     if (res.ok) {
@@ -187,8 +203,11 @@ async function refreshData(silent = false) {
         document.getElementById('liveMode').textContent  = '🟢 API';
         document.getElementById('footerMode').textContent = 'Flask API';
         buildMonthOptions(); buildTeamOptions(); applyFilters(true);
-        if (!silent) showToast('✅ ডাটাবেস থেকে আপডেট করা হয়েছে!', '#10b981');
-        startRfCountdown(); icon.classList.remove('spin'); return;
+        if (!silent) showToast('✅ ড্যাশবোর্ড আপডেট করা হয়েছে!', '#10b981');
+        startRfCountdown(); 
+        if (icon) icon.classList.remove('spin'); 
+        if (btn) btn.style.opacity = '1';
+        return;
       }
     }
   } catch (e) { console.warn('API Error:', e); }

@@ -1,6 +1,7 @@
 import json, os, urllib.request, re, time
 from flask import Flask, jsonify, send_file, request, render_template
 from flask_cors import CORS
+import agent_engine
 from shared_utils import (
     SHEET_ID, MONGO_URI, DB_NAME, DEPT_TARGET, MEM_TARGET, TEAM_TARGETS, MANAGEMENT, COL,
     get_db, parse_gviz_date, normalize_assignee_token, get_members_from_db, fetch_sheet_data_gviz
@@ -31,12 +32,12 @@ def get_current_members():
                         "fullName": str(r[1]).strip() if len(r)>1 else str(r[2]),
                         "id": str(r[0]).strip(),
                         "team": str(r[6]).strip(),
-                        "target": MEM_TARGET
+                        "target": MEM_TARGET()
                     })
     else:
         # Add target if missing from DB
         for m in members:
-            if "target" not in m: m["target"] = MEM_TARGET
+            if "target" not in m: m["target"] = MEM_TARGET()
     return members
 
 def get_member_lookup(members):
@@ -76,7 +77,7 @@ def get_members_from_sheet(sheet_id):
                         "fullName": str(c[1]['v']).strip() if c[1] else str(c[2]['v']),
                         "id": str(c[0]['f']) if c[0] and 'f' in c[0] else str(c[0]['v']) if c[0] else "",
                         "team": str(c[6]['v']).strip(),
-                        "target": MEM_TARGET
+                        "target": MEM_TARGET()
                     })
             return members
     except:
@@ -127,6 +128,15 @@ def index():
 def delivery_tracker():
     return render_template("delivery-tracker.html")
 
+@app.route("/api/sync")
+def api_sync():
+    """Manually trigger data recalculation."""
+    try:
+        agent_engine.calculate_summaries()
+        return jsonify({"status": "ok", "message": "Sync completed successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route("/api/data")
 def api_data():
     try:
@@ -140,7 +150,6 @@ def api_data():
         # Fallback if DB hasn't been recalculated yet
         if not dept_sum_doc or not team_sum_doc or not member_docs:
             print("Summary tables empty. Attempting live recalculation...")
-            import agent_engine
             agent_engine.calculate_summaries()
             dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
             team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
@@ -149,7 +158,7 @@ def api_data():
         summary = {
             "dept": dept_sum_doc or {},
             "teams": team_sum_doc.get("teams", {}) if team_sum_doc else {},
-            "management": MANAGEMENT
+            "management": MANAGEMENT()
         }
         
         return jsonify({
@@ -158,7 +167,8 @@ def api_data():
             "data": member_docs,
             "summary": summary,
             "projectCount": dept_sum_doc.get("uniqueProjects", 0) if dept_sum_doc else 0,
-            "memberCount": len(member_docs)
+            "memberCount": len(member_docs),
+            "lastSync": dept_sum_doc.get("last_updated", 0) if dept_sum_doc else 0
         })
     except Exception as e:
         import traceback
