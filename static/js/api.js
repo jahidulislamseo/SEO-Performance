@@ -95,14 +95,14 @@ function processRows(rows) {
     const assign  = (row[sheet_col.assign]  || '').trim();
     const status  = (row[sheet_col.status]  || '').trim();
     const service = (row[sheet_col.service] || '').trim().toUpperCase();
-    const order   = (row[sheet_col.order_num] || '').trim();
+    const orderID = (row[sheet_col.order_num] || '').trim();
     if (!service.includes('SEO') && !service.includes('SMM')) return;
     seoSmmRows++;
     
-    if (order) {
-      if (status === 'Delivered') uniqueDelivered.add(order);
-      else if (status === 'WIP' || status === 'Revision') uniqueWip.add(order);
-      else if (status === 'Cancelled') uniqueCancelled.add(order);
+    if (orderID) {
+      if (status === 'Delivered') uniqueDelivered.add(orderID);
+      else if (status === 'WIP' || status === 'Revision') uniqueWip.add(orderID);
+      else if (status === 'Cancelled') uniqueCancelled.add(orderID);
     }
 
     const matchedNames = parseAssignees(assign);
@@ -119,7 +119,7 @@ function processRows(rows) {
     matchedRows++;
     const amtX  = sf(row[sheet_col.amount_x]);
     const proj  = {
-      order:         order,
+      order:         orderID,
       link:          (row[sheet_col.order_link] || '').trim(),
       client:        (row[sheet_col.client]     || '').trim(),
       assign, service, status, amtX, share: 0,
@@ -176,7 +176,7 @@ function processRows(rows) {
         else if (status === 'Cancelled')   s.cancelled++;
       }
     });
-    if (order) uniqueOrders.add(order);
+    if (orderID) uniqueOrders.add(orderID);
   });
 
   let totalDel = 0, totalWip = 0;

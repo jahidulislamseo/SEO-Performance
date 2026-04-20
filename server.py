@@ -157,20 +157,20 @@ def api_data():
 
         summary = {
             "dept": dept_sum_doc or {},
-            "teams": team_sum_doc.get("teams", {}) if team_sum_doc else {},
-            "management": MANAGEMENT(),
-            "audit": {}
-        }
-        
-        # Add audit info from dept summary if available
-        summary["audit"] = {
+            "totalAchieved": dept_sum_doc.get("achieved", 0) if dept_sum_doc else 0,
+            "totalWip": dept_sum_doc.get("wipAmt", 0) if dept_sum_doc else 0,
             "seoSmmRows": dept_sum_doc.get("seoSmmRows", 0) if dept_sum_doc else 0,
-            "matchedRows": dept_sum_doc.get("matchedRows", 0) if dept_sum_doc else 0,
-            "deliveredRows": dept_sum_doc.get("deliveredRows", 0) if dept_sum_doc else 0,
             "wipRows": dept_sum_doc.get("wipRows", 0) if dept_sum_doc else 0,
             "cancelledRows": dept_sum_doc.get("cancelledRows", 0) if dept_sum_doc else 0,
             "unmatchedRows": dept_sum_doc.get("unmatchedRows", 0) if dept_sum_doc else 0,
             "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0) if dept_sum_doc else 0,
+            "audit": {
+                "seoSmmRows": dept_sum_doc.get("seoSmmRows", 0) if dept_sum_doc else 0,
+                "matchedRows": dept_sum_doc.get("matchedRows", 0) if dept_sum_doc else 0,
+                "unmatchedRows": dept_sum_doc.get("unmatchedRows", 0) if dept_sum_doc else 0,
+                "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0) if dept_sum_doc else 0,
+                "unmatchedItems": [] # Handled by specialized audit tools
+            }
         }
         
         return jsonify({
@@ -178,8 +178,8 @@ def api_data():
             "mode": "mongodb_atlas_summary_table", 
             "data": member_docs,
             "summary": summary,
-            "audit": audit,
-            "projectCount": dept_sum_doc.get("uniqueProjects", 0) if dept_sum_doc else 0,
+            "audit": summary["audit"],
+            "projectCount": summary["uniqueOrders"],
             "memberCount": len(member_docs),
             "lastSync": dept_sum_doc.get("last_updated", 0) if dept_sum_doc else 0
         })

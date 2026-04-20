@@ -65,7 +65,7 @@ for r in rows[1:]:
     all_parts = [p.strip() for p in re.split(r'[/,]', assign or "")]
     unique_assignees = set()
     for p in all_parts:
-        token = normalize_token(p).lower()
+        token = normalize_assignee_token(p).lower()
         if token: unique_assignees.add(token)
     
     # Share is divided equally among ALL people mentioned in the cell
@@ -120,7 +120,7 @@ for m in geo_members:
         'fullName':     m['fullName'],
         'id':           m['id'],
         'team':         m['team'],
-        'target':       MEM_TARGET,
+        'target':       MEM_TARGET(),
         'total':        s['Total'],
         'wip':          s['WIP'],
         'revision':     s['Revision'],
@@ -128,8 +128,8 @@ for m in geo_members:
         'cancelled':    s['Cancelled'],
         'deliveredAmt': round(s['DeliveredAmt'], 2),
         'wipAmt':       round(s['WIPAmt'], 2),
-        'remaining':    round(s['DeliveredAmt'] - MEM_TARGET, 2),
-        'progress':     round((s['DeliveredAmt'] / MEM_TARGET) * 100, 1),
+        'remaining':    round(s['DeliveredAmt'] - MEM_TARGET(), 2),
+        'progress':     round((s['DeliveredAmt'] / MEM_TARGET()) * 100, 1),
         'projects':     projects[key],
     })
 
