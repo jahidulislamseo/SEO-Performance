@@ -110,12 +110,6 @@
 .spot-stats b   { color:var(--text); font-weight:700; }
 .spot-confetti-icon { position:absolute; top:12px; left:50%; transform:translateX(-50%); font-size:16px; opacity:.5; }
 
-/* ── CHARTS ── */
-.charts-row      { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:20px; }
-.chart-card      { background:var(--card); border:1px solid var(--gb); border-radius:20px; padding:20px 24px; }
-.chart-title     { font-size:13px; font-weight:700; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
-.chart-canvas-wrap { position:relative; height:220px; }
-
 /* ── TEAM CARDS ── */
 .team-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
 .tc {

@@ -367,7 +367,6 @@ function applyFilters(reAgg = false) {
   try { renderKpiStrip();      } catch (e) { console.warn('renderKpiStrip', e); }
   try { renderStatusCards();   } catch (e) { console.warn('renderStatusCards', e); }
   try { renderSpotlight();     } catch (e) { console.warn('renderSpotlight', e); }
-  try { renderCharts();        } catch (e) { console.warn('renderCharts', e); }
   try { renderTeams();         } catch (e) { console.warn('renderTeams', e); }
   try { renderMembers(APP.pageMembers);      } catch (e) { console.warn('renderMembers', e); }
   try { renderMembersTable(APP.pageMembers); } catch (e) { console.warn('renderMembersTable', e); }
@@ -500,55 +499,6 @@ function renderSpotlight() {
     </div>`;
   }).join('');
   APP.members.filter(m => m.progress >= 100).forEach(() => launchConfetti());
-}
-
-// ── RENDER — CHARTS ───────────────────────────────────────────────
-function renderCharts() {
-  if (typeof Chart === 'undefined') return;
-  
-  const teamCanvas = document.getElementById('teamChart');
-  const deptCanvas = document.getElementById('deptChart');
-  if (!teamCanvas || !deptCanvas) return;
-
-  const allTeams   = [...new Set(APP.members.map(m => m.team))].filter(Boolean).sort();
-  const teamColors = allTeams.map(t => TC[t]?.color || '#6366f1');
-  const teamAmts   = allTeams.map(t => APP.members.filter(m => m.team === t).reduce((a, m) => a + m.deliveredAmt, 0));
-  const teamWips   = allTeams.map(t => APP.members.filter(m => m.team === t).reduce((a, m) => a + m.wipAmt, 0));
-
-  if (charts.team) charts.team.destroy();
-  const tctx = document.getElementById('teamChart').getContext('2d');
-  charts.team = new Chart(tctx, {
-    type: 'bar',
-    data: {
-      labels: allTeams,
-      datasets: [
-        { label: 'Delivered $',    data: teamAmts, backgroundColor: teamColors.map(c => c + 'cc'), borderColor: teamColors, borderWidth: 1.5, borderRadius: 6 },
-        { label: 'WIP Pipeline $', data: teamWips, backgroundColor: teamColors.map(c => c + '55'), borderColor: teamColors.map(c => c + '88'), borderWidth: 1, borderRadius: 6 },
-      ],
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } }, tooltip: { callbacks: { label: ctx => `${ctx.dataset.label}: $${ctx.parsed.y.toLocaleString('en-US', { minimumFractionDigits: 2 })}` } } },
-      scales: {
-        x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,.04)' } },
-        y: { ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => '$' + v.toLocaleString() }, grid: { color: 'rgba(255,255,255,.04)' } },
-      },
-    },
-  });
-
-  const totDel = APP.members.reduce((a, m) => a + m.delivered, 0);
-  const totWip = APP.members.reduce((a, m) => a + (m.wip + m.revision), 0);
-  const totCan = APP.members.reduce((a, m) => a + m.cancelled, 0);
-  if (charts.dept) charts.dept.destroy();
-  const dctx = document.getElementById('deptChart').getContext('2d');
-  charts.dept = new Chart(dctx, {
-    type: 'doughnut',
-    data: {
-      labels: ['Delivered', 'WIP / Revision', 'Cancelled'],
-      datasets: [{ data: [totDel, totWip, totCan], backgroundColor: ['rgba(16,185,129,.75)', 'rgba(245,158,11,.75)', 'rgba(239,68,68,.75)'], borderColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 1.5 }],
-    },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { position: 'right', labels: { color: '#94a3b8', font: { size: 11 }, padding: 14 } } } },
-  });
 }
 
 // ── RENDER — TEAMS ────────────────────────────────────────────────
