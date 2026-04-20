@@ -99,15 +99,25 @@ for r in rows[1:]:
     if 'SEO' not in service and 'SMM' not in service:
         continue
 
-    matched = parse_assignees(assign)
-    if not matched:
-        continue
+    all_parts = [p.strip() for p in re.split(r'[/,]', assign or "")]
+    unique_assignees = set()
+    for p in all_parts:
+        token = normalize_token(p).lower()
+        if token: unique_assignees.add(token)
+    
+    # Share is divided equally among ALL people mentioned in the cell
+    num_assigned = len(unique_assignees) if unique_assignees else 1
 
     try:
         amt_val = float(cell(23).replace('$','').replace(',','').strip())
     except:
         amt_val = 0.0
-    share = round(amt_val / len(matched), 2)
+    
+    share = round(amt_val / num_assigned, 2)
+
+    matched = parse_assignees(assign)
+    if not matched:
+        continue
 
     proj = {
         'order':         cell(13) or 'N/A',

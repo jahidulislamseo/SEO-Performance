@@ -151,12 +151,20 @@ body::before{content:'';position:fixed;inset:0;
 .chart-canvas-wrap{position:relative;height:220px;}
 
 /* ── KPI STRIP / STATUS ── */
-.kpi-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px;}
-.kpi-card{background:var(--card);border:1px solid var(--gb);border-radius:18px;padding:16px 18px;position:relative;overflow:hidden;}
-.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,rgba(95,133,162,.8),rgba(15,118,110,.75));}
-.kpi-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:800;margin-bottom:8px;}
-.kpi-value{font-size:24px;font-weight:900;letter-spacing:-.5px;color:var(--text);}
-.kpi-sub{font-size:11px;color:var(--m2);margin-top:4px;}
+.kpi-strip{display:flex;flex-direction:column;gap:14px;margin-bottom:18px;}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+.spot-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;}
+.kpi-card{background:var(--card);border:1px solid var(--gb);border-radius:18px;padding:14px 16px;position:relative;overflow:hidden;text-align:center;}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--kcol,rgba(95,133,162,.8));}
+.kpi-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:800;margin-bottom:6px;}
+.kpi-body{display:flex;flex-direction:column;gap:2px;}
+.kpi-count{font-size:20px;font-weight:900;color:var(--text);}
+.kpi-val{font-size:12px;font-weight:700;color:var(--m2);}
+.kpi-spot{text-align:left;display:flex;align-items:center;gap:12px;padding:12px 18px;}
+.kps-icon{font-size:24px;}
+.kps-info h4{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;}
+.kps-info div{font-size:17px;font-weight:900;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kps-info p{font-size:10px;color:var(--m2);margin-top:1px;}
 .status-row{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:18px;}
 .status-card{background:var(--card);border:1px solid var(--gb);border-radius:18px;padding:14px 18px;}
 .status-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px;}
@@ -482,9 +490,9 @@ tbody tr:hover td{background:rgba(255,255,255,.025);}
 }
 
 /* ── RESPONSIVE ── */
-@media(max-width:1200px){.kpi-strip{grid-template-columns:repeat(3,1fr);}.status-row,.audit-panels,.team-grid{grid-template-columns:repeat(2,1fr);}.charts-row{grid-template-columns:1fr;}.mgr-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:1200px){.kpi-strip{grid-template-columns:repeat(2,1fr);}.status-row,.audit-panels,.team-grid{grid-template-columns:repeat(2,1fr);}.charts-row{grid-template-columns:1fr;}.mgr-grid{grid-template-columns:repeat(2,1fr);}}
 @media(max-width:900px){.main{padding:14px 16px;}.hdr{padding:0 16px;}.page-nav{padding:10px 16px;}.spot-grid{grid-template-columns:1fr 1fr;}.dept-inner{grid-template-columns:1fr;}.dept-ring-wrap{display:none;}.status-row,.audit-panels{grid-template-columns:1fr;}.kpi-strip{grid-template-columns:repeat(2,1fr);}}
-@media(max-width:600px){.members-grid{grid-template-columns:1fr;}.team-grid,.kpi-strip{grid-template-columns:1fr 1fr;}.spot-grid{grid-template-columns:1fr;}.charts-row{grid-template-columns:1fr;}.controls{flex-direction:column;align-items:stretch;top:118px;}.hr{gap:5px;}.hbtn span:not(.spin){display:none;}.section-bar,.ctrl-right,.status-head{align-items:stretch;}.audit-grid,.tc-summary{grid-template-columns:1fr 1fr;}.page-nav{top:68px;}}
+@media(max-width:600px){.members-grid{grid-template-columns:1fr;}.team-grid{grid-template-columns:1fr 1fr;}.kpi-strip{grid-template-columns:1fr;}.spot-grid{grid-template-columns:1fr;}.charts-row{grid-template-columns:1fr;}.controls{flex-direction:column;align-items:stretch;top:118px;}.hr{gap:5px;}.hbtn span:not(.spin){display:none;}.section-bar,.ctrl-right,.status-head{align-items:stretch;}.audit-grid,.tc-summary{grid-template-columns:1fr 1fr;}.page-nav{top:68px;}}
 </style>
 </head>
 <body>
@@ -1091,7 +1099,13 @@ async function fetchSheets(){
 function processRows(rows){
   const dataRows=rows.slice(1);
   const stats={};
-  ALL_MEMBERS.forEach(m=>{stats[m.name]={...m,wip:0,revision:0,delivered:0,cancelled:0,total:0,deliveredAmt:0,wipAmt:0,projects:[]};});
+  const teamStats = {};
+  ALL_MEMBERS.forEach(m => {
+    stats[m.name] = { ...m, wip: 0, revision: 0, delivered: 0, cancelled: 0, total: 0, deliveredAmt: 0, wipAmt: 0, projects: [] };
+    if (m.team && !teamStats[m.team]) {
+      teamStats[m.team] = { amt: 0, wip: 0, revision: 0, delivered: 0, cancelled: 0, projects: 0 };
+    }
+  });
   const sf=v=>{try{return parseFloat(String(v).replace(/[$,]/g,'').trim())||0;}catch(e){return 0;}};
   const uniqueOrders=new Set();
   let seoSmmRows=0,matchedRows=0;
@@ -1125,36 +1139,49 @@ function processRows(rows){
       deliveredDate:formatSheetDate(row[COL.del_date]||''),
       deliveredBy:(row[COL.del_by]||'').trim(),
     };
-    // Sheet-এর Op. Department (col 26) থেকে team tag পড়া
-    const rowTeamTag=(row[COL.op_dept]||'').trim();
-
-    // শুধু সেই member-দের count করব যাদের team match করে row-এর team tag-এর সাথে
-    const teamMatchedNames=matchedNames.filter(name=>{
-      const member=ALL_MEMBERS.find(m=>m.name===name);
-      if(!member) return false;
-      if(!rowTeamTag) return true;
-      const mt=String(member.team).toLowerCase().replace(/[\s_]/g,'');
-      const rt=String(rowTeamTag).toLowerCase().replace(/[\s_]/g,'');
-      return mt===rt;
-    });
-
-    // কোনো team-matched member না থাকলে unmatched হিসেবে log করো
-    if(!teamMatchedNames.length){
-      // (original matchedNames ছিল কিন্তু team match হয়নি — cross-team assignment)
-      return;
+    
+    const delBy = (row[COL.del_by]||'').trim().toLowerCase().replace(/[\s_]/g,'');
+    let delByTeam = null;
+    for(const t in teamStats) {
+      if(t.toLowerCase().replace(/[\s_]/g,'') === delBy) { delByTeam = t; break; }
     }
 
-    let matched=false;
-    const share=Math.round((amtX/teamMatchedNames.length)*100)/100;
-    teamMatchedNames.forEach(name=>{
-      matched=true;
-      const p={...proj,share};
-      const s=stats[name];
-      s.projects.push(p);s.total++;
-      if(status==='Delivered'){s.delivered++;s.deliveredAmt+=p.share;}
-      else if(status==='WIP'){s.wip++;s.wipAmt+=p.share;}
-      else if(status==='Revision'){s.revision++;s.wipAmt+=p.share;}
-      else if(status==='Cancelled') s.cancelled++;
+    if (delByTeam) {
+      teamStats[delByTeam].projects++;
+      if (status === 'Delivered') {
+        teamStats[delByTeam].amt += amtX;
+        teamStats[delByTeam].delivered++;
+      } else if (status === 'WIP') {
+        teamStats[delByTeam].wip++;
+      } else if (status === 'Revision') {
+        teamStats[delByTeam].revision++;
+      } else if (status === 'Cancelled') {
+        teamStats[delByTeam].cancelled++;
+      }
+    }
+
+    // Count all people mentioned for equal division
+    const allParts = assign.split(/[\/,]/);
+    const uniqueAssigneePool = new Set();
+    allParts.forEach(p => {
+      const token = (p||'').replace(/\([^)]*\)/g,'').replace(/\b\d+%?\b/g,'').replace(/%/g,'').trim().toLowerCase();
+      if(token) uniqueAssigneePool.add(token);
+    });
+    const divisor = uniqueAssigneePool.size || 1;
+    const share = Math.round((amtX / divisor) * 100) / 100;
+
+    let matched = false;
+    matchedNames.forEach(name => {
+      matched = true;
+      const p = { ...proj, share };
+      const s = stats[name];
+      if (s) {
+        s.projects.push(p); s.total++;
+        if (status === 'Delivered') { s.delivered++; s.deliveredAmt += p.share; }
+        else if (status === 'WIP') { s.wip++; s.wipAmt += p.share; }
+        else if (status === 'Revision') { s.revision++; s.wipAmt += p.share; }
+        else if (status === 'Cancelled') s.cancelled++;
+      }
     });
     if(matched&&order) uniqueOrders.add(order);
   });
@@ -1191,11 +1218,48 @@ function reAggregate(monthFilter,statusFilter){
     else if(statusFilter==='WIP') projs=projs.filter(p=>p.status==='WIP'||p.status==='Revision');
     else if(statusFilter==='Cancelled') projs=projs.filter(p=>p.status==='Cancelled');
     let wip=0,revision=0,delivered=0,cancelled=0,deliveredAmt=0,wipAmt=0;
+    
+    // For team level recalculation
+    if (!APP.summary) APP.summary = {};
+    if (!APP.summary.teams) {
+      APP.summary.teams = {};
+      APP.allMembers.forEach(mem => {
+        if (mem.team && !APP.summary.teams[mem.team]) {
+          APP.summary.teams[mem.team] = { amt: 0, wip: 0, revision: 0, delivered: 0, cancelled: 0, projects: 0 };
+        }
+      });
+    } else {
+      // Reset for this month
+      Object.keys(APP.summary.teams).forEach(t => {
+        APP.summary.teams[t] = { amt: 0, wip: 0, revision: 0, delivered: 0, cancelled: 0, projects: 0 };
+      });
+    }
+    const teamProcessed = new Set();
+
     projs.forEach(p=>{
       if(p.status==='Delivered'){delivered++;deliveredAmt+=p.share;}
       else if(p.status==='WIP'){wip++;wipAmt+=p.share;}
       else if(p.status==='Revision'){revision++;wipAmt+=p.share;}
       else if(p.status==='Cancelled') cancelled++;
+
+      // Team Summary update (unique per order)
+      const tKey = (p.order||'NA') + (p.deliveredBy||'NA');
+      if (!teamProcessed.has(tKey)) {
+        const delBy = (p.deliveredBy||'').toLowerCase().replace(/[\s_]/g,'');
+        let delByTeam = null;
+        for (const tname in APP.summary.teams) {
+          if (tname.toLowerCase().replace(/[\s_]/g,'') === delBy) { delByTeam = tname; break; }
+        }
+        if (delByTeam) {
+          const ts = APP.summary.teams[delByTeam];
+          ts.projects++;
+          if (p.status === 'Delivered') { ts.amt += p.amtX; ts.delivered++; }
+          else if (p.status === 'WIP') ts.wip++;
+          else if (p.status === 'Revision') ts.revision++;
+          else if (p.status === 'Cancelled') ts.cancelled++;
+        }
+        teamProcessed.add(tKey);
+      }
     });
     const del=Math.round(deliveredAmt*100)/100;
     const wam=Math.round(wipAmt*100)/100;
@@ -1215,7 +1279,7 @@ async function refreshData(silent=false){
   // 1) Google Sheets
   try{
     const r=await fetchSheets();
-    APP.allMembers=r.members;APP.loaded=true;APP.audit=r.audit||APP.audit;APP.source='Google Sheets Live';
+    APP.allMembers=r.members;APP.summary=r.summary;APP.loaded=true;APP.audit=r.audit||APP.audit;APP.source='Google Sheets Live';
     document.getElementById('liveMode').textContent='🔴 Live';
     document.getElementById('footerMode').textContent='Google Sheets Live';
     buildMonthOptions();buildTeamOptions();applyFilters(true);
@@ -1345,10 +1409,22 @@ function applyFilters(reAgg=false){
   if(reAgg) APP.members=reAggregate(APP.monthFilter,APP.statusFilter);
   const srch=document.getElementById('srch').value.toLowerCase();
   const sort=document.getElementById('sortSel').value;
-  let filtered=APP.members.filter(m=>{
-    if(APP.teamFilter!=='All'&&m.team!==APP.teamFilter) return false;
-    if(srch&&!m.name.toLowerCase().includes(srch)&&!m.fullName.toLowerCase().includes(srch)) return false;
-    return true;
+  let filtered = APP.members.filter(m => {
+    if (APP.teamFilter !== 'All' && m.team !== APP.teamFilter) return false;
+    if (!srch) return true;
+
+    // Search Member Name, Full Name, and Team
+    if (m.name.toLowerCase().includes(srch)) return true;
+    if (m.fullName.toLowerCase().includes(srch)) return true;
+    if (m.team.toLowerCase().includes(srch)) return true;
+
+    // Search Project Details (Order #, Client, Service, Assignment)
+    return (m.projects || []).some(p =>
+      (p.order || '').toLowerCase().includes(srch) ||
+      (p.client || '').toLowerCase().includes(srch) ||
+      (p.service || '').toLowerCase().includes(srch) ||
+      (p.assign || '').toLowerCase().includes(srch)
+    );
   });
   if(sort==='name') filtered.sort((a,b)=>a.name.localeCompare(b.name));
   else filtered.sort((a,b)=>(b[sort]||0)-(a[sort]||0));
@@ -1382,7 +1458,13 @@ function applyFilters(reAgg=false){
 function renderDept(){
   const ms=APP.members;
   let totDel=0,totWip=0;
-  ms.forEach(m=>{totDel+=m.deliveredAmt;totWip+=m.wipAmt;});
+  if (APP.summary && APP.summary.teams) {
+    Object.values(APP.summary.teams).forEach(t => {
+      totDel += t.amt || 0;
+    });
+  } else {
+    ms.forEach(m=>{totDel+=m.deliveredAmt;totWip+=m.wipAmt;});
+  }
   const pct=Math.min((totDel/DEPT_TARGET)*100,100);
   const rem=DEPT_TARGET-totDel;
   const uniquePSet=new Set(ms.flatMap(m=>m.projects.map(p=>p.order).filter(o=>o&&o!=='N/A')));
@@ -1406,29 +1488,92 @@ function renderDept(){
 
 function renderKpiStrip(){
   const ms=APP.members;
-  const delivered=ms.reduce((a,m)=>a+m.deliveredAmt,0);
-  const wip=ms.reduce((a,m)=>a+m.wipAmt,0);
-  const cancelled=ms.reduce((a,m)=>a+m.cancelled,0);
-  const total=ms.reduce((a,m)=>a+m.total,0);
+  
+  // Calculate unique projects and their values across all members
+  const uniqueItems = [];
+  const handled = new Set();
+  const uniquePSet = new Set();
+  
+  ms.forEach(m => {
+    (m.projects || []).forEach(p => {
+       const key = (p.order||'NA') + (p.deliveredBy||'NA');
+       if (!handled.has(key)) {
+         uniqueItems.push(p);
+         handled.add(key);
+         if (p.order && p.order !== 'N/A') uniquePSet.add(p.order);
+       }
+    });
+  });
+
+  const mData = {
+    projC: uniquePSet.size, 
+    projV: uniqueItems.reduce((a,p)=>a+p.amtX, 0),
+    runC:  uniqueItems.filter(p=>['WIP','Revision'].includes(p.status)).length,
+    runV:  uniqueItems.filter(p=>['WIP','Revision'].includes(p.status)).reduce((a,p)=>a+p.amtX, 0),
+    delC:  uniqueItems.filter(p=>p.status==='Delivered').length,
+    delV:  uniqueItems.filter(p=>p.status==='Delivered').reduce((a,p)=>a+p.amtX, 0),
+    wipC:  uniqueItems.filter(p=>p.status==='WIP').length,
+    wipV:  uniqueItems.filter(p=>p.status==='WIP').reduce((a,p)=>a+p.amtX, 0),
+    canC:  uniqueItems.filter(p=>p.status==='Cancelled').length,
+    canV:  uniqueItems.filter(p=>p.status==='Cancelled').reduce((a,p)=>a+p.amtX, 0)
+  };
+
+  // Best Performer (based on individual shared amount)
   const bestMember=[...APP.filteredMembers].sort((a,b)=>b.deliveredAmt-a.deliveredAmt)[0];
-  // Best Team = highest progress % (deliveredAmt / teamTarget × 100)
-  const allTeams = [...new Set(APP.members.map(m=>m.team))].filter(Boolean);
-  const teamScores=allTeams.map(team=>{
-    const ms=APP.members.filter(m=>m.team===team);
-    const amt=ms.reduce((a,m)=>a+m.deliveredAmt,0);
-    const tgt=TEAM_TARGETS[team]||(ms.length*MEM_TARGET); // Fallback to team members * 1100
-    const pct=tgt>0?Math.round((amt/tgt)*10000)/100:0;
-    return{team,amt,pct};
-  }).sort((a,b)=>b.pct-a.pct);
-  const bestTeam=teamScores[0];
-  const uniqueP=new Set(APP.members.flatMap(m=>m.projects.map(p=>p.order).filter(o=>o&&o!=='N/A'))).size;
-  document.getElementById('kpiStrip').innerHTML=`
-    <div class="kpi-card"><div class="kpi-label">SEO/SMM Projects</div><div class="kpi-value">${uniqueP}</div><div class="kpi-sub">Unique orders from current filter</div></div>
-    <div class="kpi-card"><div class="kpi-label">Delivered Revenue</div><div class="kpi-value">${fmtK(delivered)}</div><div class="kpi-sub">Across ${APP.members.length} active members</div></div>
-    <div class="kpi-card"><div class="kpi-label">WIP Revenue</div><div class="kpi-value">${fmtK(wip)}</div><div class="kpi-sub">Pipeline still in progress</div></div>
-    <div class="kpi-card"><div class="kpi-label">Cancelled Orders</div><div class="kpi-value">${cancelled}</div><div class="kpi-sub">Current filtered cancellation count</div></div>
-    <div class="kpi-card"><div class="kpi-label">Best Team 🏆</div><div class="kpi-value">${escapeHTML(bestTeam?.team||'—')}</div><div class="kpi-sub">${bestTeam?bestTeam.pct.toFixed(1)+'% of target · '+fmt(bestTeam.amt):'No data'}</div></div>
-    <div class="kpi-card"><div class="kpi-label">Best Performer</div><div class="kpi-value">${escapeHTML(bestMember?.name||'—')}</div><div class="kpi-sub">${bestMember?fmt(bestMember.deliveredAmt):'No data'}</div></div>
+  
+  // Best Team (based on delivery progress against target)
+  const allTeams = [...new Set(ms.map(mem=>mem.team))].filter(Boolean);
+  const teamScores = allTeams.map(teamName => {
+    const tms = ms.filter(mem => mem.team === teamName);
+    const amt = tms.reduce((a, mem) => a + mem.deliveredAmt, 0);
+    const tgt = TEAM_TARGETS[teamName] || (tms.length * MEM_TARGET);
+    const pct = tgt > 0 ? Math.round((amt / tgt) * 10000) / 100 : 0;
+    return { name: teamName, amt, pct };
+  }).sort((a, b) => b.pct - a.pct);
+  const bestTeam = teamScores[0];
+
+  const strip = document.getElementById('kpiStrip');
+  strip.innerHTML = `
+    <div class="kpi-row">
+      <div class="kpi-card" style="--kcol:#a5b4fc">
+        <div class="kpi-label">Project</div>
+        <div class="kpi-body"><div class="kpi-count">${mData.projC}</div><div class="kpi-val">${fmt(mData.projV)}</div></div>
+      </div>
+      <div class="kpi-card" style="--kcol:#3b82f6">
+        <div class="kpi-label">Running</div>
+        <div class="kpi-body"><div class="kpi-count">${mData.runC}</div><div class="kpi-val">${fmt(mData.runV)}</div></div>
+      </div>
+      <div class="kpi-card" style="--kcol:#10b981">
+        <div class="kpi-label">Delivery</div>
+        <div class="kpi-body"><div class="kpi-count">${mData.delC}</div><div class="kpi-val">${fmt(mData.delV)}</div></div>
+      </div>
+      <div class="kpi-card" style="--kcol:#f59e0b">
+        <div class="kpi-label">WIP</div>
+        <div class="kpi-body"><div class="kpi-count">${mData.wipC}</div><div class="kpi-val">${fmt(mData.wipV)}</div></div>
+      </div>
+      <div class="kpi-card" style="--kcol:#ef4444">
+        <div class="kpi-label">Cancel</div>
+        <div class="kpi-body"><div class="kpi-count">${mData.canC}</div><div class="kpi-val">${fmt(mData.canV)}</div></div>
+      </div>
+    </div>
+    <div class="spot-row">
+      <div class="kpi-card kpi-spot" style="--kcol:#f59e0b">
+        <div class="kps-icon">🏆</div>
+        <div class="kps-info">
+          <h4>Best Performer</h4>
+          <div>${escapeHTML(bestMember?.name || '—')}</div>
+          <p>${bestMember ? fmt(bestMember.deliveredAmt) + ' delivered' : 'No data'}</p>
+        </div>
+      </div>
+      <div class="kpi-card kpi-spot" style="--kcol:#6366f1">
+        <div class="kps-icon">🔥</div>
+        <div class="kps-info">
+          <h4>Best Team</h4>
+          <div>${escapeHTML(bestTeam?.name || '—')}</div>
+          <p>${bestTeam ? bestTeam.pct.toFixed(1) + '% of target · ' + fmt(bestTeam.amt) : 'No data'}</p>
+        </div>
+      </div>
+    </div>
   `;
 }
 
@@ -1554,14 +1699,15 @@ function renderTeams(){
     const defaultColor = COLORS[idx % COLORS.length];
     const tc=TC[tname]||{color:defaultColor,bg:`color-mix(in srgb,${defaultColor} 15%,transparent)`,icon:'🏢'};
     const ms=APP.members.filter(m=>m.team===tname);
-    const del=ms.reduce((a,m)=>a+m.deliveredAmt,0);
-    const wip=ms.reduce((a,m)=>a+m.wipAmt,0);
+    const ts = (APP.summary && APP.summary.teams && APP.summary.teams[tname]) || {amt:0, wip:0, revision:0, delivered:0, projects:0, cancelled:0};
+    const del=ts.amt;
+    const wip=ts.wipAmt || ms.reduce((a,m)=>a+m.wipAmt,0);
     const uniqueOrdersInTeam=new Set(ms.flatMap(m=>m.projects.map(p=>p.order).filter(o=>o&&o!=='N/A')));
-    const proj=uniqueOrdersInTeam.size;
-    const delivered=ms.reduce((a,m)=>a+m.delivered,0);
-    const wipCount=ms.reduce((a,m)=>a+(m.wip||0),0);
-    const revCount=ms.reduce((a,m)=>a+(m.revision||0),0);
-    const canCount=ms.reduce((a,m)=>a+m.cancelled,0);
+    const proj=ts.projects;
+    const delivered=ts.delivered;
+    const wipCount=ts.wip;
+    const revCount=ts.revision;
+    const canCount=ts.cancelled;
     const tgt=TEAM_TARGETS[tname]||(ms.length*MEM_TARGET);
     const remaining=Math.max(tgt-del,0);
     const pct=tgt>0?Math.min((del/tgt)*100,100):0;
@@ -1853,7 +1999,13 @@ function renderProjModal(){
   const body=document.getElementById('mBody');
   if(!projs.length){body.innerHTML='<div style="text-align:center;padding:40px;color:var(--m2)">এই category-তে কোনো project নেই।</div>';return;}
   body.innerHTML=projs.map(p=>{
-    const sc=(p.assign.match(/\//g)||[]).length+1;
+    const allParts = p.assign.split(/[\/,]/);
+    const pool = new Set();
+    allParts.forEach(tok => {
+      const clean = (tok||'').replace(/\([^)]*\)/g,'').replace(/\b\d+%?\b/g,'').replace(/%/g,'').trim().toLowerCase();
+      if(clean) pool.add(clean);
+    });
+    const sc = pool.size || 1;
     const hasOrderLink=!!(p.link&&p.link!=='#'&&p.link!=='None');
     const link=hasOrderLink?`<a class="plink" href="${p.link}" target="_blank">Open Order</a>`:'';
     const showShare=p.status!=='Cancelled';

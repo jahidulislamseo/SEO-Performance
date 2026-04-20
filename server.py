@@ -209,14 +209,22 @@ def process_data(rows, member_list):
         del_date= str(row[COL["del_date"]])[:10]
         del_by  = str(row[COL["del_by"]])
 
+        all_parts = [p.strip() for p in re.split(r"[/,]", assign or "")]
+        unique_assignees = set()
+        for p in all_parts:
+            token = normalize_assignee_token(p).lower()
+            if token: unique_assignees.add(token)
+        
+        # Share is divided equally among ALL people mentioned in the cell
+        num_assigned = len(unique_assignees) if unique_assignees else 1
+        share_x = round(amt_x / num_assigned, 2)
+
         matched_names = parse_assignees(assign)
         if not matched_names:
             continue
 
         matched_any = False
         row_teams = set()
-        # Share is always divided equally among ALL matched assignees
-        share_x = round(amt_x / len(matched_names), 2)
 
         # Resolve del_by tag → team name for team amount credit
         del_by_team = None
@@ -252,6 +260,7 @@ def process_data(rows, member_list):
         if matched_any:
             if order and order != "N/A":
                 unique_orders.add(order)
+            
             # Team amount credit → Delivered By team gets full amt_x
             if del_by_team:
                 if status == "Delivered":
@@ -264,7 +273,7 @@ def process_data(rows, member_list):
                 # Fallback: split by member teams if del_by not matched
                 for t in row_teams:
                     if status == "Delivered":
-                        team_sums[t]["amt"] += amt_x / len(row_teams)
+                        team_sums[t]["amt"] += amt_x / (len(row_teams) if row_teams else 1)
                         team_sums[t]["delivered"] += 1
                     elif status in ["WIP", "Revision"]:
                         team_sums[t]["wip"] += 1
