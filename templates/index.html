@@ -7,6 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <link rel="stylesheet" href="/static/css/base.css" />
 <link rel="stylesheet" href="/static/css/dashboard.css" />
+<script src="/static/js/themes.js"></script>
 </head>
 <body>
 <div class="g1"></div><div class="g2"></div><div class="g3"></div>
@@ -19,6 +20,18 @@
     <div class="ht">
       <h1>SEO Performance Hub</h1>
       <p id="hdrSub">GEO Rankers Department · April 2026</p>
+    </div>
+  </div>
+
+  <!-- THEME SWITCHER -->
+  <div class="theme-switcher">
+    <button class="theme-btn" id="theme-btn" onclick="toggleThemeMenu()">
+      <span id="theme-label">🌙</span>
+    </button>
+    <div class="theme-menu" id="theme-menu">
+      <button class="theme-item it-light" onclick="setTheme('light')">☀️ Light</button>
+      <button class="theme-item it-dark" onclick="setTheme('dark')">🌙 Dark</button>
+      <button class="theme-item it-system" onclick="setTheme('system')">💻 System</button>
     </div>
   </div>
   <div class="hr">

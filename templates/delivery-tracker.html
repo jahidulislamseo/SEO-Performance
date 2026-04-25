@@ -6,6 +6,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="/static/css/base.css" />
 <link rel="stylesheet" href="/static/css/tracker.css" />
+<script src="/static/js/themes.js"></script>
 </head>
 <body>
 <div class="g1"></div><div class="g2"></div>
@@ -19,11 +20,24 @@
       <div class="hsub">GEO Rankers Department · Client Follow-up Management</div>
     </div>
   </div>
+
+  <!-- THEME SWITCHER -->
+  <div class="theme-switcher">
+    <button class="theme-btn" id="theme-btn" onclick="toggleThemeMenu()">
+      <span id="theme-label">🌙</span>
+    </button>
+    <div class="theme-menu" id="theme-menu">
+      <button class="theme-item it-light" onclick="setTheme('light')">☀️ Light</button>
+      <button class="theme-item it-dark" onclick="setTheme('dark')">🌙 Dark</button>
+      <button class="theme-item it-system" onclick="setTheme('system')">💻 System</button>
+    </div>
+  </div>
   <div class="hr">
     <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:50px;background:rgba(15,118,110,.1);border:1px solid rgba(15,118,110,.28);font-size:11px;font-weight:700;color:#89d8cf;">
       <div class="live-dot"></div><span id="srcLabel">Loading...</span>
     </div>
-    <button class="hbtn" onclick="refreshAll()" id="rfBtn"><span id="rfIcon">↻</span> Refresh</button>
+    <button class="hbtn" onclick="refreshAll(true)" id="rfBtn"><span id="rfIcon">↻</span> Refresh</button>
+    <button class="hbtn purple" onclick="exportToCSV()" title="Download current list as CSV">📥 Export CSV</button>
     <a class="hbtn green" href="/" target="_self">← Dashboard</a>
   </div>
 </header>
@@ -33,11 +47,12 @@
 
 <!-- KPI BAR -->
 <div class="kpi-bar" id="kpiBar">
-  <div class="kpi-box" style="--kc:#a5b4fc"><div class="kpi-num" id="kTotal">—</div><div class="kpi-lbl">Total Delivered</div></div>
-  <div class="kpi-box" style="--kc:#ef4444"><div class="kpi-num" id="kNoFu" style="color:#ef4444">—</div><div class="kpi-lbl">No Follow-up Yet</div></div>
-  <div class="kpi-box" style="--kc:#60a5fa"><div class="kpi-num" id="kInProg" style="color:#60a5fa">—</div><div class="kpi-lbl">In Progress (1-4)</div></div>
-  <div class="kpi-box" style="--kc:#10b981"><div class="kpi-num" id="kDone5" style="color:#10b981">—</div><div class="kpi-lbl">All Done (5/5)</div></div>
-  <div class="kpi-box" style="--kc:#f59e0b"><div class="kpi-num" id="kWithRmk" style="color:#f59e0b">—</div><div class="kpi-lbl">With Remarks</div></div>
+  <div class="kpi-box" style="--kc:#a5b4fc"><div class="kpi-num" id="kTotal">—</div><div class="kpi-lbl">Total Projects</div></div>
+  <div class="kpi-box" style="--kc:#ef4444"><div class="kpi-num" id="kNoFu" style="color:#ef4444">—</div><div class="kpi-lbl">Not Started</div></div>
+  <div class="kpi-box" style="--kc:#60a5fa"><div class="kpi-num" id="kInProg" style="color:#60a5fa">—</div><div class="kpi-lbl">Following Up</div></div>
+  <div class="kpi-box" style="--kc:#10b981"><div class="kpi-num" id="kDone5" style="color:#10b981">—</div><div class="kpi-lbl">Completed (5)</div></div>
+  <div class="kpi-box" style="--kc:#f59e0b"><div class="kpi-num" id="kSold" style="color:#f59e0b">—</div><div class="kpi-lbl">Sold / Success 💰</div></div>
+  <div class="kpi-box" style="--kc:#6366f1"><div class="kpi-num" id="kWithRmk" style="color:#6366f1">—</div><div class="kpi-lbl">With Remarks</div></div>
 </div>
 
 <!-- CONTROLS -->
@@ -56,7 +71,8 @@
     <button class="fu-tab" data-fu="2" onclick="setFuTab(this)">2 Done</button>
     <button class="fu-tab" data-fu="3" onclick="setFuTab(this)">3 Done</button>
     <button class="fu-tab" data-fu="4" onclick="setFuTab(this)">4 Done</button>
-    <button class="fu-tab f5" data-fu="5" onclick="setFuTab(this)">All Done ✓</button>
+    <button class="fu-tab f5" data-fu="5" onclick="setFuTab(this)">5 Follow-ups</button>
+    <button class="fu-tab f6" data-fu="6" onclick="setFuTab(this)" style="color:#f59e0b">Sold 💰</button>
   </div>
   <div class="ctrl-right">
     <span class="badge" id="badge">Showing <b>—</b></span>
@@ -74,10 +90,12 @@
     <div class="msg-title" id="msgTitle">Follow-up Message</div>
     <div class="msg-sub" id="msgSub">Select which follow-up number to send</div>
     <div class="msg-steps" id="msgSteps"></div>
+    <div style="font-size:10px; color:var(--muted); margin-bottom:5px;">Use <b>{order}</b>, <b>{client}</b>, or <b>{service}</b> for automatic filling.</div>
     <textarea class="msg-textarea" id="msgText"></textarea>
     <div class="msg-actions">
       <button class="msg-close" onclick="closeMsgModal()">Cancel</button>
-      <button class="msg-copy" onclick="copyMsgText()">📋 Copy Message</button>
+      <button class="msg-close" style="background:rgba(99,102,241,.12); border-color:rgba(99,102,241,.3); color:#a5b4fc;" onclick="updateTemplate()" title="Save current text as the default for this step">💾 Update Template</button>
+      <button class="msg-copy" onclick="copyMsgText()">📋 Copy & Mark Done</button>
     </div>
   </div>
 </div>

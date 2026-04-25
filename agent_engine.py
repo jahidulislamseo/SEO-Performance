@@ -81,7 +81,48 @@ def calculate_summaries():
         print("Error: Could not fetch data.")
         return
 
+    # 3. LIFETIME BACKUP: Archiving all data to MongoDB before filtering
+    backup_to_db(df, db)
+
     process_and_save(df, db)
+
+def backup_to_db(df, db):
+    """Saves every unique project from the sheet into a permanent archive using Bulk Operations."""
+    if df.empty: return
+    print(f"Archiving {len(df)} rows to permanent database...")
+    
+    from pymongo import UpdateOne
+    operations = []
+    
+    for _, row in df.iterrows():
+        p = row.to_dict()
+        order_num = str(p.get('order_num', '')).strip()
+        if not order_num or order_num == 'N/A' or order_num == 'None': continue
+        
+        doc = {
+            "order": order_num,
+            "client": p.get("client"),
+            "service": p.get("service"),
+            "status": p.get("status"),
+            "amtX": safe_float(p.get("amount_x")),
+            "date": p.get("date"),
+            "deliveredDate": p.get("del_date"),
+            "assign": p.get("assign"),
+            "team": p.get("op_dept"),
+            "link": p.get("order_link"),
+            "last_seen": time.time()
+        }
+        
+        operations.append(
+            UpdateOne({"order": order_num}, {"$set": doc}, upsert=True)
+        )
+    
+    if operations:
+        try:
+            result = db["projects_archive"].bulk_write(operations, ordered=False)
+            print(f"Archive Update Complete: {result.upserted_count} new, {result.modified_count} updated.")
+        except Exception as e:
+            print(f"Bulk Write Error: {e}")
 
 def process_and_save(df, db):
     # 1. Get Members

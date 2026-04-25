@@ -4,6 +4,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
+  /* DARK (Default) */
   --bg: #09111f;
   --card: rgba(14,24,38,0.97);
   --card2: rgba(10,18,30,0.96);
@@ -11,15 +12,32 @@
   --glass: rgba(255,255,255,0.035);
   --accent: #2f5d8a;
   --a2: #5f85a2;
-  --green: #0f766e;
-  --yellow: #c28a2c;
-  --red: #b94a48;
+  --green: #10b981;
+  --yellow: #f59e0b;
+  --red: #ef4444;
   --blue: #3d6f9b;
-  --cyan: #4f8ea6;
-  --pink: #7b8794;
-  --text: #e7edf5;
-  --muted: #7f8ea3;
-  --m2: #a5b3c5;
+  --text: #f1f5f9;
+  --muted: #94a3b8;
+  --m2: #cbd5e1;
+  --hdr-bg: rgba(9,17,31,0.85);
+  --grad-1: rgba(61,111,155,0.14);
+  --grad-2: rgba(15,118,110,0.08);
+}
+
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --card2: #f1f5f9;
+  --gb: rgba(15,23,42,0.08);
+  --glass: rgba(15,23,42,0.02);
+  --accent: #0f766e;
+  --a2: #0d9488;
+  --text: #0f172a;
+  --muted: #64748b;
+  --m2: #475569;
+  --hdr-bg: rgba(255,255,255,0.88);
+  --grad-1: rgba(15,118,110,0.05);
+  --grad-2: rgba(61,111,155,0.03);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -28,9 +46,9 @@ html { scroll-behavior: smooth; }
 body {
   font-family: 'Manrope', sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(61,111,155,.14), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(15,118,110,.08), transparent 28%),
-    linear-gradient(180deg, #09111f 0%, #0d1727 55%, #0a1320 100%);
+    radial-gradient(circle at top left, var(--grad-1), transparent 32%),
+    radial-gradient(circle at bottom right, var(--grad-2), transparent 28%),
+    var(--bg);
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
@@ -69,7 +87,7 @@ body::before {
   position: sticky; top: 0; z-index: 50;
   height: 68px; padding: 0 32px;
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  background: rgba(9,17,31,.88);
+  background: var(--hdr-bg);
   backdrop-filter: blur(24px);
   border-bottom: 1px solid var(--gb);
 }
@@ -82,9 +100,12 @@ body::before {
 }
 .ht h1 {
   font-size:18px; font-weight:900; letter-spacing:-.5px;
-  background: linear-gradient(135deg,#f8fafc 20%,#c7d3df 55%,#6f879c 100%);
+  background: var(--data-theme, linear-gradient(135deg,#f8fafc 20%,#c7d3df 55%,#6f879c 100%));
+  /* fallback for light mode if complex gradients fail */
+  color: var(--text);
   -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
 }
+[data-theme="light"] .ht h1 { background: none; -webkit-text-fill-color: var(--text); }
 .ht p { font-size:11px; color:var(--m2); }
 .hr  { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
 
@@ -105,6 +126,35 @@ body::before {
 .hbtn.manager:hover { background:rgba(123,135,148,.24); }
 .hbtn.tracker       { background:rgba(16,185,129,.12); border-color:rgba(16,185,129,.3);  color:#7ed2c7; }
 .hbtn.tracker:hover { background:rgba(16,185,129,.22); }
+
+/* ── THEME SWITCHER ── */
+.theme-switcher { position: relative; display: flex; align-items: center; }
+.theme-btn {
+  width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--gb);
+  background: var(--glass); color: var(--text); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
+  transition: all 0.2s;
+}
+.theme-btn:hover { background: rgba(95,133,162,0.15); border-color: var(--a2); }
+
+.theme-menu {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  background: var(--card); border: 1px solid var(--gb); border-radius: 14px;
+  padding: 6px; display: none; flex-direction: column; gap: 4px;
+  width: 140px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); z-index: 100;
+  backdrop-filter: blur(20px);
+}
+.theme-menu.open { display: flex; animation: tIn 0.2s ease; }
+.theme-item {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  border-radius: 8px; font-size: 12px; font-weight: 700; color: var(--m2);
+  cursor: pointer; transition: all 0.2s; border: none; background: none; font-family: inherit;
+  width: 100%; text-align: left;
+}
+.theme-item:hover { background: var(--glass); color: var(--text); }
+[data-pref="light"] .it-light, [data-pref="dark"] .it-dark, [data-pref="system"] .it-system {
+  background: var(--accent); color: white;
+}
 
 .live-badge {
   display:flex; align-items:center; gap:6px; padding:5px 11px;
