@@ -99,13 +99,18 @@ def backup_to_db(df, db):
         order_num = str(p.get('order_num', '')).strip()
         if not order_num or order_num == 'N/A' or order_num == 'None': continue
         
+        # Ensure we have a valid month bucket (YYYY-MM)
+        project_date = p.get("date") or p.get("del_date") or ""
+        month_bucket = project_date[:7] if len(str(project_date)) >= 7 else "Unknown"
+
         doc = {
             "order": order_num,
             "client": p.get("client"),
             "service": p.get("service"),
             "status": p.get("status"),
             "amtX": safe_float(p.get("amount_x")),
-            "date": p.get("date"),
+            "date": project_date,
+            "month": month_bucket,
             "deliveredDate": p.get("del_date"),
             "assign": p.get("assign"),
             "team": p.get("op_dept"),

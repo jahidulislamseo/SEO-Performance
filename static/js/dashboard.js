@@ -180,7 +180,7 @@ async function refreshData(silent = false) {
     if (btn) btn.style.opacity = '0.5';
   }
 
-  // 0) Trigger Server Sync (New: ensures MongoDB has latest from GSheet)
+  // 0) Trigger Server Sync (Only if manual/non-silent refresh)
   if (!silent) {
     showToast('🔄 Google Sheets থেকে ডাটা সিঙ্ক হচ্ছে...', '#6366f1');
     try {
@@ -258,14 +258,32 @@ async function refreshData(silent = false) {
 }
 
 // ── MONTH / TEAM OPTIONS ─────────────────────────────────────────
-function buildMonthOptions() {
+async function buildMonthOptions() {
+  const sel = document.getElementById('monthSel');
+  const cur = APP.monthFilter || sel.value;
+  
+  // 1. Try to fetch from DB Archive
+  try {
+    const res = await fetch('/api/months');
+    const months = await res.json();
+    if (months && months.length > 0) {
+      sel.innerHTML = '<option value="all">📅 All Time</option>';
+      months.forEach(mo => {
+        const d   = new Date(mo + '-01');
+        const lbl = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        sel.innerHTML += `<option value="${mo}">${lbl}</option>`;
+      });
+      sel.value = (cur === 'all' || months.includes(cur)) ? cur : 'all';
+      return;
+    }
+  } catch (e) { console.warn('Month Archive API failed, falling back to local:', e); }
+
+  // 2. Fallback to local data if API fails
   const months = new Set();
   APP.allMembers.forEach(m => m.projects.forEach(p => {
     const d = (p.status === 'Delivered' && p.deliveredDate && p.deliveredDate.length >= 7) ? p.deliveredDate : p.date;
     if (d && d.length >= 7) months.add(d.substring(0, 7));
   }));
-  const sel = document.getElementById('monthSel');
-  const cur = APP.monthFilter || sel.value;
   sel.innerHTML = '<option value="all">📅 All Time</option>';
   [...months].sort().reverse().forEach(mo => {
     const d   = new Date(mo + '-01');
@@ -903,4 +921,5 @@ window.addEventListener('load', () => {
   if (hid && document.getElementById(hid)) setTimeout(() => jumpSection(hid), 120);
 });
 refreshData();
-setInterval(() => { if (!document.hidden) refreshData(true); }, 30000);
+// Auto-refresh from Database every 10 minutes
+setInterval(() => { if (!document.hidden) refreshData(true); }, 600000);
