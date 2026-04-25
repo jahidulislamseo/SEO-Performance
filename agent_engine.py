@@ -111,15 +111,27 @@ def process_and_save(df, db):
 
     # ─── DATE FILTERING (Dynamic Month) ───
     cur_y = time.strftime("%Y")
-    cur_m = time.strftime("%m")
+    cur_m = time.strftime("%m").lstrip('0') # Support both 04 and 4
+    cur_m_padded = time.strftime("%m")
     cur_month_name = time.strftime("%B")
     
     def is_in_current_month(row):
         status = str(row.get('status', '')).strip()
         date_val = str(row.get('del_date', '')) if status == 'Delivered' else str(row.get('date', ''))
-        # Match YYYY-MM or "Month YYYY"
-        if date_val.startswith(f"{cur_y}-{cur_m}") or (cur_month_name in date_val and cur_y in date_val):
+        if not date_val: return False
+        
+        # Match YYYY-MM or YYYY-M
+        if date_val.startswith(f"{cur_y}-{cur_m_padded}") or date_val.startswith(f"{cur_y}-{cur_m}-"):
             return True
+        # Match Month YYYY
+        if cur_month_name in date_val and cur_y in date_val:
+            return True
+        # Match MM/DD/YYYY or M/D/YYYY
+        if re.search(fr"^{cur_m_padded}/", date_val) and f"/{cur_y}" in date_val:
+            return True
+        if re.search(fr"^{cur_m}/", date_val) and f"/{cur_y}" in date_val:
+            return True
+            
         return False
             
     df = df[df.apply(is_in_current_month, axis=1)]
@@ -218,28 +230,14 @@ def process_and_save(df, db):
     targets = TEAM_TARGETS()
     mgmt = MANAGEMENT()
     for team in targets.keys():
-        df['norm_del_by'] = df['del_by'].str.lower().str.replace("_","").str.replace(" ","")
-        norm_team = team.lower().replace(" ","")
-        if norm_team == "smm": # Handle SMM/Dark_Rankers mapping
-             t_df = df[df['norm_del_by'].isin(["smm", "darkrankers"])]
-        else:
-             t_df = df[df['norm_del_by'] == norm_team]
-        
-        if t_df.empty:
-            team_members = [s for s in member_summaries if s['team'] == team]
-            delivered_amt = sum(m['deliveredAmt'] for m in team_members)
-            wip_amt = sum(m['wipAmt'] for m in team_members)
-            total_projects = sum(m['total'] for m in team_members)
-            delivered_count = sum(m['delivered'] for m in team_members)
-            wip_count = sum(m['wip'] for m in team_members)
-        else:
-            delivered = t_df[t_df['status'] == 'Delivered']
-            wip_rev = t_df[t_df['status'].isin(['WIP', 'Revision'])]
-            delivered_amt = delivered['amount_x'].sum()
-            wip_amt = wip_rev['amount_x'].sum()
-            total_projects = len(t_df)
-            delivered_count = len(delivered)
-            wip_count = len(t_df[t_df['status'] == 'WIP'])
+        team_members = [s for s in member_summaries if s['team'] == team]
+        delivered_amt = sum(m['deliveredAmt'] for m in team_members)
+        wip_amt = sum(m['wipAmt'] for m in team_members)
+        total_projects = sum(m['total'] for m in team_members)
+        delivered_count = sum(m['delivered'] for m in team_members)
+        wip_count = sum(m['wip'] for m in team_members)
+        revision_count = sum(m['revision'] for m in team_members)
+        cancelled_count = sum(m['cancelled'] for m in team_members)
 
         team_data[team] = {
             "leader": mgmt["leaders"].get(team, {}).get("name", "N/A"),
@@ -249,6 +247,8 @@ def process_and_save(df, db):
             "projects": total_projects,
             "delivered": delivered_count,
             "wip": wip_count,
+            "revision": revision_count,
+            "cancelled": cancelled_count,
             "target": targets.get(team, 0)
         }
 

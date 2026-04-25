@@ -157,6 +157,7 @@ def api_data():
 
         summary = {
             "dept": dept_sum_doc or {},
+            "teams": team_sum_doc.get("teams", {}) if team_sum_doc else {},
             "totalAchieved": dept_sum_doc.get("achieved", 0) if dept_sum_doc else 0,
             "totalWip": dept_sum_doc.get("wipAmt", 0) if dept_sum_doc else 0,
             "seoSmmRows": dept_sum_doc.get("seoSmmRows", 0) if dept_sum_doc else 0,

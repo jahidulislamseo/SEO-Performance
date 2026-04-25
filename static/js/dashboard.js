@@ -521,8 +521,9 @@ function renderTeams() {
     // Team stats logic: prioritize APP.summary.teams from Flask, fallback to member sums
     let del = 0, wip = 0, delivered = 0, wipCount = 0, revCount = 0, canCount = 0, proj = 0;
     
-    if (APP.summary && APP.summary.teams && APP.summary.teams[tname]) {
-      const ts = APP.summary.teams[tname];
+    // Prioritize pre-calculated summary from MongoDB via Flask API
+    const ts = APP.summary?.teams?.[tname];
+    if (ts) {
       del = ts.deliveredAmt || ts.amt || 0;
       wip = ts.wipAmt || 0;
       delivered = ts.delivered || 0;
@@ -531,14 +532,15 @@ function renderTeams() {
       canCount = ts.cancelled || 0;
       proj = ts.projects || 0;
     } else {
+      // Fallback: sum from current filtered member list
       const ms  = APP.members.filter(m => m.team === tname);
       del = ms.reduce((a, m) => a + m.deliveredAmt, 0);
-      wip = ms.reduce((a, m) => a + m.wipAmt, 0);
-      delivered = ms.reduce((a, m) => a + m.delivered, 0);
-      wipCount  = ms.reduce((a, m) => a + m.wip, 0);
-      revCount  = ms.reduce((a, m) => a + m.revision, 0);
-      canCount  = ms.reduce((a, m) => a + m.cancelled, 0);
-      proj      = ms.reduce((a, m) => a + m.total, 0);
+      wip = ms.reduce((a, m) => a + (m.wipAmt || 0), 0);
+      delivered = ms.reduce((a, m) => a + (m.delivered || 0), 0);
+      wipCount  = ms.reduce((a, m) => a + (m.wip || 0), 0);
+      revCount  = ms.reduce((a, m) => a + (m.revision || 0), 0);
+      canCount  = ms.reduce((a, m) => a + (m.cancelled || 0), 0);
+      proj      = ms.reduce((a, m) => a + (m.total || 0), 0);
     }
     
     const tgt       = TEAM_TARGETS[tname] || (APP.members.filter(m => m.team === tname).length * MEM_TARGET);
