@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Employee Portal — GEO Rankers</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/base.css"/>
+<link rel="stylesheet" href="/static/css/employee.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="/static/js/themes.js"></script>
+</head>
+<body>
+<div class="g1"></div><div class="g2"></div><div class="g3"></div>
+
+<!-- ═════════════════════ LOGIN SCREEN (SPLIT PANEL) ═════════════════════ -->
+<div id="loginScreen" class="login-screen">
+
+  <!-- LEFT — Brand panel -->
+  <div class="lp-left">
+    <div class="lpl-inner">
+      <div class="lpl-logo">
+        <div class="lpl-logo-icon">🌍</div>
+        <span class="lpl-logo-text">GEO Rankers</span>
+      </div>
+      <h1 class="lpl-headline">Your work,<br>all in one place.</h1>
+      <p class="lpl-sub">Attendance, projects, performance —<br>everything you need, one dashboard.</p>
+      <div class="lpl-features">
+        <div class="lpl-feat">
+          <span class="lpl-feat-icon">📊</span>
+          <div>
+            <div class="lpl-feat-title">Real-time Attendance</div>
+            <div class="lpl-feat-sub">One-click check-in / check-out with calendar view</div>
+          </div>
+        </div>
+        <div class="lpl-feat">
+          <span class="lpl-feat-icon">📁</span>
+          <div>
+            <div class="lpl-feat-title">Project Tracking</div>
+            <div class="lpl-feat-sub">Progress, deadlines, and client work at a glance</div>
+          </div>
+        </div>
+        <div class="lpl-feat">
+          <span class="lpl-feat-icon">🏆</span>
+          <div>
+            <div class="lpl-feat-title">Performance KPIs</div>
+            <div class="lpl-feat-sub">Monthly metrics, ratings, and leave balance</div>
+          </div>
+        </div>
+      </div>
+      <div class="lpl-live">
+        <div class="lpl-live-dot"></div>
+        <span>Live system · April 2026</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT — Form panel -->
+  <div class="lp-right">
+    <div class="lc-card">
+      <div class="lc-brand">
+        <div class="lc-logo-icon">🌍</div>
+        <div>
+          <div class="lc-brand-name">GEO Rankers</div>
+          <div class="lc-brand-sub">Employee Portal</div>
+        </div>
+      </div>
+      <h2 class="lc-title">Welcome back</h2>
+      <p class="lc-desc">Sign in to access your dashboard</p>
+
+      <div class="lc-form">
+        <div class="lf-group">
+          <label class="lf-label">Employee ID</label>
+          <div class="lf-input-wrap">
+            <span class="lf-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 018 0v2"/></svg>
+            </span>
+            <input id="empId" type="text" class="lf-input" placeholder="e.g. EMP001" autocomplete="username"/>
+          </div>
+        </div>
+        <div class="lf-group">
+          <label class="lf-label" style="display:flex;align-items:center;justify-content:space-between">
+            Password
+            <span style="font-weight:600;color:var(--muted);cursor:pointer;font-size:11px">Forgot password?</span>
+          </label>
+          <div class="lf-input-wrap">
+            <span class="lf-icon">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+            </span>
+            <input id="empPass" type="password" class="lf-input" placeholder="Enter your password" autocomplete="current-password"/>
+            <button type="button" class="lf-eye" onclick="togglePass()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="lf-options">
+          <label class="lf-remember">
+            <input type="checkbox" id="rememberMe" class="lf-checkbox"/>
+            <span class="lf-cb-custom"></span>
+            Keep me signed in
+          </label>
+        </div>
+        <div id="loginErr" class="lf-err"></div>
+        <button type="button" class="lf-submit" id="loginBtn" onclick="doLogin()">
+          <span id="loginBtnText">Sign In to Portal</span>
+        </button>
+      </div>
+
+      <div class="lc-divider"><span>Quick demo access</span></div>
+      <div class="lc-demos">
+        <button onclick="fillDemo('EMP001')" class="demo-card">
+          <span class="demo-av" style="background:linear-gradient(135deg,#2563eb,#7c3aed)">JI</span>
+          <div>
+            <div class="demo-name">Jahidul Islam</div>
+            <div class="demo-role">Sr. SEO Specialist</div>
+          </div>
+          <span class="demo-id">EMP001</span>
+        </button>
+        <button onclick="fillDemo('EMP002')" class="demo-card">
+          <span class="demo-av" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">RA</span>
+          <div>
+            <div class="demo-name">Rania Ahmed</div>
+            <div class="demo-role">Content Strategist</div>
+          </div>
+          <span class="demo-id">EMP002</span>
+        </button>
+      </div>
+      <p class="lc-hint">Password for both: <code>pass123</code></p>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════ DASHBOARD APP ═════════════════════ -->
+<div id="empApp" class="emp-app" style="display:none">
+
+  <!-- SIDEBAR -->
+  <aside id="sidebar" class="emp-sidebar">
+    <div class="sb-top">
+      <div class="sb-brand">
+        <div class="sb-brand-icon">🌍</div>
+        <div class="sb-brand-text">
+          <div class="sb-brand-name">GEO Rankers</div>
+          <div class="sb-brand-sub">HR Portal</div>
+        </div>
+      </div>
+      <button class="sb-collapse-btn" onclick="toggleSidebar()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+    </div>
+
+    <nav class="sb-nav">
+      <div class="sb-section-label">MAIN</div>
+      <a class="sb-item active" data-page="overview" onclick="navigate('overview')">
+        <span class="sb-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        </span>
+        <span class="sb-label">Overview</span>
+      </a>
+      <a class="sb-item" data-page="attendance" onclick="navigate('attendance')">
+        <span class="sb-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
+        </span>
+        <span class="sb-label">Attendance</span>
+      </a>
+      <a class="sb-item" data-page="projects" onclick="navigate('projects')">
+        <span class="sb-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h6l2 3h10a2 2 0 012 2v11a2 2 0 01-2 2H3a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
+        </span>
+        <span class="sb-label">Projects</span>
+      </a>
+      <a class="sb-item" data-page="profile" onclick="navigate('profile')">
+        <span class="sb-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+        </span>
+        <span class="sb-label">Profile</span>
+      </a>
+
+      <div class="sb-section-label" style="margin-top:8px">LINKS</div>
+      <a class="sb-item" onclick="window.open('/','_blank')">
+        <span class="sb-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
+        </span>
+        <span class="sb-label">SEO Hub ↗</span>
+      </a>
+    </nav>
+
+    <div class="sb-bottom">
+      <div class="sb-divider"></div>
+      <div class="sb-user-mini" id="sbUserMini" style="cursor:pointer" onclick="navigate('profile')" title="Go to Profile">
+        <div class="sb-user-av" id="sbUserAv"></div>
+        <div class="sb-user-info">
+          <div class="sb-user-name" id="sbUserName"></div>
+          <div class="sb-user-id" id="sbUserId"></div>
+        </div>
+      </div>
+      <a class="sb-item" onclick="navigate('profile')">
+        <span class="sb-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+        </span>
+        <span class="sb-label">Settings</span>
+      </a>
+      <a class="sb-item sb-logout" onclick="doLogout()">
+        <span class="sb-icon">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </span>
+        <span class="sb-label">Logout</span>
+      </a>
+    </div>
+  </aside>
+
+  <!-- MAIN AREA -->
+  <div class="emp-main">
+    <!-- TOPBAR -->
+    <header class="emp-topbar">
+      <div class="tb-left">
+        <button class="tb-menu-btn" onclick="toggleSidebar()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <div class="tb-breadcrumb">
+          <span class="tb-bc-root">HR Portal</span>
+          <span class="tb-bc-sep">›</span>
+          <span class="tb-bc-page" id="tbPage">Overview</span>
+        </div>
+      </div>
+      <div class="tb-right">
+        <div class="tb-datetime">
+          <div class="tb-clock" id="tbClock">--:--:--</div>
+          <div class="tb-date"  id="tbDate"></div>
+        </div>
+        <!-- Notification bell -->
+        <button class="tb-notif-btn" id="tbNotif" onclick="toggleNotif()">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
+          <span class="tb-notif-badge" id="notifBadge">3</span>
+        </button>
+        <!-- Notification dropdown -->
+        <div class="notif-panel" id="notifPanel">
+          <div class="notif-header">
+            <span class="notif-title">Notifications</span>
+            <button class="notif-clear" onclick="clearNotifs()">Mark all read</button>
+          </div>
+          <div class="notif-list" id="notifList"></div>
+        </div>
+        <div class="theme-switcher">
+          <button class="theme-btn" id="theme-btn" onclick="toggleThemeMenu()">
+            <span id="theme-label">🌙</span>
+          </button>
+          <div class="theme-menu" id="theme-menu">
+            <button class="theme-item it-light" onclick="setTheme('light')">☀️ Light</button>
+            <button class="theme-item it-dark" onclick="setTheme('dark')">🌙 Dark</button>
+            <button class="theme-item it-system" onclick="setTheme('system')">💻 System</button>
+          </div>
+        </div>
+        <div class="tb-user">
+          <div class="tb-user-av" id="tbUserAv"></div>
+          <div class="tb-user-info">
+            <div class="tb-user-name" id="tbUserName"></div>
+            <div class="tb-user-role" id="tbUserRole"></div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="emp-content" id="empContent"></main>
+  </div>
+</div>
+
+<!-- Mobile sidebar overlay -->
+<div id="sbOverlay" class="sb-overlay" onclick="closeSidebarMobile()"></div>
+
+<div class="toast-box" id="toastBox"></div>
+<script src="/static/js/employee.js"></script>
+</body>
+</html>

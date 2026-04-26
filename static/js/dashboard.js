@@ -5,7 +5,7 @@
 
 // ── APP STATE ────────────────────────────────────────────────────
 let STATIC_DATA = null;
-try { STATIC_DATA = __DATA_PLACEHOLDER__; } catch (e) {}
+try { STATIC_DATA = __DATA_PLACEHOLDER__; } catch (e) { }
 
 const APP = {
   allMembers: [], members: [], filteredMembers: [], pageMembers: [],
@@ -29,15 +29,15 @@ setInterval(updateClock, 1000); updateClock();
 
 // ── COUNTDOWN BANNER ─────────────────────────────────────────────
 function updateCountdown() {
-  const now   = new Date();
-  const end   = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
+  const now = new Date();
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
   const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const daysLeft  = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-  const elapsed   = Math.round(((now - start) / (end - start)) * 100);
+  const daysLeft = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+  const elapsed = Math.round(((now - start) / (end - start)) * 100);
   document.getElementById('cdMonth').textContent = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  document.getElementById('cdDays').textContent  = daysLeft;
-  document.getElementById('cdPct').textContent   = elapsed;
-  document.getElementById('cdFill').style.width  = elapsed + '%';
+  document.getElementById('cdDays').textContent = daysLeft;
+  document.getElementById('cdPct').textContent = elapsed;
+  document.getElementById('cdFill').style.width = elapsed + '%';
 }
 updateCountdown(); setInterval(updateCountdown, 60000);
 
@@ -45,7 +45,7 @@ updateCountdown(); setInterval(updateCountdown, 60000);
 function startRfCountdown() {
   clearInterval(rfInterval);
   lastUpdated = new Date();
-  try { renderStatusCards(); } catch (e) {}
+  try { renderStatusCards(); } catch (e) { }
   rfInterval = setInterval(() => {
     if (!lastUpdated) return;
     const sec = Math.floor((new Date() - lastUpdated) / 1000);
@@ -58,7 +58,7 @@ function startRfCountdown() {
 // ── RANK TRACKING ────────────────────────────────────────────────
 function saveRanks(sorted) {
   const ranks = {}; sorted.forEach((m, i) => ranks[m.name] = i + 1);
-  try { localStorage.setItem('seo_prev_ranks', JSON.stringify(ranks)); } catch (e) {}
+  try { localStorage.setItem('seo_prev_ranks', JSON.stringify(ranks)); } catch (e) { }
   return ranks;
 }
 function loadPrevRanks() {
@@ -79,7 +79,7 @@ function jumpSection(id) {
   if (!el) return;
   el.scrollIntoView({ behavior: 'smooth', block: 'start' });
   document.querySelectorAll('.page-nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.target === id));
-  try { history.replaceState(null, '', `#${id}`); } catch (e) {}
+  try { history.replaceState(null, '', `#${id}`); } catch (e) { }
 }
 function updateSectionNav() {
   const sections = [...document.querySelectorAll('.dash-section')];
@@ -93,8 +93,8 @@ function updateSectionNav() {
 
 // ── URL STATE ────────────────────────────────────────────────────
 function syncControlsFromState() {
-  const month   = document.getElementById('monthSel');    if (month)  month.value  = APP.monthFilter;
-  const sort    = document.getElementById('sortSel');     if (sort && !sort.value) sort.value = 'deliveredAmt';
+  const month = document.getElementById('monthSel'); if (month) month.value = APP.monthFilter;
+  const sort = document.getElementById('sortSel'); if (sort && !sort.value) sort.value = 'deliveredAmt';
   const pageSel = document.getElementById('pageSizeSel'); if (pageSel) pageSel.value = String(APP.pageSize);
   document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
   const active = document.getElementById(`view-${APP.view}`); if (active) active.classList.add('active');
@@ -102,37 +102,37 @@ function syncControlsFromState() {
     b.classList.toggle('active', b.textContent.trim() === APP.teamFilter || (APP.teamFilter === 'All' && b.textContent.trim() === 'All'));
   });
   document.querySelectorAll('.sfbtn').forEach(b => b.className = 'sfbtn');
-  const sid  = APP.statusFilter === 'all' ? 'all' : APP.statusFilter === 'Delivered' ? 'del' : APP.statusFilter === 'WIP' ? 'wip' : 'can';
+  const sid = APP.statusFilter === 'all' ? 'all' : APP.statusFilter === 'Delivered' ? 'del' : APP.statusFilter === 'WIP' ? 'wip' : 'can';
   const sbtn = document.getElementById(`sf-${sid}`); if (sbtn) sbtn.className = `sfbtn active-${sid}`;
 }
 function applyUrlState() {
   try {
     const qs = new URLSearchParams(location.search);
-    APP.monthFilter  = qs.get('month')  || APP.monthFilter;
+    APP.monthFilter = qs.get('month') || APP.monthFilter;
     APP.statusFilter = qs.get('status') || APP.statusFilter;
-    APP.teamFilter   = qs.get('team')   || APP.teamFilter;
-    APP.view         = qs.get('view')   || APP.view;
-    APP.page     = Math.max(parseInt(qs.get('page') || APP.page, 10) || 1, 1);
+    APP.teamFilter = qs.get('team') || APP.teamFilter;
+    APP.view = qs.get('view') || APP.view;
+    APP.page = Math.max(parseInt(qs.get('page') || APP.page, 10) || 1, 1);
     APP.pageSize = Math.max(parseInt(qs.get('size') || APP.pageSize, 10) || 12, 1);
     const sort = qs.get('sort'); if (sort) { const el = document.getElementById('sortSel'); if (el) el.value = sort; }
-    const q    = qs.get('q');    if (q)    { const el = document.getElementById('srch');    if (el) el.value = q; }
-  } catch (e) {}
+    const q = qs.get('q'); if (q) { const el = document.getElementById('srch'); if (el) el.value = q; }
+  } catch (e) { }
 }
 function updateUrlState() {
   try {
     const params = new URLSearchParams();
-    if (APP.monthFilter  !== 'all')          params.set('month',  APP.monthFilter);
-    if (APP.statusFilter !== 'all')          params.set('status', APP.statusFilter);
-    if (APP.teamFilter   !== 'All')          params.set('team',   APP.teamFilter);
-    if (APP.view         !== 'cards')        params.set('view',   APP.view);
-    if (APP.page         !== 1)              params.set('page',   String(APP.page));
-    if (APP.pageSize     !== 12)             params.set('size',   String(APP.pageSize));
+    if (APP.monthFilter !== 'all') params.set('month', APP.monthFilter);
+    if (APP.statusFilter !== 'all') params.set('status', APP.statusFilter);
+    if (APP.teamFilter !== 'All') params.set('team', APP.teamFilter);
+    if (APP.view !== 'cards') params.set('view', APP.view);
+    if (APP.page !== 1) params.set('page', String(APP.page));
+    if (APP.pageSize !== 12) params.set('size', String(APP.pageSize));
     const sort = document.getElementById('sortSel')?.value || 'deliveredAmt';
     if (sort !== 'deliveredAmt') params.set('sort', sort);
     const q = (document.getElementById('srch')?.value || '').trim();
     if (q) params.set('q', q);
     history.replaceState(null, '', `${location.pathname}${params.toString() ? '?' + params.toString() : ''}`);
-  } catch (e) {}
+  } catch (e) { }
 }
 
 // ── REAGGREGATE ──────────────────────────────────────────────────
@@ -150,15 +150,15 @@ function reAggregate(monthFilter, statusFilter) {
       return d.startsWith(monthFilter);
     });
     if (statusFilter === 'Delivered') projs = projs.filter(p => p.status === 'Delivered');
-    else if (statusFilter === 'WIP')       projs = projs.filter(p => p.status === 'WIP' || p.status === 'Revision');
+    else if (statusFilter === 'WIP') projs = projs.filter(p => p.status === 'WIP' || p.status === 'Revision');
     else if (statusFilter === 'Cancelled') projs = projs.filter(p => p.status === 'Cancelled');
 
     let wip = 0, revision = 0, delivered = 0, cancelled = 0, deliveredAmt = 0, wipAmt = 0;
     projs.forEach(p => {
-      if (p.status === 'Delivered')  { delivered++; deliveredAmt += p.share; }
-      else if (p.status === 'WIP')       { wip++;      wipAmt += p.share; }
-      else if (p.status === 'Revision')  { revision++; wipAmt += p.share; }
-      else if (p.status === 'Cancelled')   cancelled++;
+      if (p.status === 'Delivered') { delivered++; deliveredAmt += p.share; }
+      else if (p.status === 'WIP') { wip++; wipAmt += p.share; }
+      else if (p.status === 'Revision') { revision++; wipAmt += p.share; }
+      else if (p.status === 'Cancelled') cancelled++;
     });
     const del = Math.round(deliveredAmt * 100) / 100;
     const wam = Math.round(wipAmt * 100) / 100;
@@ -198,17 +198,17 @@ async function refreshData(silent = false) {
     if (res.ok) {
       const data = await res.json();
       if (data.status === 'ok') {
-        APP.allMembers = data.data; 
-        APP.summary = data.summary; 
+        APP.allMembers = data.data;
+        APP.summary = data.summary;
         APP.audit = data.summary?.audit || data.audit || APP.audit;
         APP.source = 'Flask API';
         APP.loaded = true;
-        document.getElementById('liveMode').textContent  = '🟢 API';
+        document.getElementById('liveMode').textContent = '🟢 API';
         document.getElementById('footerMode').textContent = 'Flask API';
         buildMonthOptions(); buildTeamOptions(); applyFilters(true);
         if (!silent) showToast('✅ ড্যাশবোর্ড আপডেট করা হয়েছে!', '#10b981');
-        startRfCountdown(); 
-        if (icon) icon.classList.remove('spin'); 
+        startRfCountdown();
+        if (icon) icon.classList.remove('spin');
         if (btn) btn.style.opacity = '1';
         return;
       }
@@ -233,19 +233,19 @@ async function refreshData(silent = false) {
       const j2 = await res2.json();
       if (Array.isArray(j2) && j2.length) {
         APP.allMembers = j2; APP.loaded = true; APP.source = 'geo_data.json';
-        document.getElementById('liveMode').textContent  = '🟡 JSON';
+        document.getElementById('liveMode').textContent = '🟡 JSON';
         document.getElementById('footerMode').textContent = 'geo_data.json';
         buildMonthOptions(); applyFilters(true);
         if (!silent) showToast('📄 geo_data.json থেকে loaded', '#f59e0b');
         startRfCountdown(); icon.classList.remove('spin'); return;
       }
     }
-  } catch (e) {}
+  } catch (e) { }
 
   // 4) Static
   if (STATIC_DATA && STATIC_DATA.length) {
     APP.allMembers = STATIC_DATA; APP.loaded = true; APP.source = 'Embedded Static Data';
-    document.getElementById('liveMode').textContent  = '⚪ Static';
+    document.getElementById('liveMode').textContent = '⚪ Static';
     document.getElementById('footerMode').textContent = 'Static Data';
     buildMonthOptions(); applyFilters(true);
     showToast('📦 Static data ব্যবহার হচ্ছে', '#94a3b8');
@@ -261,7 +261,7 @@ async function refreshData(silent = false) {
 async function buildMonthOptions() {
   const sel = document.getElementById('monthSel');
   const cur = APP.monthFilter || sel.value;
-  
+
   // 1. Try to fetch from DB Archive
   try {
     const res = await fetch('/api/months');
@@ -269,7 +269,7 @@ async function buildMonthOptions() {
     if (months && months.length > 0) {
       sel.innerHTML = '<option value="all">📅 All Time</option>';
       months.forEach(mo => {
-        const d   = new Date(mo + '-01');
+        const d = new Date(mo + '-01');
         const lbl = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
         sel.innerHTML += `<option value="${mo}">${lbl}</option>`;
       });
@@ -286,7 +286,7 @@ async function buildMonthOptions() {
   }));
   sel.innerHTML = '<option value="all">📅 All Time</option>';
   [...months].sort().reverse().forEach(mo => {
-    const d   = new Date(mo + '-01');
+    const d = new Date(mo + '-01');
     const lbl = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     sel.innerHTML += `<option value="${mo}">${lbl}</option>`;
   });
@@ -296,7 +296,7 @@ async function buildMonthOptions() {
 function buildTeamOptions() {
   const teams = new Set();
   APP.allMembers.forEach(m => { if (m.team) teams.add(m.team); });
-  const tArr    = ['All', ...[...teams].sort()];
+  const tArr = ['All', ...[...teams].sort()];
   const tabWrap = document.getElementById('teamTabs');
   if (tabWrap) {
     tabWrap.innerHTML = tArr.map(t => `<button class="ftab ${APP.teamFilter === t ? 'active' : ''}" onclick="setTeam('${t}',this)">${t}</button>`).join('');
@@ -316,15 +316,15 @@ function setStatus(s, btn) {
   if (btn) btn.className = 'sfbtn active-' + (s === 'all' ? 'all' : s === 'Delivered' ? 'del' : s === 'WIP' ? 'wip' : 'can');
   applyFilters(true);
 }
-function setMonth()    { APP.monthFilter = document.getElementById('monthSel').value; APP.page = 1; applyFilters(true); }
+function setMonth() { APP.monthFilter = document.getElementById('monthSel').value; APP.page = 1; applyFilters(true); }
 function setView(view, btn) {
   APP.view = view; APP.page = 1;
-  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
-  if (btn) btn.classList.add('active');
+  const vt = document.getElementById('viewTabs');
+  if (vt) { vt.querySelectorAll('.ftab').forEach(e => e.classList.remove('active')); btn.classList.add('active'); }
   applyFilters();
 }
 function setPageSize() { APP.pageSize = parseInt(document.getElementById('pageSizeSel').value, 10) || 12; APP.page = 1; applyFilters(); }
-function goPage(p)     { APP.page = Math.max(1, p); applyFilters(); }
+function goPage(p) { APP.page = Math.max(1, p); applyFilters(); }
 
 function setTeamClick(t) {
   const tabs = document.querySelectorAll('.ftab');
@@ -335,17 +335,17 @@ function setTeamClick(t) {
 }
 
 function applyPreset(kind) {
-  if (kind === 'manager') { APP.teamFilter = 'All'; APP.statusFilter = 'all';   APP.view = 'cards'; document.getElementById('sortSel').value = 'deliveredAmt'; }
-  if (kind === 'wip')     { APP.teamFilter = 'All'; APP.statusFilter = 'WIP';   APP.view = 'table'; document.getElementById('sortSel').value = 'wipAmt'; }
-  if (kind === 'dark')    { APP.teamFilter = 'Dark Rankers'; APP.statusFilter = 'all'; APP.view = 'cards'; document.getElementById('sortSel').value = 'deliveredAmt'; }
-  if (kind === 'target')  { APP.teamFilter = 'All'; APP.statusFilter = 'all';   APP.view = 'cards'; document.getElementById('sortSel').value = 'progress'; }
+  if (kind === 'manager') { APP.teamFilter = 'All'; APP.statusFilter = 'all'; APP.view = 'cards'; document.getElementById('sortSel').value = 'deliveredAmt'; }
+  if (kind === 'wip') { APP.teamFilter = 'All'; APP.statusFilter = 'WIP'; APP.view = 'table'; document.getElementById('sortSel').value = 'wipAmt'; }
+  if (kind === 'dark') { APP.teamFilter = 'Dark Rankers'; APP.statusFilter = 'all'; APP.view = 'cards'; document.getElementById('sortSel').value = 'deliveredAmt'; }
+  if (kind === 'target') { APP.teamFilter = 'All'; APP.statusFilter = 'all'; APP.view = 'cards'; document.getElementById('sortSel').value = 'progress'; }
   APP.page = 1;
   document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
-  const tabs       = document.querySelectorAll('.ftab');
+  const tabs = document.querySelectorAll('.ftab');
   const matchedBtn = [...tabs].find(b => b.textContent === APP.teamFilter);
   if (matchedBtn) matchedBtn.classList.add('active'); else if (tabs[0]) tabs[0].classList.add('active');
   document.querySelectorAll('.sfbtn').forEach(b => b.className = 'sfbtn');
-  const sid  = APP.statusFilter === 'all' ? 'all' : APP.statusFilter === 'Delivered' ? 'del' : APP.statusFilter === 'WIP' ? 'wip' : 'can';
+  const sid = APP.statusFilter === 'all' ? 'all' : APP.statusFilter === 'Delivered' ? 'del' : APP.statusFilter === 'WIP' ? 'wip' : 'can';
   const sbtn = document.getElementById(`sf-${sid}`); if (sbtn) sbtn.className = `sfbtn active-${sid}`;
   syncControlsFromState();
   applyFilters(true);
@@ -358,62 +358,61 @@ function applyFilters(reAgg = false) {
   let filtered = APP.members.filter(m => {
     if (APP.teamFilter !== 'All' && m.team !== APP.teamFilter) return false;
     if (!srch) return true;
-    if (m.name.toLowerCase().includes(srch))     return true;
+    if (m.name.toLowerCase().includes(srch)) return true;
     if (m.fullName.toLowerCase().includes(srch)) return true;
-    if (m.team.toLowerCase().includes(srch))     return true;
+    if (m.team.toLowerCase().includes(srch)) return true;
     return (m.projects || []).some(p =>
-      (p.order   || '').toLowerCase().includes(srch) ||
-      (p.client  || '').toLowerCase().includes(srch) ||
+      (p.order || '').toLowerCase().includes(srch) ||
+      (p.client || '').toLowerCase().includes(srch) ||
       (p.service || '').toLowerCase().includes(srch) ||
-      (p.assign  || '').toLowerCase().includes(srch)
+      (p.assign || '').toLowerCase().includes(srch)
     );
   });
   if (sort === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name));
-  else                 filtered.sort((a, b) => (b[sort] || 0) - (a[sort] || 0));
+  else filtered.sort((a, b) => (b[sort] || 0) - (a[sort] || 0));
   APP.filteredMembers = filtered;
   const totalPages = Math.max(1, Math.ceil(filtered.length / APP.pageSize));
   APP.page = Math.min(APP.page, totalPages);
   const start = (APP.page - 1) * APP.pageSize;
   APP.pageMembers = filtered.slice(start, start + APP.pageSize);
   document.getElementById('mbadge').innerHTML = `Showing <b>${filtered.length}</b> of ${APP.members.length}`;
-  document.getElementById('membersGrid').style.display    = APP.view === 'cards' ? 'grid'  : 'none';
+  document.getElementById('membersGrid').style.display = APP.view === 'cards' ? 'grid' : 'none';
   document.getElementById('membersTableWrap').style.display = APP.view === 'table' ? 'block' : 'none';
-  document.getElementById('viewPill').textContent         = APP.view === 'cards' ? 'Cards View' : 'Table View';
   syncControlsFromState();
   updateUrlState();
-  try { renderDept();          } catch (e) { console.warn('renderDept', e); }
-  try { renderKpiStrip();      } catch (e) { console.warn('renderKpiStrip', e); }
-  try { renderStatusCards();   } catch (e) { console.warn('renderStatusCards', e); }
-  try { renderSpotlight();     } catch (e) { console.warn('renderSpotlight', e); }
-  try { renderTeams();         } catch (e) { console.warn('renderTeams', e); }
-  try { renderMembers(APP.pageMembers);      } catch (e) { console.warn('renderMembers', e); }
+  try { renderDept(); } catch (e) { console.warn('renderDept', e); }
+  try { renderKpiStrip(); } catch (e) { console.warn('renderKpiStrip', e); }
+  try { renderStatusCards(); } catch (e) { console.warn('renderStatusCards', e); }
+  try { renderSpotlight(); } catch (e) { console.warn('renderSpotlight', e); }
+  try { renderTeams(); } catch (e) { console.warn('renderTeams', e); }
+  try { renderMembers(APP.pageMembers); } catch (e) { console.warn('renderMembers', e); }
   try { renderMembersTable(APP.pageMembers); } catch (e) { console.warn('renderMembersTable', e); }
   try { renderPager(filtered.length, totalPages); } catch (e) { console.warn('renderPager', e); }
-  try { renderAuditPanels();   } catch (e) { console.warn('renderAuditPanels', e); }
-  try { renderLeaderboard();   } catch (e) { console.warn('renderLeaderboard', e); }
+  try { renderAuditPanels(); } catch (e) { console.warn('renderAuditPanels', e); }
+  try { renderLeaderboard(); } catch (e) { console.warn('renderLeaderboard', e); }
 }
 
 // ── RENDER — DEPT ─────────────────────────────────────────────────
 function renderDept() {
-  const ms      = APP.members;
+  const ms = APP.members;
   const summary = APP.summary?.dept || {};
-  const totDel  = summary.achieved       !== undefined ? summary.achieved       : ms.reduce((a, m) => a + m.deliveredAmt, 0);
-  const totWip  = summary.wipAmt         !== undefined ? summary.wipAmt         : ms.reduce((a, m) => a + m.wipAmt, 0);
+  const totDel = summary.achieved !== undefined ? summary.achieved : ms.reduce((a, m) => a + m.deliveredAmt, 0);
+  const totWip = summary.wipAmt !== undefined ? summary.wipAmt : ms.reduce((a, m) => a + m.wipAmt, 0);
   const uniqueP = summary.uniqueProjects !== undefined ? summary.uniqueProjects : new Set(ms.flatMap(m => m.projects.map(p => p.order))).size;
   const pct = Math.min((totDel / DEPT_TARGET) * 100, 100);
   const rem = DEPT_TARGET - totDel;
   document.getElementById('deptHeading').textContent = fmtK(totDel) + ' / ' + fmtK(DEPT_TARGET);
-  document.getElementById('deptSub').textContent     = `Department monthly target — ${ms.length} members, ${APP.monthFilter === 'all' ? 'All Time' : APP.monthFilter}`;
-  document.getElementById('deptTgt').textContent     = `Target: ${fmt(DEPT_TARGET)}`;
+  document.getElementById('deptSub').textContent = `Department monthly target — ${ms.length} members, ${APP.monthFilter === 'all' ? 'All Time' : APP.monthFilter}`;
+  document.getElementById('deptTgt').textContent = `Target: ${fmt(DEPT_TARGET)}`;
   setTimeout(() => {
     document.getElementById('deptFill').style.width = pct + '%';
     const circ = 2 * Math.PI * 42, off = circ * (1 - pct / 100);
     document.getElementById('dRing').style.strokeDashoffset = off;
-    document.getElementById('dRingPct').textContent         = pct.toFixed(1) + '%';
+    document.getElementById('dRingPct').textContent = pct.toFixed(1) + '%';
   }, 100);
   document.getElementById('deptKpis').innerHTML = `
     <div class="dkpi"><div class="dkpi-val gn">${fmt(totDel)}</div><div class="dkpi-lbl">Achieved</div></div>
-    <div class="dkpi"><div class="dkpi-val ${rem > 0 ? 'yw' : 'gn'}">${rem > 0 ? '-' + fmt(rem) : '+' + fmt(Math.abs(rem))}</div><div class="dkpi-lbl">Remaining</div></div>
+    <div class="dkpi"><div class="dkpi-val ${rem > 0 ? 'yw' : 'gn'}">${rem > 0 ? fmt(rem) : '+' + fmt(Math.abs(rem))}</div><div class="dkpi-lbl">${rem > 0 ? 'Remaining' : 'Surplus 🎉'}</div></div>
     <div class="dkpi"><div class="dkpi-val yw">${fmt(totWip)}</div><div class="dkpi-lbl">WIP Pipeline</div></div>
     <div class="dkpi"><div class="dkpi-val pu">${uniqueP}</div><div class="dkpi-lbl">Unique Orders</div></div>
   `;
@@ -421,28 +420,28 @@ function renderDept() {
 
 // ── RENDER — KPI STRIP ────────────────────────────────────────────
 function renderKpiStrip() {
-  const ms      = APP.members;
+  const ms = APP.members;
   const summary = APP.summary?.dept || {};
-  const audit   = APP.audit || {};
-  
+  const audit = APP.audit || {};
+
   // Calculate counts and values from the current filtered members (ms)
   // this ensures the counts match the grid when filters are applied.
   // Using unique project order IDs for counts (delC, wipC, canC)
   const allProjs = ms.flatMap(m => m.projects);
-  const mData   = {
+  const mData = {
     projC: new Set(allProjs.map(p => p.order)).size,
     projV: ms.reduce((a, m) => a + m.deliveredAmt + m.wipAmt, 0),
-    runC:  new Set(allProjs.filter(p => p.status === 'WIP' || p.status === 'Revision').map(p => p.order)).size,
-    runV:  ms.reduce((a, m) => a + m.wipAmt, 0),
-    delC:  new Set(allProjs.filter(p => p.status === 'Delivered').map(p => p.order)).size,
-    delV:  ms.reduce((a, m) => a + m.deliveredAmt, 0),
-    wipC:  new Set(allProjs.filter(p => p.status === 'WIP' || p.status === 'Revision').map(p => p.order)).size,
-    wipV:  ms.reduce((a, m) => a + m.wipAmt, 0),
-    canC:  new Set(allProjs.filter(p => p.status === 'Cancelled').map(p => p.order)).size,
+    runC: new Set(allProjs.filter(p => p.status === 'WIP' || p.status === 'Revision').map(p => p.order)).size,
+    runV: ms.reduce((a, m) => a + m.wipAmt, 0),
+    delC: new Set(allProjs.filter(p => p.status === 'Delivered').map(p => p.order)).size,
+    delV: ms.reduce((a, m) => a + m.deliveredAmt, 0),
+    wipC: new Set(allProjs.filter(p => p.status === 'WIP' || p.status === 'Revision').map(p => p.order)).size,
+    wipV: ms.reduce((a, m) => a + m.wipAmt, 0),
+    canC: new Set(allProjs.filter(p => p.status === 'Cancelled').map(p => p.order)).size,
   };
-  
+
   const bestMember = [...APP.filteredMembers].sort((a, b) => b.deliveredAmt - a.deliveredAmt)[0];
-  const allTeams   = [...new Set(ms.map(m => m.team))].filter(Boolean);
+  const allTeams = [...new Set(ms.map(m => m.team))].filter(Boolean);
   const teamScores = allTeams.map(t => {
     const tms = ms.filter(m => m.team === t);
     const amt = tms.reduce((a, m) => a + m.deliveredAmt, 0);
@@ -450,7 +449,7 @@ function renderKpiStrip() {
     return { name: t, amt, pct: tgt > 0 ? Math.round((amt / tgt) * 10000) / 100 : 0 };
   }).sort((a, b) => b.pct - a.pct);
   const bestTeam = teamScores[0];
-  const strip    = document.getElementById('kpiStrip');
+  const strip = document.getElementById('kpiStrip');
   if (!strip) return;
   strip.innerHTML = `
     <div class="kpi-row">
@@ -475,26 +474,23 @@ function renderKpiStrip() {
 // ── RENDER — STATUS CARDS ─────────────────────────────────────────
 function renderStatusCards() {
   document.getElementById('sourcePill').textContent = `Source: ${APP.source}`;
-  document.getElementById('syncPill').textContent   = `Last Sync: ${lastUpdated ? lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--'}`;
-  document.getElementById('auditRows').textContent      = APP.audit.seoSmmRows  || 0;
-  document.getElementById('auditMatched').textContent   = APP.audit.matchedRows  || 0;
+  document.getElementById('syncPill').textContent = `Last Sync: ${lastUpdated ? lastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '--'}`;
+  document.getElementById('auditRows').textContent = APP.audit.seoSmmRows || 0;
+  document.getElementById('auditMatched').textContent = APP.audit.matchedRows || 0;
   document.getElementById('auditUnmatched').textContent = APP.audit.unmatchedRows || 0;
-  document.getElementById('auditProjects').textContent  = APP.audit.uniqueOrders || 0;
+  document.getElementById('auditProjects').textContent = APP.audit.uniqueOrders || 0;
   const visibleTeams = new Set(APP.filteredMembers.map(m => m.team)).size;
   const start = APP.filteredMembers.length ? ((APP.page - 1) * APP.pageSize) + 1 : 0;
-  const end   = Math.min(APP.page * APP.pageSize, APP.filteredMembers.length);
-  document.getElementById('viewMembers').textContent = APP.filteredMembers.length;
-  document.getElementById('viewTeams').textContent   = visibleTeams;
-  document.getElementById('viewPage').textContent    = `${APP.page} / ${Math.max(1, Math.ceil(APP.filteredMembers.length / APP.pageSize))}`;
-  document.getElementById('viewRange').textContent   = APP.filteredMembers.length ? `${start}-${end}` : '0';
+  const end = Math.min(APP.page * APP.pageSize, APP.filteredMembers.length);
+
   document.getElementById('memberSectionMeta').textContent = `Showing ${start || 0}${APP.filteredMembers.length ? `-${end}` : ''} of ${APP.filteredMembers.length} filtered members`;
-  document.getElementById('savedViewMeta').textContent     = `URL synced · ${APP.teamFilter} · ${APP.statusFilter} · ${APP.monthFilter === 'all' ? 'All Time' : APP.monthFilter}`;
+  document.getElementById('savedViewMeta').textContent = `URL synced · ${APP.teamFilter} · ${APP.statusFilter} · ${APP.monthFilter === 'all' ? 'All Time' : APP.monthFilter}`;
 }
 
 // ── RENDER — SPOTLIGHT ────────────────────────────────────────────
 function renderSpotlight() {
-  const sorted    = [...APP.filteredMembers].sort((a, b) => b.deliveredAmt - a.deliveredAmt).slice(0, 3);
-  const medals    = ['🥇', '🥈', '🥉'], rankClass = ['rank-1', 'rank-2', 'rank-3'];
+  const sorted = [...APP.filteredMembers].sort((a, b) => b.deliveredAmt - a.deliveredAmt).slice(0, 3);
+  const medals = ['🥇', '🥈', '🥉'], rankClass = ['rank-1', 'rank-2', 'rank-3'];
   document.getElementById('spotGrid').innerHTML = sorted.map((m, i) => {
     const [c1, c2] = memberPalette(m.name);
     const pct = Math.min(m.progress, 100);
@@ -521,10 +517,10 @@ function renderSpotlight() {
 
 // ── RENDER — TEAMS ────────────────────────────────────────────────
 function renderTeams() {
-  const allMs     = APP.allMembers || APP.members;
+  const allMs = APP.allMembers || APP.members;
   const teamOrder = ['GEO Rankers', 'Rank Riser', 'Search Apex', 'SMM'];
-  
-  const topTeam   = teamOrder.map(team => {
+
+  const topTeam = teamOrder.map(team => {
     const tms = APP.members.filter(m => m.team === team);
     const amt = tms.reduce((a, m) => a + m.deliveredAmt, 0);
     const tgt = TEAM_TARGETS[team] || (tms.length * MEM_TARGET);
@@ -534,11 +530,11 @@ function renderTeams() {
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#14b8a6'];
   document.getElementById('teamGrid').innerHTML = teamOrder.map((tname, idx) => {
     const defaultColor = COLORS[idx % COLORS.length];
-    const tc  = TC[tname] || { color: defaultColor, bg: `rgba(99,102,241,.15)`, icon: '🏢' };
-    
+    const tc = TC[tname] || { color: defaultColor, bg: `rgba(99,102,241,.15)`, icon: '🏢' };
+
     // Team stats logic: prioritize APP.summary.teams from Flask, fallback to member sums
     let del = 0, wip = 0, delivered = 0, wipCount = 0, revCount = 0, canCount = 0, proj = 0;
-    
+
     // Prioritize pre-calculated summary from MongoDB via Flask API
     const ts = APP.summary?.teams?.[tname];
     if (ts) {
@@ -551,23 +547,23 @@ function renderTeams() {
       proj = ts.projects || 0;
     } else {
       // Fallback: sum from current filtered member list
-      const ms  = APP.members.filter(m => m.team === tname);
+      const ms = APP.members.filter(m => m.team === tname);
       del = ms.reduce((a, m) => a + m.deliveredAmt, 0);
       wip = ms.reduce((a, m) => a + (m.wipAmt || 0), 0);
       delivered = ms.reduce((a, m) => a + (m.delivered || 0), 0);
-      wipCount  = ms.reduce((a, m) => a + (m.wip || 0), 0);
-      revCount  = ms.reduce((a, m) => a + (m.revision || 0), 0);
-      canCount  = ms.reduce((a, m) => a + (m.cancelled || 0), 0);
-      proj      = ms.reduce((a, m) => a + (m.total || 0), 0);
+      wipCount = ms.reduce((a, m) => a + (m.wip || 0), 0);
+      revCount = ms.reduce((a, m) => a + (m.revision || 0), 0);
+      canCount = ms.reduce((a, m) => a + (m.cancelled || 0), 0);
+      proj = ms.reduce((a, m) => a + (m.total || 0), 0);
     }
-    
-    const tgt       = TEAM_TARGETS[tname] || (APP.members.filter(m => m.team === tname).length * MEM_TARGET);
+
+    const tgt = TEAM_TARGETS[tname] || (APP.members.filter(m => m.team === tname).length * MEM_TARGET);
     const remaining = Math.max(tgt - del, 0);
-    const pct       = tgt > 0 ? Math.min((del / tgt) * 100, 100) : 0;
-    const hit       = del >= tgt && tgt > 0;
+    const pct = tgt > 0 ? Math.min((del / tgt) * 100, 100) : 0;
+    const hit = del >= tgt && tgt > 0;
     const [healthText, healthCls] = teamHealth(pct);
     const leader = MGMT.leaders[tname]?.name || '';
-    
+
     return `
     <div class="tc${APP.teamFilter === tname ? ' active' : ''}" style="--tcol:${tc.color}" onclick="setTeamClick('${tname}')">
       <div class="tc-glow"></div>
@@ -592,7 +588,7 @@ function renderTeams() {
         <div class="tc-stat-item tc-stat-rev"><div class="tc-stat-val">${revCount}</div><div class="tc-stat-lbl">🔁 Revision</div></div>
         <div class="tc-stat-item tc-stat-can"><div class="tc-stat-val">${canCount}</div><div class="tc-stat-lbl">❌ Cancel</div></div>
         <div class="tc-stat-item tc-stat-tot"><div class="tc-stat-val">${proj}</div><div class="tc-stat-lbl">📦 Total</div></div>
-        <div class="tc-stat-item tc-stat-pct"><div class="tc-stat-val" style="color:${pct>=100?'#10b981':pct>=70?'#3b82f6':pct>=40?'#f59e0b':'#ef4444'}">${pct.toFixed(0)}%</div><div class="tc-stat-lbl">🎯 Complete</div></div>
+        <div class="tc-stat-item tc-stat-pct"><div class="tc-stat-val" style="color:${pct >= 100 ? '#10b981' : pct >= 70 ? '#3b82f6' : pct >= 40 ? '#f59e0b' : '#ef4444'}">${pct.toFixed(0)}%</div><div class="tc-stat-lbl">🎯 Complete</div></div>
       </div>
     </div>`;
   }).join('');
@@ -607,17 +603,17 @@ function renderMembers(list) {
     return;
   }
   const sortedForRank = [...APP.filteredMembers].sort((a, b) => b.deliveredAmt - a.deliveredAmt);
-  const currentRanks  = {}; sortedForRank.forEach((m, i) => currentRanks[m.name] = i + 1);
+  const currentRanks = {}; sortedForRank.forEach((m, i) => currentRanks[m.name] = i + 1);
 
   grid.innerHTML = list.map((m, i) => {
     const [c1, c2] = memberPalette(m.name);
-    const tc    = TC[m.team] || { color: '#6366f1', bg: 'rgba(99,102,241,.15)', border: 'rgba(99,102,241,.3)' };
-    const pct   = Math.min(m.progress || 0, 100);
-    const pc    = pctC(m.progress);
-    const r     = 40, circ = 2 * Math.PI * r, off = circ * (1 - pct / 100);
-    const hit   = m.progress >= 100;
-    const seoC  = m.projects.filter(p => p.service.includes('SEO')).length;
-    const smmC  = m.projects.filter(p => p.service.includes('SMM')).length;
+    const tc = TC[m.team] || { color: '#6366f1', bg: 'rgba(99,102,241,.15)', border: 'rgba(99,102,241,.3)' };
+    const pct = Math.min(m.progress || 0, 100);
+    const pc = pctC(m.progress);
+    const r = 40, circ = 2 * Math.PI * r, off = circ * (1 - pct / 100);
+    const hit = m.progress >= 100;
+    const seoC = m.projects.filter(p => p.service.includes('SEO')).length;
+    const smmC = m.projects.filter(p => p.service.includes('SMM')).length;
     const rankNum = currentRanks[m.name] || '—';
     return `
     <div class="mc${hit ? ' target-hit' : ''}" style="animation-delay:${i * .04}s" onclick="openProj('${m.name}')">
@@ -677,10 +673,10 @@ function renderMembersTable(list) {
     return;
   }
   const sortedForRank = [...APP.filteredMembers].sort((a, b) => b.deliveredAmt - a.deliveredAmt);
-  const currentRanks  = {}; sortedForRank.forEach((m, i) => currentRanks[m.name] = i + 1);
+  const currentRanks = {}; sortedForRank.forEach((m, i) => currentRanks[m.name] = i + 1);
   body.innerHTML = list.map(m => {
     const rank = currentRanks[m.name] || '—';
-    const tc   = TC[m.team] || { color: '#6366f1', bg: 'rgba(99,102,241,.15)', border: 'rgba(99,102,241,.3)' };
+    const tc = TC[m.team] || { color: '#6366f1', bg: 'rgba(99,102,241,.15)', border: 'rgba(99,102,241,.3)' };
     return `<tr class="m-row clickable-row" onclick="openProj('${m.name}')">
       <td>#${rank}</td>
       <td><strong>${escapeHTML(m.name)}</strong><div style="font-size:10px;color:var(--m2)">#${m.id} · ${escapeHTML(m.fullName)}</div></td>
@@ -696,7 +692,7 @@ function renderMembersTable(list) {
 function renderPager(total, totalPages) {
   const pager = document.getElementById('pager');
   const start = total ? ((APP.page - 1) * APP.pageSize) + 1 : 0;
-  const end   = Math.min(APP.page * APP.pageSize, total);
+  const end = Math.min(APP.page * APP.pageSize, total);
   const chips = [];
   for (let p = Math.max(1, APP.page - 2); p <= Math.min(totalPages, APP.page + 2); p++) {
     chips.push(`<button class="page-chip ${p === APP.page ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`);
@@ -736,11 +732,11 @@ function renderLeaderboard() {
   const ri = i => i === 0 ? '<span class="rnum r1">🥇</span>' : i === 1 ? '<span class="rnum r2">🥈</span>' : i === 2 ? '<span class="rnum r3">🥉</span>' : `<span class="rnum" style="color:var(--m2)">${i + 1}</span>`;
   document.getElementById('lbBody').innerHTML = sorted.map((m, i) => {
     const [c1, c2] = memberPalette(m.name);
-    const tc   = TC[m.team] || { color: '#6366f1', bg: 'rgba(99,102,241,.15)', border: 'rgba(99,102,241,.3)' };
-    const pct  = Math.min(m.progress || 0, 100);
+    const tc = TC[m.team] || { color: '#6366f1', bg: 'rgba(99,102,241,.15)', border: 'rgba(99,102,241,.3)' };
+    const pct = Math.min(m.progress || 0, 100);
     const prev = APP.prevRanks[m.name];
     const diff = prev ? (prev - (i + 1)) : null;
-    const chg  = diff === null ? '<span class="rank-chg rank-new">NEW</span>' : diff > 0 ? `<span class="rank-chg rank-up">↑${diff}</span>` : diff < 0 ? `<span class="rank-chg rank-dn">↓${Math.abs(diff)}</span>` : '<span class="rank-chg rank-eq">—</span>';
+    const chg = diff === null ? '<span class="rank-chg rank-new">NEW</span>' : diff > 0 ? `<span class="rank-chg rank-up">↑${diff}</span>` : diff < 0 ? `<span class="rank-chg rank-dn">↓${Math.abs(diff)}</span>` : '<span class="rank-chg rank-eq">—</span>';
     return `<tr>
       <td>${ri(i)}</td><td>${chg}</td>
       <td><div style="display:flex;align-items:center;gap:9px">
@@ -773,11 +769,11 @@ function openProj(name) {
 function renderProjModal() {
   const m = modalMember;
   const [c1, c2] = memberPalette(m.name);
-  document.getElementById('mAv').style.background  = `linear-gradient(135deg,${c1},${c2})`;
-  document.getElementById('mAv').style.boxShadow   = `0 4px 18px ${c1}55`;
-  document.getElementById('mAv').textContent        = m.name[0];
-  document.getElementById('mName').textContent      = m.name;
-  document.getElementById('mSub').textContent       = m.fullName + ' · ' + m.team + ' · #' + m.id;
+  document.getElementById('mAv').style.background = `linear-gradient(135deg,${c1},${c2})`;
+  document.getElementById('mAv').style.boxShadow = `0 4px 18px ${c1}55`;
+  document.getElementById('mAv').textContent = m.name[0];
+  document.getElementById('mName').textContent = m.name;
+  document.getElementById('mSub').textContent = m.fullName + ' · ' + m.team + ' · #' + m.id;
   document.getElementById('mKpis').innerHTML = `
     <div class="mkpi"><div class="mkpi-val" style="color:#a5b4fc">${m.total}</div><div class="mkpi-lbl">Total</div></div>
     <div class="mkpi"><div class="mkpi-val" style="color:#10b981">${m.delivered}</div><div class="mkpi-lbl">Delivered</div></div>
@@ -795,7 +791,7 @@ function renderProjModal() {
     const allParts = p.assign.split(/[\/,]/);
     const pool = new Set();
     allParts.forEach(tok => { const clean = normalizeAssigneeToken(tok).toLowerCase(); if (clean) pool.add(clean); });
-    const sc  = pool.size || 1;
+    const sc = pool.size || 1;
     const hasOrderLink = !!(p.link && p.link !== '#' && p.link !== 'None');
     const link = hasOrderLink ? `<a class="plink" href="${p.link}" target="_blank">Open Order</a>` : '';
     return `<div class="pc">
@@ -821,22 +817,23 @@ function setMTab(tab, btn) {
 
 // ── MANAGER VIEW ──────────────────────────────────────────────────
 function openManager() {
-  const ms       = APP.members;
+  const ms = APP.members;
   const allTeams = [...new Set(APP.allMembers.map(m => m.team))].filter(Boolean).sort();
   let totDel = 0, totWip = 0, totProj = 0, hitTarget = 0, totTgt = 0;
   ms.forEach(m => { totDel += m.deliveredAmt; totWip += m.wipAmt; totProj += m.total; if (m.progress >= 100) hitTarget++; });
   allTeams.forEach(t => { const tms = APP.allMembers.filter(m => m.team === t); totTgt += (TEAM_TARGETS[t] || (tms.length * MEM_TARGET)); });
-  const pct    = totTgt > 0 ? Math.min((totDel / totTgt) * 100, 100) : 0;
+  const pct = totTgt > 0 ? Math.min((totDel / totTgt) * 100, 100) : 0;
   const sorted = [...ms].sort((a, b) => b.deliveredAmt - a.deliveredAmt);
   const alerts = [];
-  if (pct < 50)      alerts.push({ type: 'danger', msg: `⚠️ Department progress ${pct.toFixed(1)}% — মাস শেষ হওয়ার আগে target miss হতে পারে` });
-  else if (pct < 75) alerts.push({ type: 'warn',   msg: `📊 Department ${pct.toFixed(1)}% complete — আরও push দরকার` });
-  else               alerts.push({ type: 'good',   msg: `✅ Department on track — ${pct.toFixed(1)}% achieved` });
-  ms.filter(m => m.total === 0).forEach(m       => alerts.push({ type: 'warn', msg: `⚠️ ${m.name} (${m.team}) — এখনও কোনো project নেই` }));
-  ms.filter(m => m.progress >= 100).forEach(m  => alerts.push({ type: 'good', msg: `🎯 ${m.name} target hit করেছে — ${fmt(m.deliveredAmt)}` }));
+  if (pct < 50) alerts.push({ type: 'danger', msg: `⚠️ Department progress ${pct.toFixed(1)}% — মাস শেষ হওয়ার আগে target miss হতে পারে` });
+  else if (pct < 75) alerts.push({ type: 'warn', msg: `📊 Department ${pct.toFixed(1)}% complete — আরও push দরকার` });
+  else alerts.push({ type: 'good', msg: `✅ Department on track — ${pct.toFixed(1)}% achieved` });
+  ms.filter(m => m.total === 0).forEach(m => alerts.push({ type: 'warn', msg: `⚠️ ${m.name} (${m.team}) — এখনও কোনো project নেই` }));
+  ms.filter(m => m.progress >= 100).forEach(m => alerts.push({ type: 'good', msg: `🎯 ${m.name} target hit করেছে — ${fmt(m.deliveredAmt)}` }));
 
-  document.getElementById('mgrSub').textContent  = `Manager: ${MGMT.manager.name} · ${APP.monthFilter === 'all' ? 'All Time' : APP.monthFilter}`;
-  document.getElementById('mgrBody').innerHTML   = `
+  document.getElementById('mgrSub').textContent = `Manager: ${MGMT.manager.name} · ${APP.monthFilter === 'all' ? 'All Time' : APP.monthFilter}`;
+  document.getElementById('mgrBody').innerHTML = `
+    <button class="hbtn yellow" style="margin-bottom:20px" onclick="openHolidayManager()">⚙️ Manage Working Days / Holidays</button>
     <div class="mgr-grid">
       <div class="mgr-kpi"><div class="mgr-kpi-val" style="color:#6366f1">${fmtK(totDel)}</div><div class="mgr-kpi-lbl">Total Delivered</div></div>
       <div class="mgr-kpi"><div class="mgr-kpi-val" style="color:#10b981">${fmtK(totTgt)}</div><div class="mgr-kpi-lbl">Combined Target</div></div>
@@ -853,49 +850,117 @@ function openManager() {
     <div class="stitle" style="margin-bottom:14px">Team Summary</div>
     <div class="mgr-team-grid">
       ${allTeams.map(tname => {
-        const tms  = APP.allMembers.filter(m => m.team === tname);
-        const tDel = tms.reduce((a, m) => a + m.deliveredAmt, 0);
-        const tWip = tms.reduce((a, m) => a + m.wipAmt, 0);
-        const tgt  = TEAM_TARGETS[tname] || (tms.length * MEM_TARGET);
-        const tPct = tgt > 0 ? Math.min((tDel / tgt) * 100, 100) : 0;
-        const tc   = TC[tname] || { color: '#6366f1' };
-        const leader = MGMT.leaders[tname]?.name || '';
-        return `<div class="mgr-team-card" style="--tcol:${tc.color}">
+    const tms = APP.allMembers.filter(m => m.team === tname);
+    const tDel = tms.reduce((a, m) => a + m.deliveredAmt, 0);
+    const tWip = tms.reduce((a, m) => a + m.wipAmt, 0);
+    const tgt = TEAM_TARGETS[tname] || (tms.length * MEM_TARGET);
+    const tPct = tgt > 0 ? Math.min((tDel / tgt) * 100, 100) : 0;
+    const tc = TC[tname] || { color: '#6366f1' };
+    const leader = MGMT.leaders[tname]?.name || '';
+    return `<div class="mgr-team-card" style="--tcol:${tc.color}">
           <div class="mgr-team-name">${tname}</div>
           <div class="mgr-team-leader">👤 ${leader} · ${tms.length} members</div>
           <div class="mgr-team-amt" style="color:${tc.color}">${fmt(tDel)}</div>
           <div class="mgr-tbar"><div class="mgr-tbar-fill" style="width:${tPct}%;background:${tc.color}"></div></div>
-          <div class="mgr-tstats"><span><b>${tms.reduce((a,m)=>a+m.delivered,0)}</b> delivered</span><span><b>${fmt(tWip)}</b> WIP</span><span><b>${tPct.toFixed(0)}%</b> target</span></div>
+          <div class="mgr-tstats"><span><b>${tms.reduce((a, m) => a + m.delivered, 0)}</b> delivered</span><span><b>${fmt(tWip)}</b> WIP</span><span><b>${tPct.toFixed(0)}%</b> target</span></div>
         </div>`;
-      }).join('')}
+  }).join('')}
     </div>
     <div class="stitle" style="margin-bottom:12px">Individual Ranking</div>
     <table class="mgr-rank-table">
       <thead><tr><th>Rank</th><th>Member</th><th>Team</th><th>Delivered $</th><th>WIP $</th><th>Progress</th><th>Status</th></tr></thead>
       <tbody>${sorted.map((m, i) => {
-        const tc   = TC[m.team] || { color: '#6366f1' };
-        const icon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
-        const sl   = m.progress >= 100 ? '<span style="color:#10b981;font-weight:800">✅ Hit</span>' : m.progress >= 75 ? '<span style="color:#3b82f6;font-weight:700">🔵 Close</span>' : m.progress >= 50 ? '<span style="color:#f59e0b;font-weight:700">🟡 Mid</span>' : '<span style="color:#ef4444;font-weight:700">🔴 Behind</span>';
-        return `<tr><td style="font-weight:900">${icon}</td><td style="font-weight:700">${m.name}<div style="font-size:10px;color:var(--m2)">${m.fullName}</div></td><td><span style="color:${tc.color};font-weight:700;font-size:11px">${m.team}</span></td><td style="font-weight:800;color:#10b981">${fmt(m.deliveredAmt)}</td><td style="color:#f59e0b">${fmt(m.wipAmt)}</td><td style="font-weight:700;color:${pctC(m.progress)}">${m.progress.toFixed(1)}%</td><td>${sl}</td></tr>`;
-      }).join('')}</tbody>
+    const tc = TC[m.team] || { color: '#6366f1' };
+    const icon = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `#${i + 1}`;
+    const sl = m.progress >= 100 ? '<span style="color:#10b981;font-weight:800">✅ Hit</span>' : m.progress >= 75 ? '<span style="color:#3b82f6;font-weight:700">🔵 Close</span>' : m.progress >= 50 ? '<span style="color:#f59e0b;font-weight:700">🟡 Mid</span>' : '<span style="color:#ef4444;font-weight:700">🔴 Behind</span>';
+    return `<tr><td style="font-weight:900">${icon}</td><td style="font-weight:700">${m.name}<div style="font-size:10px;color:var(--m2)">${m.fullName}</div></td><td><span style="color:${tc.color};font-weight:700;font-size:11px">${m.team}</span></td><td style="font-weight:800;color:#10b981">${fmt(m.deliveredAmt)}</td><td style="color:#f59e0b">${fmt(m.wipAmt)}</td><td style="font-weight:700;color:${pctC(m.progress)}">${m.progress.toFixed(1)}%</td><td>${sl}</td></tr>`;
+  }).join('')}</tbody>
     </table>`;
   openOverlay('mgrOverlay');
 }
 
+async function openHolidayManager() {
+  const body = document.getElementById('mgrBody');
+  body.innerHTML = `
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px;">
+       <button class="hbtn" onclick="openManager()">← Back to Stats</button>
+       <h3 style="font-size:16px; font-weight:900;">Holiday & Working Days Manager</h3>
+    </div>
+    <div class="holiday-manager-card" style="background:var(--card2); padding:20px; border-radius:16px; border:1px solid var(--gb);">
+       <p style="font-size:12px; color:var(--m2); margin-bottom:15px;">Override the default weekday count for specific months to account for holidays.</p>
+       <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap:12px; align-items:end;">
+          <div><label style="font-size:10px; font-weight:800; display:block; margin-bottom:4px;">Year</label>
+          <input type="number" id="hYear" value="${new Date().getFullYear()}" class="month-sel" style="width:100%"></div>
+          <div><label style="font-size:10px; font-weight:800; display:block; margin-bottom:4px;">Month</label>
+          <select id="hMonth" class="month-sel" style="width:100%">
+             ${Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}" ${i === new Date().getMonth() ? 'selected' : ''}>${new Date(2000, i).toLocaleString('default', { month: 'long' })}</option>`).join('')}
+          </select></div>
+          <div><label style="font-size:10px; font-weight:800; display:block; margin-bottom:4px;">Work Days</label>
+          <input type="number" id="hCount" value="22" class="month-sel" style="width:100%"></div>
+          <button class="hbtn green" onclick="saveHolidayOverride()">Save Override</button>
+       </div>
+       <div id="holidayList" style="margin-top:25px; border-top:1px solid var(--gb); padding-top:15px;">
+          <div style="font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:10px;">Active Overrides</div>
+          <div id="holidayItems">Loading...</div>
+       </div>
+    </div>`;
+  loadHolidayList();
+}
+
+async function loadHolidayList() {
+  const container = document.getElementById('holidayItems');
+  try {
+    const res = await fetch('/api/admin/calendar-config');
+    const config = await res.json();
+    const entries = [];
+    Object.keys(config).forEach(year => {
+      if (year === '_id') return;
+      Object.keys(config[year]).forEach(month => {
+        entries.push({ year, month, count: config[year][month] });
+      });
+    });
+    if (!entries.length) { container.innerHTML = '<div style="font-size:12px; color:var(--m2)">No overrides set. Using standard weekdays.</div>'; return; }
+    container.innerHTML = entries.map(e => `
+      <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.03);">
+        <span style="font-size:13px; font-weight:700;">${new Date(e.year, e.month - 1).toLocaleString('default', { month: 'long' })} ${e.year}</span>
+        <span style="font-size:13px; color:#10b981; font-weight:800;">${e.count} Working Days</span>
+      </div>
+    `).join('');
+  } catch (e) { container.innerHTML = 'Error loading config.'; }
+}
+
+async function saveHolidayOverride() {
+  const year = document.getElementById('hYear').value;
+  const month = document.getElementById('hMonth').value;
+  const count = parseInt(document.getElementById('hCount').value);
+
+  const res = await fetch('/api/admin/calendar-config');
+  const config = await res.json();
+  if (!config[year]) config[year] = {};
+  config[year][month] = count;
+
+  const saveRes = await fetch('/api/admin/calendar-config', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config)
+  });
+  if (saveRes.ok) { showToast('Calendar updated!', '#10b981'); loadHolidayList(); }
+}
+
 // ── OVERLAY HELPERS ───────────────────────────────────────────────
-function openOverlay(id)    { document.getElementById(id).classList.add('open');    document.body.style.overflow = 'hidden'; }
-function closeOverlay(id)   { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
-function handleOC(e, id)    { if (e.target === document.getElementById(id)) closeOverlay(id); }
+function openOverlay(id) { document.getElementById(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
+function closeOverlay(id) { document.getElementById(id).classList.remove('open'); document.body.style.overflow = ''; }
+function handleOC(e, id) { if (e.target === document.getElementById(id)) closeOverlay(id); }
 document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeOverlay('projOverlay'); closeOverlay('mgrOverlay'); } });
 
 // ── EXPORT ────────────────────────────────────────────────────────
 function downloadCSV() {
-  const ms      = [...APP.members].sort((a, b) => b.deliveredAmt - a.deliveredAmt);
+  const ms = [...APP.members].sort((a, b) => b.deliveredAmt - a.deliveredAmt);
   const headers = ['Rank', 'Name', 'Full Name', 'ID', 'Team', 'Target $', 'Delivered $', 'WIP $', 'Progress %', 'Delivered Count', 'WIP Count', 'Cancelled', 'Total Projects'];
-  const rows    = ms.map((m, i) => [i + 1, m.name, m.fullName, m.id, m.team, m.target, m.deliveredAmt.toFixed(2), m.wipAmt.toFixed(2), m.progress.toFixed(1), m.delivered, m.wip + m.revision, m.cancelled, m.total]);
-  const csv     = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
-  const blob    = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url     = URL.createObjectURL(blob);
+  const rows = ms.map((m, i) => [i + 1, m.name, m.fullName, m.id, m.team, m.target, m.deliveredAmt.toFixed(2), m.wipAmt.toFixed(2), m.progress.toFixed(1), m.delivered, m.wip + m.revision, m.cancelled, m.total]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href = url;
   a.download = `SEO_Performance_${APP.monthFilter === 'all' ? 'AllTime' : APP.monthFilter}_${new Date().toISOString().slice(0, 10)}.csv`;
   a.click(); URL.revokeObjectURL(url);

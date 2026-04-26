@@ -11,6 +11,7 @@ load_dotenv()
 
 # ─── CONFIGURATION ──────────────────────────────────────────
 SHEET_ID = os.getenv("SHEET_ID")
+QUERY_SHEET_ID = os.getenv("QUERY_SHEET_ID", "1jClQQmwVHg4Eg3WGda0R3w7_B_qwuRE5_W4QGxvabIE")
 MONGO_URI = os.getenv("MONGO_URI")
 DB_NAME = "seo_dashboard"
 
@@ -100,8 +101,9 @@ def safe_float(val):
     except:
         return 0.0
 
-def fetch_sheet_data_gviz(sheet_name):
-    url = f"https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:json&sheet={sheet_name.replace(' ', '+')}&t={int(time.time())}"
+def fetch_sheet_data_gviz(sheet_name, sheet_id=None):
+    if not sheet_id: sheet_id = SHEET_ID
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:json&sheet={sheet_name.replace(' ', '+')}&t={int(time.time())}"
     req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
     try:
         with urllib.request.urlopen(req) as res:

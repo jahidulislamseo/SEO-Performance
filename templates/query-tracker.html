@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Query & Lead Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/base.css" />
+<link rel="stylesheet" href="/static/css/tracker.css" />
+<style>
+  .query-card {
+    background: var(--card);
+    border: 1px solid var(--gb);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: all 0.2s;
+  }
+  .query-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .q-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+  .q-client { font-size: 16px; font-weight: 700; color: var(--text); }
+  .q-meta { font-size: 12px; color: var(--muted); }
+  .q-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px; }
+  .q-item {  }
+  .q-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 2px; }
+  .q-val { font-size: 13px; font-weight: 600; color: var(--text); }
+  .q-val a { color: var(--accent); text-decoration: none; }
+  .q-val a:hover { text-decoration: underline; }
+  .q-remarks { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--gb); }
+  .q-remark-box { 
+    width: 100%; 
+    background: rgba(0,0,0,0.1); 
+    border: 1px solid var(--gb); 
+    border-radius: 6px; 
+    padding: 8px; 
+    color: var(--text); 
+    font-size: 13px; 
+    margin-top: 4px;
+    min-height: 40px;
+    resize: vertical;
+  }
+  .q-save-btn {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .q-save-btn:hover { opacity: 0.9; }
+  .status-badge {
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .st-new { background: rgba(59,130,246,0.15); color: #60a5fa; }
+  .st-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .st-closed { background: rgba(16,185,129,0.15); color: #10b981; }
+</style>
+<script src="/static/js/themes.js"></script>
+</head>
+<body>
+<div class="g1"></div><div class="g2"></div>
+
+<header class="hdr">
+  <div class="hl">
+    <div class="logo">🚀</div>
+    <div>
+      <div class="htitle">Query & Lead Tracker</div>
+      <div class="hsub">GEO Rankers · Sales Assistant</div>
+    </div>
+  </div>
+
+  <div class="theme-switcher">
+    <button class="theme-btn" id="theme-btn" onclick="toggleThemeMenu()">
+      <span id="theme-label">🌙</span>
+    </button>
+    <div class="theme-menu" id="theme-menu">
+      <button class="theme-item it-light" onclick="setTheme('light')">☀️ Light</button>
+      <button class="theme-item it-dark" onclick="setTheme('dark')">🌙 Dark</button>
+      <button class="theme-item it-system" onclick="setTheme('system')">💻 System</button>
+    </div>
+  </div>
+  <div class="hr">
+    <button class="hbtn" onclick="fetchQueries(true)" id="rfBtn"><span id="rfIcon">↻</span> Refresh</button>
+    <a class="hbtn green" href="/" target="_self">← Dashboard</a>
+  </div>
+</header>
+
+
+<main class="main">
+  <div class="controls" style="margin-bottom: 20px;">
+    <div class="srch-wrap">
+      <span class="srch-icon">🔍</span>
+      <input class="srch" id="srch" placeholder="Search client, member or service..." oninput="filterQueries()"/>
+    </div>
+    <select class="sel" id="memberFilter" onchange="filterQueries()">
+      <option value="">All Members</option>
+    </select>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button onclick="changeMonth(-1)" style="background:var(--glass);border:1px solid var(--gb);color:var(--text);padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">‹</button>
+      <span id="monthDisplay" style="font-size:13px;font-weight:800;color:var(--text);min-width:80px;text-align:center;">—</span>
+      <button onclick="changeMonth(1)" style="background:var(--glass);border:1px solid var(--gb);color:var(--text);padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">›</button>
+    </div>
+    <div class="ctrl-right">
+      <span class="badge" id="countBadge">Loading...</span>
+    </div>
+  </div>
+
+  <div id="queryList">
+    <div class="empty-state"><h3>🔍</h3><p>Fetching query data...</p></div>
+  </div>
+</main>
+
+<div class="toast-box" id="toastBox"></div>
+<footer class="footer">SEO Performance Hub · Query Tracker · <span id="fDate"></span></footer>
+
+<script>
+  let allQueries = [];
+  
+  // Get month from URL param or default to current month
+  const urlParams = new URLSearchParams(window.location.search);
+  let currentMonth = urlParams.get('month') || new Date().toISOString().slice(0, 7);
+
+  // Fetch logic with optional force refresh parameter
+  async function fetchQueries(forceRefresh = false) {
+    const btn = document.getElementById('rfBtn');
+    if(btn) { btn.disabled = true; document.getElementById('rfIcon').classList.add('spin'); }
+    
+    try {
+      const url = `/api/query-tracker?month=${currentMonth}${forceRefresh ? '&refresh=true' : ''}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      if(json.error) throw new Error(json.error);
+      allQueries = json;
+      
+      // Update month display
+      document.getElementById('monthDisplay').textContent = currentMonth;
+      
+      // Populate member filter
+      const members = [...new Set(allQueries.map(q => q.member))].filter(Boolean).sort();
+      const sel = document.getElementById('memberFilter');
+      sel.innerHTML = '<option value="">All Members</option>';
+      members.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m; opt.textContent = m;
+        sel.appendChild(opt);
+      });
+      
+      renderQueries(allQueries);
+      if(forceRefresh) showToast("Refreshed with Live Sheet Data ✅");
+    } catch (err) {
+
+      console.error('fetchQueries error:', err);
+      document.getElementById('queryList').innerHTML = `<div class="empty-state"><h3>❌</h3><p>Error: ${err.message}</p></div>`;
+    } finally {
+      if(btn) { btn.disabled = false; document.getElementById('rfIcon').classList.remove('spin'); }
+    }
+  }
+
+  function changeMonth(offset) {
+    const [y, m] = currentMonth.split('-').map(Number);
+    const d = new Date(y, m - 1 + offset, 1);
+    currentMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    fetchQueries();
+  }
+
+  function renderQueries(data) {
+    const list = document.getElementById('queryList');
+    const badge = document.getElementById('countBadge');
+    
+    if(!data || data.length === 0) {
+      list.innerHTML = '<div class="empty-state"><h3>📭</h3><p>No queries found matching filters.</p></div>';
+      badge.textContent = 'Showing 0';
+      return;
+    }
+    
+    badge.innerHTML = `Showing <b>${data.length}</b>`;
+    
+    list.innerHTML = data.map((q, idx) => `
+      <div class="query-card">
+        <div class="q-header">
+          <div>
+            <div class="q-client">${q.client || 'Unnamed Client'}</div>
+            <div class="q-meta">${q.date} · ${q.member}</div>
+          </div>
+          <span class="status-badge ${getStatClass(q.status)}">${q.status || 'NEW'}</span>
+        </div>
+        
+        <div class="q-grid">
+          <div class="q-item">
+            <div class="q-label">Service</div>
+            <div class="q-val">${q.service}</div>
+          </div>
+          <div class="q-item">
+            <div class="q-label">Profile</div>
+            <div class="q-val">${q.profile}</div>
+          </div>
+          <div class="q-item">
+            <div class="q-label">Source</div>
+            <div class="q-val">${q.source}</div>
+          </div>
+          <div class="q-item">
+            <div class="q-label">Inbox</div>
+            <div class="q-val">${q.inboxUrl ? `<a href="${q.inboxUrl}" target="_blank">View Inbox 🔗</a>` : 'N/A'}</div>
+          </div>
+          
+          <div class="q-item">
+            <div class="q-label">Follow-up 1</div>
+            <div class="q-val">${q.fu1 || '-'}</div>
+          </div>
+          <div class="q-item">
+            <div class="q-label">Follow-up 2</div>
+            <div class="q-val">${q.fu2 || '-'}</div>
+          </div>
+          <div class="q-item">
+            <div class="q-label">Follow-up 3</div>
+            <div class="q-val">${q.fu3 || '-'}</div>
+          </div>
+          <div class="q-item">
+            <div class="q-label">Conv. Status</div>
+            <div class="q-val">${q.convStatus || '-'}</div>
+          </div>
+
+          <div class="q-item">
+            <div class="q-label">Conversation URL</div>
+            <div class="q-val">${q.convUrl ? `<a href="${q.convUrl}" target="_blank" style="color:var(--accent); font-weight:700;">View Chat 💬</a>` : 'N/A'}</div>
+          </div>
+          <div class="q-item">
+            <div class="q-label">Brief URL</div>
+            <div class="q-val">${q.briefUrl ? `<a href="${q.briefUrl}" target="_blank" style="color:var(--accent); font-weight:700;">View Brief 📄</a>` : 'N/A'}</div>
+          </div>
+        </div>
+
+        <div class="q-remarks">
+          <div class="q-label">Local Remark (Internal)</div>
+          <textarea class="q-remark-box" id="rem-${idx}" placeholder="Add private notes here...">${q.localRemark || ''}</textarea>
+          <button class="q-save-btn" onclick="saveRemark('${q.rowKey}', ${idx})">Save Remark</button>
+          
+          ${q.sheetRemarks ? `
+            <div style="margin-top:10px; font-size:11px; color:var(--muted); font-style:italic;">
+              <b>Sheet Remark:</b> ${q.sheetRemarks}
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function getStatClass(st) {
+    if(!st) return 'st-new';
+    st = st.toLowerCase();
+    if(st.includes('pending') || st.includes('wait')) return 'st-pending';
+    if(st.includes('done') || st.includes('closed') || st.includes('sold')) return 'st-closed';
+    return 'st-new';
+  }
+
+  function filterQueries() {
+    const term = document.getElementById('srch').value.toLowerCase();
+    const mem = document.getElementById('memberFilter').value;
+    
+    const filtered = allQueries.filter(q => {
+      const matchSearch = (q.client + q.member + q.service + q.profile).toLowerCase().includes(term);
+      const matchMem = !mem || q.member === mem;
+      return matchSearch && matchMem;
+    });
+    
+    renderQueries(filtered);
+  }
+
+  async function saveRemark(key, idx) {
+    const val = document.getElementById(`rem-${idx}`).value;
+    try {
+      const res = await fetch('/api/query-remarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, remark: val })
+      });
+      if(res.ok) {
+        showToast('Remark saved! ✅');
+        // Update local data
+        const q = allQueries.find(item => item.rowKey === key);
+        if(q) q.localRemark = val;
+      }
+    } catch (err) {
+      showToast('Error saving remark ❌');
+    }
+  }
+
+  function showToast(msg) {
+    const tb = document.getElementById('toastBox');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.textContent = msg;
+    tb.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  document.getElementById('fDate').textContent = new Date().toLocaleDateString();
+  fetchQueries();
+</script>
+</body>
+</html>

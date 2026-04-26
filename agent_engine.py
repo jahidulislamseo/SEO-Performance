@@ -239,6 +239,11 @@ def process_and_save(df, db):
             
             s = {
                 "name": name, "fullName": m["fullName"], "team": m["team"], "id": m.get("id",""),
+                "role": m.get("role", "Member"),
+                "email": m.get("email", ""),
+                "phone": m.get("phone", ""),
+                "joinDate": m.get("joinDate", ""),
+                "manager": m.get("manager", "Mehedi Hassan"),
                 "target": MEM_TARGET(),
                 "total": len(m_df),
                 "delivered": len(delivered),

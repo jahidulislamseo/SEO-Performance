@@ -11,7 +11,12 @@
       "Bash(taskkill /PID 24708 /F)",
       "PowerShell(Stop-Process -Id 24708 -Force)",
       "Bash(python server.py)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/delivery-tracker)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/delivery-tracker)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/employee)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/)",
+      "Bash(Get-FileHash \"c:\\\\Users\\\\Jahidul Islam\\\\Downloads\\\\jahidul\\\\static\\\\js\\\\employee.js\")",
+      "Bash(curl -s http://127.0.0.1:5000/employee)",
+      "Bash(curl -s http://127.0.0.1:5000/static/js/employee.js)"
     ]
   }
 }

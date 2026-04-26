@@ -18,22 +18,34 @@ def sync():
     member_rows = fetch_sheet_data_gviz("All Member Data")
     if member_rows:
         members_collection = db["members"]
-        # Skip header if present (header row 0: ID, Full Name, Short Name, etc.)
-        valid_members = []
-        for r in member_rows:
-            if len(r) > 6 and r[2] and r[6]: # Short Name and Team
-                valid_members.append({
-                    "name": str(r[2]).strip(),
-                    "fullName": str(r[1]).strip() if len(r)>1 else str(r[2]),
-                    "id": str(r[0]).strip(),
-                    "team": str(r[6]).strip(),
-                    "updated_at": time.time()
-                })
-        if valid_members:
-            # Simple overwrite for members for now
-            members_collection.delete_many({})
-            members_collection.insert_many(valid_members)
-            print(f"Synced {len(valid_members)} members.")
+        member_ops = []
+        for i, r in enumerate(member_rows):
+            if i == 0: continue # Skip header
+            if len(r) > 6 and r[0] and r[2]: 
+                member_id = str(r[0]).strip()
+                member_ops.append(
+                    UpdateOne(
+                        {"id": member_id},
+                        {
+                            "$set": {
+                                "name": str(r[2]).strip(),
+                                "fullName": str(r[1]).strip() if len(r)>1 else str(r[2]),
+                                "team": str(r[6]).strip(),
+                                "role": str(r[3]).strip() if len(r) > 3 else "Member",
+                                "email": str(r[4]).strip() if len(r) > 4 else "",
+                                "phone": str(r[5]).strip() if len(r) > 5 else "",
+                                "joinDate": str(r[7]).strip() if len(r) > 7 else "",
+                                "manager": str(r[8]).strip() if len(r) > 8 else "Mehedi Hassan",
+                                "updated_at": time.time()
+                            },
+                            "$setOnInsert": {"password": "pass123"}
+                        },
+                        upsert=True
+                    )
+                )
+        if member_ops:
+            result = members_collection.bulk_write(member_ops)
+            print(f"Synced {result.upserted_count + result.modified_count} members.")
 
     # 2. Sync Projects (Kam Data)
     print("Fetching Projects...")
