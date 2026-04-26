@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;padding:20px;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.mc{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:18px;width:200px;cursor:pointer;transition:all .2s;animation:cardIn .4s ease}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.mc:hover{border-color:rgba(95,133,162,.4);transform:translateY(-2px)}
+.mc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px}
+.mc-av{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff;flex-shrink:0}
+.mc-rank{font-size:9px;font-weight:800;color:#94a3b8;background:rgba(148,163,184,.1);border:1px solid rgba(148,163,184,.2);padding:3px 7px;border-radius:20px}
+.mc-name{font-size:13px;font-weight:800;color:#f1f5f9;margin-bottom:2px;letter-spacing:-.2px}
+.mc-team{font-size:10px;font-weight:600;color:#94a3b8}
+.mc-prog{margin:10px 0 8px}
+.prog-labels{display:flex;justify-content:space-between;font-size:10px;font-weight:700;margin-bottom:5px}
+.track{height:6px;background:rgba(148,163,184,.18);border-radius:50px;overflow:hidden}
+.fill{height:100%;border-radius:50px;position:relative;overflow:hidden}
+.fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shimmer 2.5s linear infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+.mc-stats{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat{background:rgba(255,255,255,.03);border:1px solid rgba(148,163,184,.1);border-radius:8px;padding:6px 8px}
+.stat-val{font-size:13px;font-weight:800;color:#10b981;font-variant-numeric:tabular-nums}
+.stat-lbl{font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px}
+</style></head>
+<body>
+<!-- Card 1: Top performer -->
+<div class="mc">
+  <div class="mc-top">
+    <div class="mc-av" style="background:linear-gradient(135deg,#2f5d8a,#5f85a2)">JI</div>
+    <div class="mc-rank">#1</div>
+  </div>
+  <div class="mc-name">Jahidul Islam</div>
+  <div class="mc-team">Geo Rankers</div>
+  <div class="mc-prog">
+    <div class="prog-labels"><span style="color:#10b981">92%</span><span style="color:#94a3b8">Target</span></div>
+    <div class="track"><div class="fill" style="width:92%;background:linear-gradient(90deg,#059669,#10b981)"></div></div>
+  </div>
+  <div class="mc-stats">
+    <div class="stat"><div class="stat-val">$1,012</div><div class="stat-lbl">Delivered</div></div>
+    <div class="stat"><div class="stat-val" style="color:#f59e0b">$340</div><div class="stat-lbl">WIP</div></div>
+    <div class="stat"><div class="stat-val" style="color:#cbd5e1">14</div><div class="stat-lbl">Done</div></div>
+    <div class="stat"><div class="stat-val" style="color:#ef4444">1</div><div class="stat-lbl">Cancel</div></div>
+  </div>
+</div>
+<!-- Card 2: Mid performer -->
+<div class="mc">
+  <div class="mc-top">
+    <div class="mc-av" style="background:linear-gradient(135deg,#0f766e,#10b981)">SR</div>
+    <div class="mc-rank">#4</div>
+  </div>
+  <div class="mc-name">Sara Rahman</div>
+  <div class="mc-team">Rank Riser</div>
+  <div class="mc-prog">
+    <div class="prog-labels"><span style="color:#f59e0b">58%</span><span style="color:#94a3b8">Target</span></div>
+    <div class="track"><div class="fill" style="width:58%;background:linear-gradient(90deg,#d97706,#f59e0b)"></div></div>
+  </div>
+  <div class="mc-stats">
+    <div class="stat"><div class="stat-val">$638</div><div class="stat-lbl">Delivered</div></div>
+    <div class="stat"><div class="stat-val" style="color:#f59e0b">$520</div><div class="stat-lbl">WIP</div></div>
+    <div class="stat"><div class="stat-val" style="color:#cbd5e1">9</div><div class="stat-lbl">Done</div></div>
+    <div class="stat"><div class="stat-val" style="color:#ef4444">0</div><div class="stat-lbl">Cancel</div></div>
+  </div>
+</div>
+</body></html>

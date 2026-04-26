@@ -115,6 +115,8 @@ def backup_to_db(df, db):
             "assign": p.get("assign"),
             "team": p.get("op_dept"),
             "link": p.get("order_link"),
+            "instruction": p.get("instruction"),
+            "profile": p.get("profile"),
             "last_seen": time.time()
         }
         
@@ -262,7 +264,9 @@ def process_and_save(df, db):
                     "client": p.get("client"), "date": p.get("date"),
                     "deliveredBy": p.get("del_by"), "deliveredDate": p.get("del_date"),
                     "assign": p.get("assign"), "service": p.get("service"),
-                    "link": p.get("order_link")
+                    "link": p.get("order_link"),
+                    "instruction": p.get("instruction"),
+                    "profile": p.get("profile")
                 })
         else:
             s = {

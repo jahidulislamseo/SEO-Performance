@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/><style>
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;padding:20px;display:flex;flex-direction:column;gap:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.swatch{display:flex;flex-direction:column;gap:6px}
+.chip{width:80px;height:54px;border-radius:10px;border:1px solid rgba(148,163,184,.15)}
+.lbl{font-size:10px;font-weight:800;color:#94a3b8;letter-spacing:.5px}
+.val{font-size:9px;color:#64748b;font-weight:600}
+.title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#475569;margin-bottom:4px}
+.grad{width:200px;height:54px;border-radius:10px;background:linear-gradient(90deg,#2f5d8a,#5f85a2,#4f8ea6);border:1px solid rgba(148,163,184,.15)}
+</style></head>
+<body>
+<div class="title">Blue / Accent Scale</div>
+<div class="row">
+  <div class="swatch"><div class="chip" style="background:#2f5d8a"></div><div class="lbl">Blue 700</div><div class="val">#2f5d8a</div></div>
+  <div class="swatch"><div class="chip" style="background:#3d6f9b"></div><div class="lbl">Blue 600</div><div class="val">#3d6f9b</div></div>
+  <div class="swatch"><div class="chip" style="background:#4f8ea6"></div><div class="lbl">Blue 500</div><div class="val">#4f8ea6</div></div>
+  <div class="swatch"><div class="chip" style="background:#5f85a2"></div><div class="lbl">Blue 400</div><div class="val">#5f85a2</div></div>
+  <div class="swatch"><div class="chip" style="background:#7ea8c4"></div><div class="lbl">Blue 300</div><div class="val">#7ea8c4</div></div>
+</div>
+<div class="title" style="margin-top:4px">Accent Gradient (progress bars, fills)</div>
+<div class="row">
+  <div class="grad"></div>
+</div>
+</body></html>

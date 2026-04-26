@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;padding:20px;display:flex;flex-direction:column;gap:16px}
+.title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#475569;margin-bottom:4px}
+.track{background:rgba(148,163,184,.18);border-radius:50px;overflow:hidden;position:relative}
+.fill{height:100%;border-radius:50px;position:relative;overflow:hidden}
+.fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shimmer 2.5s linear infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+.blue-fill{background:linear-gradient(90deg,#2f5d8a,#5f85a2,#4f8ea6)}
+.green-fill{background:linear-gradient(90deg,#059669,#10b981)}
+.amber-fill{background:linear-gradient(90deg,#d97706,#f59e0b)}
+.red-fill{background:linear-gradient(90deg,#dc2626,#ef4444)}
+.labels{display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:#64748b;margin-top:4px}
+.row{display:flex;align-items:center;gap:10px}
+.pct{font-size:12px;font-weight:800;color:#cbd5e1;min-width:36px;text-align:right}
+.svg-ring{display:flex;align-items:center;gap:16px}
+</style></head>
+<body>
+<div class="title">Progress Bars</div>
+<div>
+  <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:4px"><span>Dept Progress — Blue (default)</span><span>69%</span></div>
+  <div class="track" style="height:10px"><div class="fill blue-fill" style="width:69%"></div></div>
+</div>
+<div>
+  <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:4px"><span>Member Delivered — Green</span><span>88%</span></div>
+  <div class="track" style="height:8px"><div class="fill green-fill" style="width:88%"></div></div>
+</div>
+<div>
+  <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:4px"><span>WIP Pipeline — Amber</span><span>45%</span></div>
+  <div class="track" style="height:8px"><div class="fill amber-fill" style="width:45%"></div></div>
+</div>
+<div>
+  <div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:#94a3b8;margin-bottom:4px"><span>Month elapsed — thin (5px)</span><span>85%</span></div>
+  <div class="track" style="height:5px"><div class="fill blue-fill" style="width:85%"></div></div>
+  <div class="labels"><span>$0</span><span>Target: $35,000</span></div>
+</div>
+<div class="title" style="margin-top:4px">SVG Ring (dept overview)</div>
+<svg width="80" height="80" viewBox="0 0 100 100">
+  <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,.06)" stroke-width="8" fill="none"/>
+  <circle cx="50" cy="50" r="42" stroke="#6366f1" stroke-width="8" fill="none"
+    stroke-dasharray="263.9" stroke-dashoffset="80" stroke-linecap="round"
+    style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1.8s ease"/>
+</svg>
+</body></html>

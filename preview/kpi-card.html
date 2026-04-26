@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;padding:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-start}
+.kpi{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:16px;padding:14px 18px;min-width:130px}
+.kpi-tag{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-bottom:6px}
+.kpi-val{font-size:26px;font-weight:900;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.kpi-sub{font-size:10px;font-weight:600;color:#64748b;margin-top:4px}
+.dept-card{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:20px;padding:20px 24px;width:100%;position:relative;overflow:hidden}
+.dept-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(47,93,138,.12) 0%,rgba(95,133,162,.06) 50%,transparent 100%)}
+.dept-inner{position:relative;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
+.dept-tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#cbd5e1;margin-bottom:4px}
+.dept-heading{font-size:24px;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,#f3f6fa,#c6d2de,#879caf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.dept-sub{font-size:12px;color:#cbd5e1;margin:4px 0 12px}
+.track{height:10px;background:rgba(148,163,184,.18);border-radius:50px;overflow:hidden;margin-bottom:6px}
+.fill{height:100%;border-radius:50px;background:linear-gradient(90deg,#2f5d8a,#5f85a2,#4f8ea6);position:relative;overflow:hidden}
+.fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shimmer 2.5s linear infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+.tlabels{display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:#64748b}
+</style></head>
+<body>
+<!-- KPI strip cards -->
+<div class="kpi"><div class="kpi-tag">Total Delivered</div><div class="kpi-val" style="color:#10b981">$24,350</div><div class="kpi-sub">↑ 12% vs last month</div></div>
+<div class="kpi"><div class="kpi-tag">WIP Pipeline</div><div class="kpi-val" style="color:#f59e0b">$8,200</div><div class="kpi-sub">8 active projects</div></div>
+<div class="kpi"><div class="kpi-tag">Cancelled</div><div class="kpi-val" style="color:#ef4444">$1,450</div><div class="kpi-sub">3 orders</div></div>
+<div class="kpi"><div class="kpi-tag">Members</div><div class="kpi-val" style="color:#cbd5e1">22</div><div class="kpi-sub">Across 4 teams</div></div>
+<!-- Dept overview -->
+<div class="dept-card">
+  <div class="dept-inner">
+    <div>
+      <div class="dept-tag">Department Overview</div>
+      <div class="dept-heading">$24,350 delivered</div>
+      <div class="dept-sub">GEO Rankers · 69.6% of $35,000 monthly target</div>
+      <div class="track"><div class="fill" style="width:70%"></div></div>
+      <div class="tlabels"><span>$0</span><span>Target: $35,000</span></div>
+    </div>
+    <svg width="80" height="80" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,.06)" stroke-width="8" fill="none"/>
+      <circle cx="50" cy="50" r="42" stroke="#6366f1" stroke-width="8" fill="none"
+        stroke-dasharray="263.9" stroke-dashoffset="79" stroke-linecap="round"
+        style="transform:rotate(-90deg);transform-origin:center"/>
+      <text x="50" y="48" text-anchor="middle" font-family="Manrope,sans-serif" font-size="14" font-weight="900" fill="#f1f5f9">70%</text>
+      <text x="50" y="60" text-anchor="middle" font-family="Manrope,sans-serif" font-size="8" font-weight="700" fill="#94a3b8">Done</text>
+    </svg>
+  </div>
+</div>
+</body></html>

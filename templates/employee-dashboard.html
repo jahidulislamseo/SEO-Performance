@@ -1,273 +1,1009 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Employee Portal — GEO Rankers</title>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/static/css/base.css"/>
-<link rel="stylesheet" href="/static/css/employee.css"/>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="/static/js/themes.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/css/colors_and_type.css"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;color:#f1f5f9;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(95,133,162,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(95,133,162,.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+.g1{position:fixed;top:-200px;left:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(61,111,155,.18) 0%,transparent 70%);pointer-events:none;z-index:0}
+.g2{position:fixed;bottom:-150px;right:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(15,118,110,.12) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ── LOGIN SCREEN ── */
+.login-screen{display:grid;grid-template-columns:1fr 1fr;min-height:100vh;position:relative;z-index:5}
+.lp-left{background:linear-gradient(135deg,rgba(18,32,54,.98),rgba(14,24,40,.98));border-right:1px solid rgba(148,163,184,.12);padding:48px;display:flex;flex-direction:column;justify-content:center}
+.lpl-logo{display:flex;align-items:center;gap:10px;margin-bottom:40px}
+.lpl-logo-icon{width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#2f5d8a,#5f85a2);display:flex;align-items:center;justify-content:center;font-size:18px}
+.lpl-logo-text{font-size:18px;font-weight:900;letter-spacing:-.3px;color:#f1f5f9}
+.lpl-headline{font-size:38px;font-weight:900;letter-spacing:-1.5px;background:linear-gradient(135deg,#f3f6fa,#c6d2de,#879caf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.1;margin-bottom:14px}
+.lpl-sub{font-size:14px;color:#94a3b8;line-height:1.7;margin-bottom:40px}
+.lpl-features{display:flex;flex-direction:column;gap:18px;margin-bottom:40px}
+.lpl-feat{display:flex;align-items:flex-start;gap:14px}
+.lpl-feat-icon{width:38px;height:38px;border-radius:10px;background:rgba(47,93,138,.2);border:1px solid rgba(95,133,162,.25);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.lpl-feat-title{font-size:13px;font-weight:800;color:#f1f5f9;margin-bottom:2px}
+.lpl-feat-sub{font-size:11px;color:#64748b;line-height:1.5}
+.lpl-live{display:flex;align-items:center;gap:8px;font-size:11px;color:#94a3b8;font-weight:600}
+.lpl-dot{width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.6);animation:pulse 2s infinite}
+
+.lp-right{display:flex;align-items:center;justify-content:center;padding:48px}
+.lc-card{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:24px;padding:36px;width:100%;max-width:400px;animation:cardIn .5s ease}
+.lc-brand{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+.lc-logo-icon{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#2f5d8a,#5f85a2);display:flex;align-items:center;justify-content:center;font-size:16px}
+.lc-brand-name{font-size:14px;font-weight:900;color:#f1f5f9}
+.lc-brand-sub{font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.lc-title{font-size:24px;font-weight:900;letter-spacing:-.5px;color:#f1f5f9;margin-bottom:4px}
+.lc-desc{font-size:13px;color:#94a3b8;margin-bottom:28px}
+.lf-group{margin-bottom:16px}
+.lf-label{font-size:11px;font-weight:800;color:#cbd5e1;text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px;display:block}
+.lf-input-wrap{position:relative;display:flex;align-items:center}
+.lf-icon{position:absolute;left:12px;color:#64748b;display:flex;align-items:center}
+.lf-input{width:100%;padding:11px 12px 11px 36px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.2);color:#f1f5f9;font-size:13px;font-weight:600;font-family:inherit;outline:none;transition:all .2s}
+.lf-input:focus{border-color:rgba(95,133,162,.5);background:rgba(255,255,255,.07)}
+.lf-input::placeholder{color:#475569}
+.lf-submit{width:100%;padding:13px;border-radius:12px;background:linear-gradient(135deg,#2f5d8a,#5f85a2);border:none;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s;margin-top:8px;letter-spacing:.2px}
+.lf-submit:hover{opacity:.9;transform:translateY(-1px)}
+.lc-divider{text-align:center;margin:20px 0;position:relative;font-size:11px;color:#475569;font-weight:700}
+.lc-divider::before,.lc-divider::after{content:'';position:absolute;top:50%;width:38%;height:1px;background:rgba(148,163,184,.15)}
+.lc-divider::before{left:0}.lc-divider::after{right:0}
+.lc-demos{display:flex;flex-direction:column;gap:8px}
+.demo-card{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:11px;background:rgba(255,255,255,.03);border:1px solid rgba(148,163,184,.12);color:#f1f5f9;cursor:pointer;font-family:inherit;transition:all .2s;text-align:left}
+.demo-card:hover{background:rgba(47,93,138,.15);border-color:rgba(95,133,162,.3)}
+.demo-av{width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff;flex-shrink:0}
+.demo-name{font-size:12px;font-weight:800;color:#f1f5f9}
+.demo-role{font-size:10px;color:#64748b;font-weight:600}
+.demo-id{margin-left:auto;font-size:10px;font-weight:800;color:#5f85a2;background:rgba(47,93,138,.15);padding:2px 8px;border-radius:20px}
+.lc-hint{font-size:11px;color:#475569;margin-top:10px;text-align:center}
+.lc-hint code{background:rgba(255,255,255,.06);padding:2px 6px;border-radius:4px;color:#94a3b8}
+.lf-err{font-size:12px;font-weight:700;color:#ef4444;min-height:18px;margin-bottom:4px}
+
+/* ── EMPLOYEE APP ── */
+.emp-app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;position:relative;z-index:5}
+.emp-sidebar{background:rgba(9,15,29,.98);border-right:1px solid rgba(148,163,184,.12);padding:20px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-top{padding:0 18px 20px;border-bottom:1px solid rgba(148,163,184,.1)}
+.sb-brand{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.sb-brand-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#2f5d8a,#5f85a2);display:flex;align-items:center;justify-content:center;font-size:15px}
+.sb-brand-name{font-size:13px;font-weight:900;color:#f1f5f9}
+.sb-brand-sub{font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.sb-nav{padding:14px 10px;display:flex;flex-direction:column;gap:3px;flex:1}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;border:none;background:none;font-family:inherit;text-align:left;width:100%}
+.sb-item:hover{background:rgba(255,255,255,.05);color:#f1f5f9}
+.sb-item.active{background:rgba(47,93,138,.2);color:#d5e2ee;border:1px solid rgba(95,133,162,.2)}
+.sb-item-icon{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:rgba(255,255,255,.05)}
+.sb-item.active .sb-item-icon{background:rgba(47,93,138,.3)}
+.sb-divider{height:1px;background:rgba(148,163,184,.1);margin:8px 10px}
+.sb-user{padding:14px 18px;border-top:1px solid rgba(148,163,184,.1);display:flex;align-items:center;gap:10px;margin-top:auto}
+.sb-av{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0}
+.sb-uname{font-size:12px;font-weight:800;color:#f1f5f9}
+.sb-urole{font-size:10px;color:#64748b;font-weight:600}
+.sb-logout{margin-left:auto;padding:4px 8px;border-radius:6px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.sb-logout:hover{background:rgba(239,68,68,.2)}
+
+/* ── MAIN CONTENT ── */
+.emp-main{padding:28px 32px;overflow-y:auto}
+.emp-topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.emp-greeting{font-size:22px;font-weight:900;letter-spacing:-.5px;color:#f1f5f9}
+.emp-greeting span{background:linear-gradient(135deg,#5f85a2,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.emp-date{font-size:12px;color:#64748b;font-weight:600;margin-top:2px}
+.emp-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.emp-kpi{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:16px;padding:16px;animation:cardIn .4s ease}
+.emp-kpi-icon{font-size:18px;margin-bottom:8px}
+.emp-kpi-val{font-size:24px;font-weight:900;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+.emp-kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-top:3px}
+.emp-row{display:grid;grid-template-columns:1fr 320px;gap:14px;margin-bottom:24px}
+.emp-card{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:18px;padding:20px}
+.emp-card-title{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.8px;color:#cbd5e1;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.emp-card-title::after{content:'';flex:1;height:1px;background:rgba(148,163,184,.18)}
+
+/* attendance */
+.att-checkin{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.att-status{display:flex;align-items:center;gap:8px}
+.att-dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 8px rgba(16,185,129,.6);animation:pulse 2s infinite}
+.att-lbl{font-size:13px;font-weight:700;color:#10b981}
+.att-btn{padding:8px 16px;border-radius:10px;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;border:none;transition:all .2s}
+.att-btn-in{background:linear-gradient(135deg,#059669,#10b981);color:#fff}
+.att-btn-out{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#f87171}
+.att-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.att-day{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#64748b;background:rgba(255,255,255,.03)}
+.att-day.present{background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#34d399}
+.att-day.absent{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:#f87171}
+.att-day.today{background:rgba(47,93,138,.25);border:1px solid rgba(95,133,162,.4);color:#7ea8c4;font-weight:900}
+.att-day.future{opacity:.3}
+.att-day.header{background:none;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px}
+
+/* projects */
+.proj-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(148,163,184,.08);margin-bottom:8px;transition:background .2s}
+.proj-item:hover{background:rgba(255,255,255,.06)}
+.proj-name{font-size:12px;font-weight:700;color:#f1f5f9;margin-bottom:2px}
+.proj-sub{font-size:10px;color:#64748b}
+.proj-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.proj-amt{font-size:13px;font-weight:900;color:#10b981;font-variant-numeric:tabular-nums}
+.sbadge{display:inline-flex;padding:3px 8px;border-radius:50px;font-size:9px;font-weight:800}
+
+/* performance ring */
+.perf-ring-wrap{display:flex;flex-direction:column;align-items:center;gap:12px}
+.perf-ring{position:relative;width:120px;height:120px}
+.perf-ring svg{position:absolute;top:0;left:0}
+.perf-inner{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.perf-pct{font-size:22px;font-weight:900;color:#f1f5f9}
+.perf-lbl{font-size:10px;color:#64748b;font-weight:700}
+.perf-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.perf-stat{background:rgba(255,255,255,.03);border:1px solid rgba(148,163,184,.1);border-radius:10px;padding:10px;text-align:center}
+.perf-stat-val{font-size:16px;font-weight:900;font-variant-numeric:tabular-nums}
+.perf-stat-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#64748b;margin-top:2px}
+
+/* track bar */
+.tbar{height:6px;background:rgba(148,163,184,.18);border-radius:50px;overflow:hidden;margin-top:6px}
+.tbar-fill{height:100%;border-radius:50px;position:relative;overflow:hidden;transition:width 1s ease}
+.tbar-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shimmer 2.5s linear infinite}
+
+.footer{text-align:center;padding:16px;border-top:1px solid rgba(148,163,184,.1);color:#475569;font-size:11px;margin-top:auto}
+</style>
 </head>
 <body>
-<div class="g1"></div><div class="g2"></div><div class="g3"></div>
+<div class="g1"></div><div class="g2"></div>
+<div id="root"></div>
 
-<!-- ═════════════════════ LOGIN SCREEN (SPLIT PANEL) ═════════════════════ -->
-<div id="loginScreen" class="login-screen">
 
-  <!-- LEFT — Brand panel -->
-  <div class="lp-left">
-    <div class="lpl-inner">
-      <div class="lpl-logo">
-        <div class="lpl-logo-icon">🌍</div>
-        <span class="lpl-logo-text">GEO Rankers</span>
+
+
+<script type="text/babel">
+{% raw %}
+
+const DEMO_USERS = {
+  '17236': { name: 'Alamin', role: 'SMM Member', team: 'SMM', initials: 'A', grad: 'linear-gradient(135deg,#2563eb,#7c3aed)' },
+  '17136': { name: 'Ibrahim', role: 'SMM Member', team: 'SMM', initials: 'I', grad: 'linear-gradient(135deg,#ec4899,#8b5cf6)' },
+};
+
+const statusBadge = (s) => {
+  const map = {
+    Delivered: { bg:'rgba(16,185,129,.12)', border:'rgba(16,185,129,.3)', color:'#34d399', icon:'✅' },
+    WIP:       { bg:'rgba(245,158,11,.12)', border:'rgba(245,158,11,.3)', color:'#fbbf24', icon:'⏳' },
+    Revision:  { bg:'rgba(99,102,241,.12)', border:'rgba(99,102,241,.3)', color:'#a5b4fc', icon:'🔄' },
+    Cancelled: { bg:'rgba(239,68,68,.12)',  border:'rgba(239,68,68,.3)',  color:'#f87171', icon:'❌' },
+  };
+  const c = map[s] || map.WIP;
+  return <span className="sbadge" style={{background:c.bg,border:`1px solid ${c.border}`,color:c.color}}>{c.icon} {s}</span>;
+};
+
+
+const AdminPanel = () => {
+    const [members, setMembers] = React.useState([]);
+    const [attendance, setAttendance] = React.useState([]);
+    const [view, setView] = React.useState('members'); // 'members' or 'attendance'
+    const [editingMember, setEditingMember] = React.useState(null);
+    const [editingAtt, setEditingAtt] = React.useState(null);
+    const [msg, setMsg] = React.useState('');
+
+    const fetchMembers = async () => {
+        try {
+            const res = await fetch('/api/admin/members');
+            setMembers(await res.json());
+        } catch(e) { console.error(e); }
+    };
+
+    const fetchAttendance = async () => {
+        try {
+            const res = await fetch('/api/admin/attendance');
+            setAttendance(await res.json());
+        } catch(e) { console.error(e); }
+    };
+
+    React.useEffect(() => {
+        if(view === 'members') fetchMembers();
+        else fetchAttendance();
+    }, [view]);
+
+    const handleUpdateMember = async (m) => {
+        setMsg('Saving...');
+        try {
+            const res = await fetch('/api/admin/members/update', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(m)
+            });
+            if(res.ok) { setMsg('Saved!'); setEditingMember(null); fetchMembers(); }
+            else setMsg('Error saving.');
+        } catch(e) { setMsg('Error saving.'); }
+    };
+
+    const handleUpdateAtt = async (a) => {
+        setMsg('Saving...');
+        try {
+            const res = await fetch('/api/admin/attendance/update', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(a)
+            });
+            if(res.ok) { setMsg('Saved!'); setEditingAtt(null); fetchAttendance(); }
+            else setMsg('Error saving.');
+        } catch(e) { setMsg('Error saving.'); }
+    };
+
+    return (
+        <div className="emp-card" style={{gridColumn:'1/-1'}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
+                <div className="emp-card-title" style={{margin:0}}>🛡️ Admin Control Panel</div>
+                <div style={{display:'flex', gap:8}}>
+                    <button className={`nav-btn ${view==='members'?'active':''}`} onClick={()=>setView('members')} style={{padding:'6px 12px', fontSize:11}}>👥 Members</button>
+                    <button className={`nav-btn ${view==='attendance'?'active':''}`} onClick={()=>setView('attendance')} style={{padding:'6px 12px', fontSize:11}}>📅 Today's Attendance</button>
+                </div>
+            </div>
+            
+            {msg && <div style={{padding:10, background:'rgba(16,185,129,.1)', color:'#10b981', borderRadius:8, marginBottom:16, fontSize:12, fontWeight:700}}>{msg}</div>}
+
+            {view === 'members' && (
+                <div style={{overflowX:'auto'}}>
+                    <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
+                        <thead>
+                            <tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}>
+                                <th style={{padding:10}}>ID</th>
+                                <th style={{padding:10}}>Name</th>
+                                <th style={{padding:10}}>Team</th>
+                                <th style={{padding:10}}>Role</th>
+                                <th style={{padding:10}}>Target</th>
+                                <th style={{padding:10}}>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {members.map(m => (
+                                <tr key={m.id} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}>
+                                    <td style={{padding:10}}>{m.id}</td>
+                                    <td style={{padding:10}}>{m.name}</td>
+                                    <td style={{padding:10}}>{m.team}</td>
+                                    <td style={{padding:10}}>{m.role}</td>
+                                    <td style={{padding:10}}>${m.target || 1100}</td>
+                                    <td style={{padding:10}}>
+                                        <button onClick={()=>setEditingMember(m)} style={{background:'rgba(255,255,255,.1)', border:'none', color:'#f1f5f9', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Edit</button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {view === 'attendance' && (
+                <div style={{overflowX:'auto'}}>
+                    <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
+                        <thead>
+                            <tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}>
+                                <th style={{padding:10}}>Emp ID</th>
+                                <th style={{padding:10}}>Date</th>
+                                <th style={{padding:10}}>In Time</th>
+                                <th style={{padding:10}}>Out Time</th>
+                                <th style={{padding:10}}>Status</th>
+                                <th style={{padding:10}}>Duration</th>
+                                <th style={{padding:10}}>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {attendance.map(a => (
+                                <tr key={a.emp_id+a.date} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}>
+                                    <td style={{padding:10}}>{a.emp_id}</td>
+                                    <td style={{padding:10}}>{a.date}</td>
+                                    <td style={{padding:10, color:'#10b981', fontWeight:800}}>{a.in || '-'}</td>
+                                    <td style={{padding:10, color:'#f59e0b', fontWeight:800}}>{a.out || '-'}</td>
+                                    <td style={{padding:10}}>
+                                        <span style={{padding:'2px 8px', borderRadius:10, fontSize:10, background:a.status==='Late'?'rgba(239,68,68,.1)':'rgba(16,185,129,.1)', color:a.status==='Late'?'#ef4444':'#10b981'}}>{a.status}</span>
+                                    </td>
+                                    <td style={{padding:10}}>{a.duration || '-'}</td>
+                                    <td style={{padding:10}}>
+                                        <button onClick={()=>setEditingAtt(a)} style={{background:'rgba(255,255,255,.1)', border:'none', color:'#f1f5f9', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Fix Time</button>
+                                    </td>
+                                </tr>
+                            ))}
+                            {attendance.length === 0 && <tr><td colSpan="7" style={{padding:20, textAlign:'center', color:'#64748b'}}>No attendance records for today.</td></tr>}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+
+            {/* Edit Member Modal */}
+            {editingMember && (
+                <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100}}>
+                    <div style={{background:'#0f172a', padding:24, borderRadius:16, width:300, border:'1px solid rgba(148,163,184,.2)'}}>
+                        <h3 style={{marginTop:0, marginBottom:16}}>Edit Member</h3>
+                        <div style={{display:'flex', flexDirection:'column', gap:10}}>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Name</label><input value={editingMember.name} onChange={e=>setEditingMember({...editingMember, name:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Role</label><input value={editingMember.role} onChange={e=>setEditingMember({...editingMember, role:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Target ($)</label><input type="number" value={editingMember.target || ''} onChange={e=>setEditingMember({...editingMember, target:parseInt(e.target.value)})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
+                        </div>
+                        <div style={{display:'flex', gap:8, marginTop:20}}>
+                            <button onClick={()=>handleUpdateMember(editingMember)} style={{flex:1, background:'#2563eb', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Save</button>
+                            <button onClick={()=>setEditingMember(null)} style={{flex:1, background:'rgba(255,255,255,.1)', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Attendance Modal */}
+            {editingAtt && (
+                <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100}}>
+                    <div style={{background:'#0f172a', padding:24, borderRadius:16, width:300, border:'1px solid rgba(148,163,184,.2)'}}>
+                        <h3 style={{marginTop:0, marginBottom:16}}>Override Time</h3>
+                        <div style={{display:'flex', flexDirection:'column', gap:10}}>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>In Time (e.g. 09:10 AM)</label><input value={editingAtt.in || ''} onChange={e=>setEditingAtt({...editingAtt, in:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Out Time (e.g. 06:00 PM)</label><input value={editingAtt.out || ''} onChange={e=>setEditingAtt({...editingAtt, out:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Status</label><input value={editingAtt.status || ''} onChange={e=>setEditingAtt({...editingAtt, status:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Duration (e.g. 8h 30m)</label><input value={editingAtt.duration || ''} onChange={e=>setEditingAtt({...editingAtt, duration:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
+                        </div>
+                        <div style={{display:'flex', gap:8, marginTop:20}}>
+                            <button onClick={()=>handleUpdateAtt(editingAtt)} style={{flex:1, background:'#2563eb', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Save</button>
+                            <button onClick={()=>setEditingAtt(null)} style={{flex:1, background:'rgba(255,255,255,.1)', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const App = () => {
+  const [screen, setScreen] = React.useState('login'); 
+  const [user, setUser] = React.useState(null);
+  const [empId, setEmpId] = React.useState('');
+  const [pass, setPass] = React.useState('');
+  const [err, setErr] = React.useState('');
+  const [navItem, setNavItem] = React.useState('overview');
+  const [checkedIn, setCheckedIn] = React.useState(false);
+  const [checkInTime, setCheckInTime] = React.useState('');
+  const [attData, setAttData] = React.useState([]);
+  const [notifications, setNotifications] = React.useState([]);
+  const [showNotifs, setShowNotifs] = React.useState(false);
+  const [updMsg, setUpdMsg] = React.useState('');
+  const [projFilter, setProjFilter] = React.useState('All');
+
+  const doLogin = async (id) => {
+    const uid = id || empId.trim().toUpperCase();
+    const pwd = pass || 'pass123';
+    setErr('');
+    try {
+        const res = await fetch('/api/login', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: uid, password: pwd })
+        });
+        const data = await res.json();
+        if(data.status === 'ok') {
+            const [attRes, notifRes] = await Promise.all([
+                fetch(`/api/attendance?id=${uid}`),
+                fetch(`/api/notifications?id=${uid}`)
+            ]);
+            const [attList, notifList] = await Promise.all([attRes.json(), notifRes.json()]);
+            
+            setAttData(attList);
+            setNotifications(notifList);
+
+            const todayStr = new Date().toLocaleDateString('en-CA');
+            const todayRec = attList.find(r => r.date === todayStr);
+            if (todayRec && todayRec.in && !todayRec.out) {
+                setCheckedIn(true);
+                setCheckInTime(todayRec.in);
+            } else {
+                setCheckedIn(false);
+            }
+            
+            const projects = data.user.projects || [];
+            setUser({
+                id: data.user.profile.id,
+                name: data.user.profile.name || 'Employee',
+                fullName: data.user.profile.fullName || data.user.profile.name,
+                role: data.user.profile.role,
+                team: data.user.profile.department,
+                email: data.user.profile.email || '',
+                phone: data.user.profile.phone || '',
+                initials: data.user.profile.avatar || 'U',
+                grad: data.user.profile.avatarColor || 'linear-gradient(135deg,#2563eb,#7c3aed)',
+                deliveredAmt: data.user.stats.deliveredAmt || 0,
+                wipAmt: data.user.stats.wipAmt || 0,
+                delivered: projects.filter(p => p.status === 'Delivered').length,
+                wip: projects.filter(p => p.status === 'WIP').length,
+                cancelled: projects.filter(p => ['Cancelled', 'Hold'].includes(p.status)).length,
+                target: data.user.profile.target || 1100,
+                projects: projects,
+                leave: data.user.stats.leaveBalance || {},
+                rating: (data.user.performance && data.user.performance[0]) ? data.user.performance[0].value : 4.8,
+                isAdmin: data.user.profile.isAdmin || false
+            });
+            setScreen('dashboard');
+        } else {
+            setErr('Invalid ID or password.');
+        }
+    } catch(e) {
+        setErr('Server error connecting to database.');
+    }
+  };
+
+  const toggleCheckIn = async () => {
+    if(!user) return;
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
+    const action = checkedIn ? 'check-out' : 'check-in';
+    
+    try {
+        const res = await fetch('/api/attendance', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                emp_id: user.id, 
+                date: now.toLocaleDateString('en-CA'), 
+                [action === 'check-in' ? 'in' : 'out']: timeStr,
+                status: 'Present' 
+            })
+        });
+        if(res.ok) {
+            setCheckedIn(!checkedIn);
+            if(action === 'check-in') setCheckInTime(timeStr);
+            const attRes = await fetch(`/api/attendance?id=${user.id}`);
+            const attList = await attRes.json();
+            setAttData(attList);
+        }
+    } catch(e) {
+        console.error("Checkin failed", e);
+    }
+  };
+
+  const handleUpdateProfile = async (e) => {
+    e.preventDefault();
+    setUpdMsg('Updating...');
+    try {
+        const res = await fetch('/api/user/update', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: user.id,
+                fullName: user.fullName,
+                email: user.email,
+                phone: user.phone
+            })
+        });
+        if(res.ok) setUpdMsg('Profile updated successfully!');
+        else setUpdMsg('Failed to update profile.');
+    } catch(e) { setUpdMsg('Error updating profile.'); }
+  };
+
+  const markRead = async () => {
+    setShowNotifs(!showNotifs);
+    if(!showNotifs && notifications.some(n => !n.read)) {
+        await fetch('/api/notifications/mark-read', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: user.id })
+        });
+        setNotifications(notifications.map(n => ({...n, read: true})));
+    }
+  };
+
+  const attStats = {
+    present: attData.filter(a => a.status === 'Present' || a.status === 'Late').length,
+    absent: attData.filter(a => a.status === 'Absent').length,
+    late: attData.filter(a => a.status === 'Late').length
+  };
+
+  const pct = user ? Math.min(100, Math.round((user.deliveredAmt / user.target) * 100)) : 0;
+  const da = 263.9, ds = da - (da * pct / 100);
+
+  const NAV = [
+    { id:'overview', icon:'📊', label:'Overview' },
+    { id:'attendance', icon:'📅', label:'Attendance' },
+    { id:'projects', icon:'📁', label:'My Projects' },
+    { id:'performance', icon:'🏆', label:'Performance' },
+    { id:'leave', icon:'🌴', label:'Leave Balance' },
+    { id:'settings', icon:'⚙️', label:'Settings' },
+    ...(user?.isAdmin ? [{ id:'admin', icon:'🛡️', label:'Admin Control' }] : []),
+  ];
+  
+  const DAYS = ['S','M','T','W','T','F','S'];
+  
+  const renderCalendar = () => {
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+      let boxes = [];
+      for(let i=0; i<monthStart.getDay(); i++) boxes.push('f');
+      for(let d=1; d<=daysInMonth; d++) {
+          const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const rec = attData.find(r => r.date === dateStr);
+          if (rec) {
+              if (rec.status === 'Absent') boxes.push(0);
+              else if (rec.status === 'Present' || rec.status === 'Late') boxes.push(1);
+          } else {
+              if (d === now.getDate()) boxes.push('t');
+              else if (d > now.getDate()) boxes.push('future');
+              else boxes.push(0); 
+          }
+      }
+      return boxes;
+  };
+
+  if (screen === 'login') return (
+    <div className="login-screen">
+      <div className="lp-left">
+        <div className="lpl-logo">
+          <div className="lpl-logo-icon">🌍</div>
+          <span className="lpl-logo-text">GEO Rankers</span>
+        </div>
+        <h1 className="lpl-headline">Your work,<br/>all in one place.</h1>
+        <p className="lpl-sub">Attendance, projects, performance —<br/>everything you need, one dashboard.</p>
+        <div className="lpl-features">
+          {[['📊','Real-time Attendance','One-click check-in / check-out with calendar view'],['📁','Project Tracking','Progress, deadlines, and client work at a glance'],['🏆','Performance KPIs','Monthly metrics, ratings, and leave balance']].map(([icon,title,sub]) => (
+            <div className="lpl-feat" key={title}>
+              <div className="lpl-feat-icon">{icon}</div>
+              <div><div className="lpl-feat-title">{title}</div><div className="lpl-feat-sub">{sub}</div></div>
+            </div>
+          ))}
+        </div>
+        <div className="lpl-live"><div className="lpl-dot"></div><span>Live system · April 2026</span></div>
       </div>
-      <h1 class="lpl-headline">Your work,<br>all in one place.</h1>
-      <p class="lpl-sub">Attendance, projects, performance —<br>everything you need, one dashboard.</p>
-      <div class="lpl-features">
-        <div class="lpl-feat">
-          <span class="lpl-feat-icon">📊</span>
-          <div>
-            <div class="lpl-feat-title">Real-time Attendance</div>
-            <div class="lpl-feat-sub">One-click check-in / check-out with calendar view</div>
+      <div className="lp-right">
+        <div className="lc-card">
+          <div className="lc-brand">
+            <div className="lc-logo-icon">🌍</div>
+            <div><div className="lc-brand-name">GEO Rankers</div><div className="lc-brand-sub">Employee Portal</div></div>
           </div>
-        </div>
-        <div class="lpl-feat">
-          <span class="lpl-feat-icon">📁</span>
-          <div>
-            <div class="lpl-feat-title">Project Tracking</div>
-            <div class="lpl-feat-sub">Progress, deadlines, and client work at a glance</div>
+          <h2 className="lc-title">Welcome back</h2>
+          <p className="lc-desc">Sign in to access your dashboard</p>
+          <div className="lf-group">
+            <label className="lf-label">Employee ID</label>
+            <div className="lf-input-wrap">
+              <span className="lf-icon">👤</span>
+              <input className="lf-input" placeholder="e.g. 17236" value={empId} onChange={e=>setEmpId(e.target.value)}/>
+            </div>
           </div>
-        </div>
-        <div class="lpl-feat">
-          <span class="lpl-feat-icon">🏆</span>
-          <div>
-            <div class="lpl-feat-title">Performance KPIs</div>
-            <div class="lpl-feat-sub">Monthly metrics, ratings, and leave balance</div>
+          <div className="lf-group">
+            <label className="lf-label">Password</label>
+            <div className="lf-input-wrap">
+              <span className="lf-icon">🔒</span>
+              <input className="lf-input" type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)}/>
+            </div>
           </div>
+          {err && <div className="lf-err">{err}</div>}
+          <button className="lf-submit" onClick={() => doLogin()}>Sign In to Portal</button>
+          <div className="lc-divider">Quick Login</div>
+          <div className="lc-demos">
+            {Object.entries(DEMO_USERS).map(([id, u]) => (
+              <button className="demo-card" key={id} onClick={() => doLogin(id)}>
+                <span className="demo-av" style={{background:u.grad}}>{u.initials}</span>
+                <div><div className="demo-name">{u.name}</div><div className="demo-role">{u.role}</div></div>
+                <span className="demo-id">{id}</span>
+              </button>
+            ))}
+          </div>
+          <p className="lc-hint">Password for both: <code>pass123</code></p>
         </div>
-      </div>
-      <div class="lpl-live">
-        <div class="lpl-live-dot"></div>
-        <span>Live system · April 2026</span>
       </div>
     </div>
-  </div>
+  );
 
-  <!-- RIGHT — Form panel -->
-  <div class="lp-right">
-    <div class="lc-card">
-      <div class="lc-brand">
-        <div class="lc-logo-icon">🌍</div>
-        <div>
-          <div class="lc-brand-name">GEO Rankers</div>
-          <div class="lc-brand-sub">Employee Portal</div>
-        </div>
-      </div>
-      <h2 class="lc-title">Welcome back</h2>
-      <p class="lc-desc">Sign in to access your dashboard</p>
+  const unreadCount = notifications.filter(n => !n.read).length;
 
-      <div class="lc-form">
-        <div class="lf-group">
-          <label class="lf-label">Employee ID</label>
-          <div class="lf-input-wrap">
-            <span class="lf-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="8" width="18" height="13" rx="2"/><path d="M8 8V6a4 4 0 018 0v2"/></svg>
-            </span>
-            <input id="empId" type="text" class="lf-input" placeholder="e.g. EMP001" autocomplete="username"/>
+  return (
+    <div className="emp-app">
+      <aside className="emp-sidebar">
+        <div className="sb-top">
+          <div className="sb-brand">
+            <div className="sb-brand-icon">🌍</div>
+            <div><div className="sb-brand-name">GEO Rankers</div><div className="sb-brand-sub">HR Portal</div></div>
           </div>
         </div>
-        <div class="lf-group">
-          <label class="lf-label" style="display:flex;align-items:center;justify-content:space-between">
-            Password
-            <span style="font-weight:600;color:var(--muted);cursor:pointer;font-size:11px">Forgot password?</span>
-          </label>
-          <div class="lf-input-wrap">
-            <span class="lf-icon">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-            </span>
-            <input id="empPass" type="password" class="lf-input" placeholder="Enter your password" autocomplete="current-password"/>
-            <button type="button" class="lf-eye" onclick="togglePass()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <nav className="sb-nav">
+          {NAV.map(n => (
+            <button key={n.id} className={`sb-item${navItem===n.id?' active':''}`} onClick={()=>setNavItem(n.id)}>
+              <span className="sb-item-icon">{n.icon}</span>{n.label}
             </button>
-          </div>
-        </div>
-        <div class="lf-options">
-          <label class="lf-remember">
-            <input type="checkbox" id="rememberMe" class="lf-checkbox"/>
-            <span class="lf-cb-custom"></span>
-            Keep me signed in
-          </label>
-        </div>
-        <div id="loginErr" class="lf-err"></div>
-        <button type="button" class="lf-submit" id="loginBtn" onclick="doLogin()">
-          <span id="loginBtnText">Sign In to Portal</span>
-        </button>
-      </div>
-
-      <div class="lc-divider"><span>Quick demo access</span></div>
-      <div class="lc-demos">
-        <button onclick="fillDemo('EMP001')" class="demo-card">
-          <span class="demo-av" style="background:linear-gradient(135deg,#2563eb,#7c3aed)">JI</span>
-          <div>
-            <div class="demo-name">Jahidul Islam</div>
-            <div class="demo-role">Sr. SEO Specialist</div>
-          </div>
-          <span class="demo-id">EMP001</span>
-        </button>
-        <button onclick="fillDemo('EMP002')" class="demo-card">
-          <span class="demo-av" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)">RA</span>
-          <div>
-            <div class="demo-name">Rania Ahmed</div>
-            <div class="demo-role">Content Strategist</div>
-          </div>
-          <span class="demo-id">EMP002</span>
-        </button>
-      </div>
-      <p class="lc-hint">Password for both: <code>pass123</code></p>
-    </div>
-  </div>
-</div>
-
-<!-- ═════════════════════ DASHBOARD APP ═════════════════════ -->
-<div id="empApp" class="emp-app" style="display:none">
-
-  <!-- SIDEBAR -->
-  <aside id="sidebar" class="emp-sidebar">
-    <div class="sb-top">
-      <div class="sb-brand">
-        <div class="sb-brand-icon">🌍</div>
-        <div class="sb-brand-text">
-          <div class="sb-brand-name">GEO Rankers</div>
-          <div class="sb-brand-sub">HR Portal</div>
-        </div>
-      </div>
-      <button class="sb-collapse-btn" onclick="toggleSidebar()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 18l-6-6 6-6"/></svg>
-      </button>
-    </div>
-
-    <nav class="sb-nav">
-      <div class="sb-section-label">MAIN</div>
-      <a class="sb-item active" data-page="overview" onclick="navigate('overview')">
-        <span class="sb-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
-        </span>
-        <span class="sb-label">Overview</span>
-      </a>
-      <a class="sb-item" data-page="attendance" onclick="navigate('attendance')">
-        <span class="sb-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
-        </span>
-        <span class="sb-label">Attendance</span>
-      </a>
-      <a class="sb-item" data-page="projects" onclick="navigate('projects')">
-        <span class="sb-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3h6l2 3h10a2 2 0 012 2v11a2 2 0 01-2 2H3a2 2 0 01-2-2V5a2 2 0 012-2z"/></svg>
-        </span>
-        <span class="sb-label">Projects</span>
-      </a>
-      <a class="sb-item" data-page="profile" onclick="navigate('profile')">
-        <span class="sb-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-        </span>
-        <span class="sb-label">Profile</span>
-      </a>
-
-      <div class="sb-section-label" style="margin-top:8px">LINKS</div>
-      <a class="sb-item" onclick="window.open('/','_blank')">
-        <span class="sb-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/></svg>
-        </span>
-        <span class="sb-label">SEO Hub ↗</span>
-      </a>
-    </nav>
-
-    <div class="sb-bottom">
-      <div class="sb-divider"></div>
-      <div class="sb-user-mini" id="sbUserMini" style="cursor:pointer" onclick="navigate('profile')" title="Go to Profile">
-        <div class="sb-user-av" id="sbUserAv"></div>
-        <div class="sb-user-info">
-          <div class="sb-user-name" id="sbUserName"></div>
-          <div class="sb-user-id" id="sbUserId"></div>
-        </div>
-      </div>
-      <a class="sb-item" onclick="navigate('profile')">
-        <span class="sb-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        </span>
-        <span class="sb-label">Settings</span>
-      </a>
-      <a class="sb-item sb-logout" onclick="doLogout()">
-        <span class="sb-icon">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-        </span>
-        <span class="sb-label">Logout</span>
-      </a>
-    </div>
-  </aside>
-
-  <!-- MAIN AREA -->
-  <div class="emp-main">
-    <!-- TOPBAR -->
-    <header class="emp-topbar">
-      <div class="tb-left">
-        <button class="tb-menu-btn" onclick="toggleSidebar()">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-        </button>
-        <div class="tb-breadcrumb">
-          <span class="tb-bc-root">HR Portal</span>
-          <span class="tb-bc-sep">›</span>
-          <span class="tb-bc-page" id="tbPage">Overview</span>
-        </div>
-      </div>
-      <div class="tb-right">
-        <div class="tb-datetime">
-          <div class="tb-clock" id="tbClock">--:--:--</div>
-          <div class="tb-date"  id="tbDate"></div>
-        </div>
-        <!-- Notification bell -->
-        <button class="tb-notif-btn" id="tbNotif" onclick="toggleNotif()">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>
-          <span class="tb-notif-badge" id="notifBadge">3</span>
-        </button>
-        <!-- Notification dropdown -->
-        <div class="notif-panel" id="notifPanel">
-          <div class="notif-header">
-            <span class="notif-title">Notifications</span>
-            <button class="notif-clear" onclick="clearNotifs()">Mark all read</button>
-          </div>
-          <div class="notif-list" id="notifList"></div>
-        </div>
-        <div class="theme-switcher">
-          <button class="theme-btn" id="theme-btn" onclick="toggleThemeMenu()">
-            <span id="theme-label">🌙</span>
+          ))}
+          <div className="sb-divider"></div>
+          <button className="sb-item" onClick={()=>window.history.back()}>
+            <span className="sb-item-icon">←</span>Dashboard
           </button>
-          <div class="theme-menu" id="theme-menu">
-            <button class="theme-item it-light" onclick="setTheme('light')">☀️ Light</button>
-            <button class="theme-item it-dark" onclick="setTheme('dark')">🌙 Dark</button>
-            <button class="theme-item it-system" onclick="setTheme('system')">💻 System</button>
+        </nav>
+        <div className="sb-user">
+          <div className="sb-av" style={{background:user.grad}}>{user.initials}</div>
+          <div style={{overflow:'hidden'}}>
+            <div className="sb-uname" style={{whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{user.name}</div>
+            <div className="sb-urole">{user.team} Member</div>
+          </div>
+          <button className="sb-logout" onClick={()=>{setScreen('login');setUser(null);setEmpId('');setPass('')}}>↩</button>
+        </div>
+      </aside>
+
+      <div className="emp-main">
+        <div className="emp-topbar">
+          <div>
+            <div className="emp-greeting">Good morning, <span>{user.name.split(' ')[0]}</span> 👋</div>
+            <div className="emp-date">{new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' })} · {user.team}</div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:14}}>
+            <div style={{position:'relative'}}>
+                <button className="att-btn-in" style={{background:'rgba(255,255,255,.05)',border:'1px solid rgba(148,163,184,.1)',borderRadius:10,width:40,height:40,fontSize:16}} onClick={markRead}>
+                    🔔 {unreadCount > 0 && <span style={{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',fontSize:10,padding:'2px 5px',borderRadius:20}}>{unreadCount}</span>}
+                </button>
+                {showNotifs && (
+                    <div style={{position:'absolute',top:50,right:0,width:300,background:'rgba(14,24,38,.98)',border:'1px solid rgba(148,163,184,.2)',borderRadius:16,boxShadow:'0 20px 40px rgba(0,0,0,.4)',zIndex:100,padding:12}}>
+                        <div style={{fontSize:12,fontWeight:800,marginBottom:12,paddingBottom:8,borderBottom:'1px solid rgba(148,163,184,.1)'}}>Notifications</div>
+                        <div style={{maxHeight:300,overflowY:'auto'}}>
+                            {notifications.length === 0 ? <p style={{fontSize:11,color:'#64748b',textAlign:'center'}}>No notifications</p> : 
+                             notifications.map((n,i) => (
+                                <div key={i} style={{padding:'8px 0',borderBottom:i<notifications.length-1?'1px solid rgba(148,163,184,.05)':''}}>
+                                    <div style={{fontSize:11,fontWeight:800,color:n.read?'#94a3b8':'#f1f5f9'}}>{n.title}</div>
+                                    <div style={{fontSize:10,color:'#64748b',lineHeight:1.4}}>{n.message}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+            <div style={{display:'flex',alignItems:'center',gap:6,padding:'5px 11px',borderRadius:50,background:'rgba(15,118,110,.12)',border:'1px solid rgba(15,118,110,.32)',fontSize:11,fontWeight:700,color:'#89d8cf'}}>
+              <div style={{width:6,height:6,borderRadius:'50%',background:'#7ed2c7',boxShadow:'0 0 8px rgba(126,210,199,.7)',animation:'pulse 2s infinite'}}></div>Live
+            </div>
           </div>
         </div>
-        <div class="tb-user">
-          <div class="tb-user-av" id="tbUserAv"></div>
-          <div class="tb-user-info">
-            <div class="tb-user-name" id="tbUserName"></div>
-            <div class="tb-user-role" id="tbUserRole"></div>
+
+        { navItem === 'overview' && (
+          <div className="page-content">
+            {/* WELCOME BANNER */}
+            <div style={{
+              background:'linear-gradient(135deg,rgba(37,99,235,.12),rgba(124,58,237,.07),rgba(16,185,129,.05))',
+              border:'1px solid rgba(37,99,235,.2)', borderRadius:18,
+              padding:'24px 28px', marginBottom:20,
+              display:'flex', alignItems:'center', justifyContent:'space-between', gap:20
+            }}>
+              <div>
+                <div style={{fontSize:26, fontWeight:900, color:'#f1f5f9', marginBottom:8}}>
+                  {(() => {
+                    const h = new Date().getHours();
+                    return (h<12?'Good morning':h<17?'Good afternoon':'Good evening') + ', ' + (user.name||'Employee') + '! 👋';
+                  })()}
+                </div>
+                <div style={{display:'flex', alignItems:'center', gap:10, fontSize:12, color:'#94a3b8', flexWrap:'wrap'}}>
+                  <span>{new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</span>
+                  <span style={{padding:'3px 10px', borderRadius:20, background:'rgba(37,99,235,.15)', border:'1px solid rgba(37,99,235,.28)', color:'#93c5fd', fontSize:10, fontWeight:800}}>{user.role}</span>
+                </div>
+              </div>
+              <div style={{display:'flex', alignItems:'center', gap:12, flexShrink:0}}>
+                {checkedIn
+                  ? <button onClick={toggleCheckIn} style={{padding:'12px 22px', borderRadius:12, background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff', border:'none', fontSize:13, fontWeight:800, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:8, boxShadow:'0 6px 18px rgba(245,158,11,.3)'}}>⏹ Check Out</button>
+                  : <button onClick={toggleCheckIn} style={{padding:'12px 22px', borderRadius:12, background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', border:'none', fontSize:13, fontWeight:800, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:8, boxShadow:'0 6px 18px rgba(16,185,129,.3)'}}>▶ Check In</button>
+                }
+                <div style={{width:52, height:52, borderRadius:14, background:user.grad||'linear-gradient(135deg,#2563eb,#7c3aed)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:900, color:'#fff', boxShadow:'0 8px 24px rgba(0,0,0,.3)'}}>{user.initials}</div>
+              </div>
+            </div>
+
+            {/* KPI ROW */}
+            <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:14, marginBottom:20}}>
+              {[
+                {icon:'📅', color:'#3b82f6', bg:'rgba(59,130,246,.12)', val: attData.length || 0, label:'WORKING DAYS', sub:'This month', trend:null},
+                {icon:'✅', color:'#10b981', bg:'rgba(16,185,129,.12)', val: attData.filter(a=>a.status==='Present'||a.status==='Late').length, label:'PRESENT DAYS', sub:`${attData.length?Math.round(attData.filter(a=>a.status!=='Absent').length/attData.length*100):0}% rate`, trend:'↑ 5%', trendUp:true},
+                {icon:'❌', color:'#ef4444', bg:'rgba(239,68,68,.12)', val: attData.filter(a=>a.status==='Absent').length, label:'ABSENT DAYS', sub:'Days missed', trend:'↓ 1%', trendUp:false},
+                {icon:'🕒', color:'#f59e0b', bg:'rgba(245,158,11,.12)', val: attData.filter(a=>a.status==='Late').length, label:'LATE ARRIVALS', sub:'Late check-ins', trend:'— 0%', trendSame:true},
+                {icon:'🌴', color:'#a78bfa', bg:'rgba(167,139,250,.12)', val: user.leave&&user.leave.annual?user.leave.annual.remaining:13, label:'LEAVE BALANCE', sub:'Annual days left', trend:null},
+              ].map(k => (
+                <div key={k.label} style={{background:'rgba(14,23,40,.95)', border:'1px solid rgba(255,255,255,.06)', borderRadius:14, padding:'18px 16px', position:'relative', overflow:'hidden', transition:'transform .2s, box-shadow .2s'}}
+                  onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 16px 40px rgba(0,0,0,.3)'}}
+                  onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
+                  <div style={{position:'absolute', top:0, left:0, right:0, height:3, background:k.color, borderRadius:'14px 14px 0 0'}}></div>
+                  <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12}}>
+                    <div style={{width:38, height:38, borderRadius:10, background:k.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18}}>{k.icon}</div>
+                    {k.trend && <span style={{padding:'2px 7px', borderRadius:20, fontSize:10, fontWeight:800, background:k.trendUp?'rgba(16,185,129,.12)':k.trendSame?'rgba(148,163,184,.1)':'rgba(239,68,68,.12)', color:k.trendUp?'#10b981':k.trendSame?'#94a3b8':'#ef4444', border:`1px solid ${k.trendUp?'rgba(16,185,129,.25)':k.trendSame?'rgba(148,163,184,.2)':'rgba(239,68,68,.25)'}`}}>{k.trend}</span>}
+                  </div>
+                  <div style={{fontSize:34, fontWeight:900, color:'#f1f5f9', letterSpacing:-1, marginBottom:4, lineHeight:1}}>{k.val}</div>
+                  <div style={{fontSize:10, fontWeight:800, color:'#f1f5f9', textTransform:'uppercase', letterSpacing:.6, marginBottom:3}}>{k.label}</div>
+                  <div style={{fontSize:11, color:'#64748b'}}>{k.sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* MAIN GRID: Attendance Table + Calendar */}
+            <div style={{display:'grid', gridTemplateColumns:'1.6fr 1fr', gap:16}}>
+              {/* Recent Attendance Table */}
+              <div style={{background:'rgba(14,23,40,.95)', border:'1px solid rgba(255,255,255,.06)', borderRadius:14, padding:20}}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16}}>
+                  <div style={{fontSize:13, fontWeight:800, color:'#f1f5f9'}}>📋 Recent Attendance</div>
+                  <button onClick={()=>setNavItem('attendance')} style={{fontSize:11, color:'#3b82f6', background:'none', border:'none', cursor:'pointer', fontWeight:700, fontFamily:'inherit'}}>View All →</button>
+                </div>
+                <table style={{width:'100%', borderCollapse:'collapse'}}>
+                  <thead>
+                    <tr>
+                      {['DATE','CHECK IN','CHECK OUT','HOURS','STATUS'].map(h=>(
+                        <th key={h} style={{textAlign:'left', padding:'0 12px 10px', fontSize:9, fontWeight:800, color:'#64748b', textTransform:'uppercase', letterSpacing:.8}}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {attData.slice(0,7).map(a=>{
+                      const d = new Date(a.date+'T00:00:00');
+                      const isLate = a.status==='Late'; const isAbsent = a.status==='Absent';
+                      const badgeBg = isAbsent?'rgba(239,68,68,.15)':isLate?'rgba(245,158,11,.15)':'rgba(16,185,129,.15)';
+                      const badgeColor = isAbsent?'#ef4444':isLate?'#f59e0b':'#10b981';
+                      const badgeBorder = isAbsent?'rgba(239,68,68,.3)':isLate?'rgba(245,158,11,.3)':'rgba(16,185,129,.3)';
+                      return (
+                        <tr key={a.date} style={{borderTop:'1px solid rgba(255,255,255,.04)'}}>
+                          <td style={{padding:'12px'}}>
+                            <div style={{fontWeight:800, color:'#f1f5f9', fontSize:13}}>{d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
+                            <div style={{fontSize:10, color:'#64748b'}}>{d.toLocaleDateString('en-US',{weekday:'short'})}</div>
+                          </td>
+                          <td style={{padding:'12px', fontVariantNumeric:'tabular-nums', color:isLate?'#f59e0b':'#f1f5f9', fontWeight:700, fontSize:13}}>{a.in||'—'}</td>
+                          <td style={{padding:'12px', fontVariantNumeric:'tabular-nums', color:'#f1f5f9', fontWeight:700, fontSize:13}}>{a.out||'—'}</td>
+                          <td style={{padding:'12px', color:'#94a3b8', fontVariantNumeric:'tabular-nums', fontSize:12}}>{a.duration||'—'}</td>
+                          <td style={{padding:'12px'}}>
+                            <span style={{padding:'3px 10px', borderRadius:20, fontSize:10, fontWeight:800, background:badgeBg, color:badgeColor, border:`1px solid ${badgeBorder}`}}>{a.status||'Present'}</span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {attData.length===0 && <tr><td colSpan="5" style={{textAlign:'center', padding:'32px 0', color:'#64748b', fontSize:12}}>No attendance records yet.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Calendar */}
+              <div style={{background:'rgba(14,23,40,.95)', border:'1px solid rgba(255,255,255,.06)', borderRadius:14, padding:24}}>
+                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
+                  <button style={{width:28, height:28, borderRadius:8, background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.06)', color:'#94a3b8', cursor:'pointer', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center'}}>‹</button>
+                  <div style={{fontSize:13, fontWeight:800, color:'#f1f5f9'}}>{new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'})}</div>
+                  <button style={{width:28, height:28, borderRadius:8, background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.06)', color:'#94a3b8', cursor:'pointer', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center'}}>›</button>
+                </div>
+                <div style={{display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:4}}>
+                  {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=><div key={d} style={{textAlign:'center', fontSize:9, fontWeight:800, color:'#475569', padding:'3px 0', textTransform:'uppercase', letterSpacing:.5}}>{d}</div>)}
+                </div>
+                <div style={{display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:3}}>
+                  {(() => {
+                    const now = new Date(); const yr = now.getFullYear(); const mo = now.getMonth();
+                    const firstDay = new Date(yr,mo,1).getDay(); const daysInMonth = new Date(yr,mo+1,0).getDate(); const today = now.getDate();
+                    const attMap = {};
+                    attData.forEach(a=>{const d=new Date(a.date+'T00:00:00'); if(d.getMonth()===mo&&d.getFullYear()===yr) attMap[d.getDate()]=a.status;});
+                    const cells = [];
+                    for(let i=0;i<firstDay;i++) cells.push(<div key={'p'+i} style={{aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color:'#334155', borderRadius:6}}>{new Date(yr,mo,-firstDay+i+1).getDate()}</div>);
+                    for(let d=1;d<=daysInMonth;d++){
+                      const isToday=d===today; const st=attMap[d];
+                      const bg=st==='Present'?'rgba(16,185,129,.2)':st==='Late'?'rgba(245,158,11,.2)':st==='Absent'?'rgba(239,68,68,.2)':isToday?'rgba(37,99,235,.25)':'transparent';
+                      const col=st==='Present'?'#10b981':st==='Late'?'#f59e0b':st==='Absent'?'#ef4444':isToday?'#93c5fd':'#64748b';
+                      const dow=new Date(yr,mo,d).getDay(); const isWkd=dow===0||dow===6;
+                      cells.push(<div key={d} style={{aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:isToday?900:600, color:isWkd&&!st?'#374151':col, background:bg, borderRadius:6, outline:isToday?'1px solid rgba(59,130,246,.5)':'none'}}>{d}</div>);
+                    }
+                    return cells;
+                  })()}
+                </div>
+                <div style={{display:'flex', gap:12, marginTop:16, paddingTop:14, borderTop:'1px solid rgba(255,255,255,.05)', flexWrap:'wrap'}}>
+                  {[['#10b981','Present'],['#f59e0b','Late'],['#ef4444','Absent']].map(([c,l])=>(
+                    <div key={l} style={{display:'flex', alignItems:'center', gap:5, fontSize:10, color:'#94a3b8'}}>
+                      <div style={{width:8, height:8, borderRadius:2, background:c+'66'}}></div>{l}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
+        )}
+
+        
+
+        { navItem === 'attendance' && (
+          <div className="emp-card">
+            <div className="emp-card-title">📅 Attendance — {new Date().toLocaleDateString('en-US', {month:'long', year:'numeric'})}</div>
+            <div className="att-checkin">
+              <div className="att-status">
+                <div className="att-dot"></div>
+                <span className="att-lbl">{checkedIn ? `Checked In — ${checkInTime}` : 'Not Checked In'}</span>
+              </div>
+              <button className={`att-btn ${checkedIn?'att-btn-out':'att-btn-in'}`} onClick={()=>toggleCheckIn()}>
+                {checkedIn ? '⬛ Check Out' : '✅ Check In'}
+              </button>
+            </div>
+            <div className="att-calendar">
+              {DAYS.map(d=><div key={d} className="att-day header" style={{fontSize:9,fontWeight:800,color:'#475569',textAlign:'center'}}>{d}</div>)}
+              {renderCalendar().map((v,i)=>(
+                <div key={i} className={`att-day${v===1?' present':v===0?' absent':v==='t'?' today':' future'}`} style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  {v==='f'?'':(i+1<=31?i+1:'')}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        { navItem === 'projects' && (
+          <div className="page-content">
+            {/* Header */}
+            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12}}>
+              <div>
+                <div style={{fontSize:22, fontWeight:900, color:'#f1f5f9', letterSpacing:-.5}}>📁 Project Management</div>
+                <div style={{fontSize:12, color:'#64748b', marginTop:3}}>{user.projects?.length||0} total orders assigned to you</div>
+              </div>
+              <div style={{display:'flex', gap:8}}>
+                {['All','Delivered','WIP','Revision','Cancelled'].map(f=>(
+                  <button key={f} onClick={()=>setProjFilter&&setProjFilter(f)}
+                    style={{padding:'7px 14px', borderRadius:20, border:'1px solid rgba(255,255,255,.08)', background:projFilter===f?'rgba(37,99,235,.2)':'rgba(255,255,255,.03)', color:projFilter===f?'#93c5fd':'#94a3b8', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit', transition:'all .2s'}}
+                  >{f}<span style={{marginLeft:5, padding:'1px 6px', borderRadius:10, background:'rgba(255,255,255,.08)', fontSize:10}}>{f==='All'?(user.projects?.length||0):user.projects?.filter(p=>p.status===f).length||0}</span></button>
+                ))}
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20}}>
+              {[
+                {label:'My Earnings', val:`$${(user.deliveredAmt||0).toLocaleString()}`, icon:'💰', color:'#10b981', bg:'rgba(16,185,129,.1)'},
+                {label:'WIP Share', val:`$${(user.wipAmt||0).toLocaleString()}`, icon:'⏳', color:'#f59e0b', bg:'rgba(245,158,11,.1)'},
+                {label:'Completed', val: user.projects?.filter(p=>p.status==='Delivered').length||0, icon:'✅', color:'#3b82f6', bg:'rgba(59,130,246,.1)'},
+                {label:'Active', val: user.projects?.filter(p=>p.status==='WIP').length||0, icon:'🔄', color:'#a78bfa', bg:'rgba(167,139,250,.1)'},
+              ].map(s=>(
+                <div key={s.label} style={{background:'rgba(14,23,40,.95)', border:'1px solid rgba(255,255,255,.06)', borderRadius:12, padding:'16px 18px', display:'flex', alignItems:'center', gap:14}}>
+                  <div style={{width:42, height:42, borderRadius:12, background:s.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0}}>{s.icon}</div>
+                  <div>
+                    <div style={{fontSize:22, fontWeight:900, color:s.color, lineHeight:1}}>{s.val}</div>
+                    <div style={{fontSize:10, fontWeight:700, color:'#64748b', textTransform:'uppercase', letterSpacing:.5, marginTop:3}}>{s.label}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Project Table Header */}
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1.2fr 1fr 100px 120px', gap:16, padding:'10px 20px', background:'rgba(255,255,255,.02)', borderRadius:'12px 12px 0 0', border:'1px solid rgba(255,255,255,.06)', borderBottom:'none'}}>
+                {['ORDER NUMBER','PROFILE NAME','CLIENT NAME','INSTRUCTION','AMOUNT','STATUS'].map(h=>(
+                    <div key={h} style={{fontSize:9, fontWeight:800, color:'#64748b', letterSpacing:.8}}>{h}</div>
+                ))}
+            </div>
+
+            {/* Project List */}
+            <div style={{display:'flex', flexDirection:'column', gap:1, background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.06)', borderRadius:'0 0 14px 14px', overflow:'hidden'}}>
+              {(user.projects||[])
+                .filter(p => !projFilter || projFilter==='All' || p.status===projFilter)
+                .map((p,i) => {
+                  const isDelivered = p.status==='Delivered';
+                  const isWIP = p.status==='WIP';
+                  const isRevision = p.status==='Revision';
+                  const isCancelled = p.status==='Cancelled'||p.status==='Hold';
+                  const statusColor = isDelivered?'#10b981':isWIP?'#f59e0b':isRevision?'#3b82f6':isCancelled?'#ef4444':'#94a3b8';
+                  const statusBg = isDelivered?'rgba(16,185,129,.12)':isWIP?'rgba(245,158,11,.12)':isRevision?'rgba(59,130,246,.12)':isCancelled?'rgba(239,68,68,.12)':'rgba(148,163,184,.1)';
+                  const statusBorder = isDelivered?'rgba(16,185,129,.3)':isWIP?'rgba(245,158,11,.3)':isRevision?'rgba(59,130,246,.3)':isCancelled?'rgba(239,68,68,.3)':'rgba(148,163,184,.2)';
+                  const share = p.share || 0;
+                  
+                  return (
+                    <div key={p.order||i} style={{background:'rgba(14,23,40,.98)', padding:'16px 20px', display:'grid', gridTemplateColumns:'1fr 1fr 1.2fr 1fr 100px 120px', gap:16, alignItems:'center', transition:'all .2s'}}
+                      onMouseEnter={e=>{e.currentTarget.style.background='rgba(20,30,55,.98)'}}
+                      onMouseLeave={e=>{e.currentTarget.style.background='rgba(14,23,40,.98)'}}>
+                      
+                      {/* Order Number */}
+                      <div style={{fontSize:12, fontWeight:800, color:'#f1f5f9', fontFamily:'monospace'}}>
+                        {p.link ? <a href={p.link} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6', textDecoration:'none'}}>{p.order||'—'}</a> : (p.order||'—')}
+                      </div>
+                      
+                      {/* Profile Name */}
+                      <div style={{fontSize:12, color:'#cbd5e1', display:'flex', alignItems:'center', gap:6}}>
+                        <div style={{width:20, height:20, borderRadius:6, background:'rgba(99,102,241,.1)', color:'#a5b4fc', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10}}>👤</div>
+                        {p.profile || 'Personal'}
+                      </div>
+                      
+                      {/* Client Name */}
+                      <div style={{fontSize:12, fontWeight:700, color:'#f1f5f9'}}>{p.client || 'Direct Client'}</div>
+                      
+                      {/* Instruction Sheet */}
+                      <div>
+                        {p.instruction ? (
+                          <a href={p.instruction} target="_blank" rel="noopener noreferrer" style={{fontSize:11, color:'#10b981', textDecoration:'none', display:'flex', alignItems:'center', gap:4, fontWeight:700}}>
+                            📄 View Sheet ↗
+                          </a>
+                        ) : (
+                          <span style={{fontSize:11, color:'#475569'}}>No Sheet</span>
+                        )}
+                      </div>
+
+                      {/* Amount */}
+                      <div style={{fontSize:14, fontWeight:900, color: isDelivered?'#10b981':isWIP?'#f59e0b':'#94a3b8', fontVariantNumeric:'tabular-nums'}}>
+                        ${(share||0).toLocaleString()}
+                      </div>
+
+                      {/* Status */}
+                      <div>
+                        <span style={{padding:'4px 10px', borderRadius:20, fontSize:10, fontWeight:800, background:statusBg, color:statusColor, border:`1px solid ${statusBorder}`, display:'inline-flex', alignItems:'center', gap:4}}>
+                          <span style={{width:5, height:5, borderRadius:'50%', background:statusColor}}></span>
+                          {p.status}
+                        </span>
+                      </div>
+                    </div>
+                  );
+              })}
+              {(!user.projects || user.projects.length===0) && (
+                <div style={{textAlign:'center', padding:'60px 0', color:'#64748b', background:'rgba(14,23,40,.98)'}}>
+                  <div style={{fontSize:40, marginBottom:12}}>📭</div>
+                  <div style={{fontSize:15, fontWeight:700, color:'#94a3b8', marginBottom:6}}>No Projects Found</div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        { navItem === 'performance' && (
+          <div className="emp-card">
+            <div className="emp-card-title">🏆 Performance Overview</div>
+            <div className="perf-ring-wrap" style={{marginBottom:24}}>
+              <div className="perf-ring">
+                <svg width="120" height="120" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,.06)" strokeWidth="8" fill="none"/>
+                  <circle cx="50" cy="50" r="42" stroke={pct>=80?'#10b981':pct>=50?'#f59e0b':'#ef4444'} strokeWidth="8" fill="none"
+                    strokeDasharray={da} strokeDashoffset={ds} strokeLinecap="round"
+                    style={{transform:'rotate(-90deg)',transformOrigin:'center',transition:'stroke-dashoffset 1.8s ease'}}/>
+                </svg>
+                <div className="perf-inner">
+                  <div className="perf-pct">{pct}%</div>
+                  <div className="perf-lbl">Target</div>
+                </div>
+              </div>
+            </div>
+            <div className="perf-stats">
+              <div className="perf-stat"><div className="perf-stat-val" style={{color:'#10b981'}}>{user.delivered}</div><div className="perf-stat-lbl">Delivered</div></div>
+              <div className="perf-stat"><div className="perf-stat-val" style={{color:'#f59e0b'}}>{user.wip}</div><div className="perf-stat-lbl">WIP</div></div>
+              <div className="perf-stat"><div className="perf-stat-val" style={{color:'#ef4444'}}>{user.cancelled}</div><div className="perf-stat-lbl">Cancelled</div></div>
+              <div className="perf-stat"><div className="perf-stat-val" style={{color:'#a5b4fc'}}>⭐ {user.rating}</div><div className="perf-stat-lbl">Rating</div></div>
+            </div>
+          </div>
+        )}
+
+        { navItem === 'leave' && (
+          <div className="emp-card">
+            <div className="emp-card-title">🌴 My Leave Balance</div>
+            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:14}}>
+              {Object.entries(user.leave || {}).map(([key, l]) => (
+                <div key={key} style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:14}}>
+                  <div style={{fontSize:10, fontWeight:800, color:'#64748b', textTransform:'uppercase', marginBottom:6}}>{l.label || key}</div>
+                  <div style={{display:'flex', alignItems:'baseline', gap:6}}>
+                    <div style={{fontSize:24, fontWeight:900, color:l.color || '#f1f5f9'}}>{l.remaining}</div>
+                    <div style={{fontSize:11, color:'#64748b'}}>days left</div>
+                  </div>
+                  <div style={{height:4, background:'rgba(148,163,184,.1)', borderRadius:10, marginTop:10, overflow:'hidden'}}>
+                    <div style={{height:'100%', width:`${(l.remaining/l.total)*100}%`, background:l.color || '#3b82f6'}}></div>
+                  </div>
+                  <div style={{fontSize:9, color:'#475569', marginTop:8, fontWeight:700}}>{l.used} used / {l.total} total</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        { navItem === 'settings' && (
+            <div className="emp-card">
+                <div className="emp-card-title">⚙️ Account Settings</div>
+                <form onSubmit={handleUpdateProfile} style={{display:'flex', flexDirection:'column', gap:16, maxWidth:400}}>
+                    <div className="lf-group">
+                        <label className="lf-label">Full Name</label>
+                        <input className="lf-input" style={{paddingLeft:12}} value={user.fullName} onChange={e=>setUser({...user, fullName:e.target.value})}/>
+                    </div>
+                    <div className="lf-group">
+                        <label className="lf-label">Email Address</label>
+                        <input className="lf-input" style={{paddingLeft:12}} value={user.email} onChange={e=>setUser({...user, email:e.target.value})}/>
+                    </div>
+                    <div className="lf-group">
+                        <label className="lf-label">Phone Number</label>
+                        <input className="lf-input" style={{paddingLeft:12}} value={user.phone} onChange={e=>setUser({...user, phone:e.target.value})}/>
+                    </div>
+                    {updMsg && <div style={{fontSize:11, fontWeight:800, color:updMsg.includes('success')?'#10b981':'#ef4444'}}>{updMsg}</div>}
+                    <button type="submit" className="lf-submit" style={{marginTop:0}}>Update Profile</button>
+                </form>
+                <div style={{marginTop:32, paddingTop:24, borderTop:'1px solid rgba(148,163,184,.1)'}}>
+                    <div className="emp-card-title" style={{fontSize:14}}>Security</div>
+                    <p style={{fontSize:11, color:'#64748b', marginBottom:12}}>Contact admin to reset your password or change your department.</p>
+                </div>
+            </div>
+        )}
+
+        
+        { navItem === 'admin' && <AdminPanel /> }
+
+        <div className="footer">SEO Performance Hub · Employee Portal · April 2026</div>
       </div>
-    </header>
+    </div>
+  );
+};
 
-    <!-- CONTENT -->
-    <main class="emp-content" id="empContent"></main>
-  </div>
-</div>
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+{% endraw %}
+</script>
 
-<!-- Mobile sidebar overlay -->
-<div id="sbOverlay" class="sb-overlay" onclick="closeSidebarMobile()"></div>
 
-<div class="toast-box" id="toastBox"></div>
-<script src="/static/js/employee.js"></script>
 </body>
 </html>

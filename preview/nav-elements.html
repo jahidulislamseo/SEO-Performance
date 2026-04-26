@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;display:flex;flex-direction:column;gap:0}
+.hdr{height:56px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;background:rgba(9,17,31,.85);backdrop-filter:blur(24px);border-bottom:1px solid rgba(148,163,184,.18)}
+.logo-wrap{display:flex;align-items:center;gap:10px}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#2f5d8a,#5f85a2);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:0 14px 28px rgba(18,33,54,.35)}
+.ht-title{font-size:15px;font-weight:900;letter-spacing:-.5px;background:linear-gradient(135deg,#f8fafc 20%,#c7d3df 55%,#6f879c 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ht-sub{font-size:10px;color:#cbd5e1}
+.hdr-r{display:flex;align-items:center;gap:6px}
+.btn{padding:5px 10px;border-radius:8px;border:1px solid rgba(95,133,162,.28);background:rgba(61,111,155,.12);color:#c4d4e2;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px}
+.live{display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:50px;background:rgba(15,118,110,.12);border:1px solid rgba(15,118,110,.32);font-size:10px;font-weight:700;color:#89d8cf}
+.dot{width:5px;height:5px;border-radius:50%;background:#7ed2c7;box-shadow:0 0 6px rgba(126,210,199,.7);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+.nav{height:42px;padding:0 24px;display:flex;align-items:center;gap:6px;background:rgba(9,17,31,.85);backdrop-filter:blur(18px);border-bottom:1px solid rgba(148,163,184,.18)}
+.pill{padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:rgba(255,255,255,.035);color:#94a3b8;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;white-space:nowrap}
+.pill.active{background:rgba(47,93,138,.2);color:#d5e2ee;border-color:rgba(95,133,162,.34)}
+.pill-green{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:#7ed2c7}
+</style></head>
+<body>
+<div class="hdr">
+  <div class="logo-wrap">
+    <div class="logo">🌍</div>
+    <div><div class="ht-title">SEO Performance Hub</div><div class="ht-sub">GEO Rankers Department · April 2026</div></div>
+  </div>
+  <div class="hdr-r">
+    <div class="live"><div class="dot"></div>Live</div>
+    <button class="btn">👤 Manager View</button>
+    <button class="btn" style="background:rgba(194,138,44,.12);border-color:rgba(194,138,44,.3);color:#e7c98e">📊 CSV</button>
+    <button class="btn" style="background:rgba(15,118,110,.12);border-color:rgba(15,118,110,.28);color:#7ed2c7">🖨️ PDF</button>
+    <button class="btn">↻ Refresh</button>
+  </div>
+</div>
+<div class="nav">
+  <button class="pill active">Overview</button>
+  <button class="pill">Top Performers</button>
+  <button class="pill">Teams</button>
+  <button class="pill">Members</button>
+  <button class="pill">Audit</button>
+  <button class="pill">Leaderboard</button>
+  <button class="pill pill-green">📦 Delivery Tracker ↗</button>
+</div>
+</body></html>

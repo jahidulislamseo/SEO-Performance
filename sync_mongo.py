@@ -76,6 +76,8 @@ def sync():
             doc = {
                 "order_num": order_num,
                 "order_link": str(r[COL["order_link"]]),
+                "instruction": str(r[COL["instruction"]]),
+                "profile": str(r[COL["profile"]]),
                 "client": str(r[COL["client"]]),
                 "assign": str(r[COL["assign"]]),
                 "status": str(r[COL["status"]]),
@@ -87,7 +89,6 @@ def sync():
                 "updated_at": time.time()
             }
             
-            from pymongo import UpdateOne
             batch.append(UpdateOne({"_id": doc_id}, {"$set": doc}, upsert=True))
             
         if batch:

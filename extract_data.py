@@ -85,6 +85,8 @@ for r in rows[1:]:
     proj = {
         'order':         cell(13) or 'N/A',
         'link':          cell(14) or '#',
+        'instruction':   cell(15) or '',
+        'profile':       cell(6) or 'N/A',
         'client':        cell(10) or 'N/A',
         'assign':        assign,
         'service':       cell(20),

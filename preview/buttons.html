@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;padding:20px;display:flex;flex-direction:column;gap:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#475569}
+.btn{padding:6px 12px;border-radius:9px;border:1px solid;font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px;font-family:inherit;transition:all .2s;white-space:nowrap}
+.btn-default{background:rgba(61,111,155,.12);border-color:rgba(95,133,162,.28);color:#c4d4e2}
+.btn-green{background:rgba(15,118,110,.12);border-color:rgba(15,118,110,.28);color:#7ed2c7}
+.btn-yellow{background:rgba(194,138,44,.12);border-color:rgba(194,138,44,.3);color:#e7c98e}
+.btn-manager{background:rgba(123,135,148,.13);border-color:rgba(123,135,148,.3);color:#d2d9e1}
+.pill{padding:8px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:rgba(255,255,255,.035);color:#94a3b8;font-size:11px;font-weight:800;letter-spacing:.2px;cursor:pointer;font-family:inherit}
+.pill-active{background:rgba(47,93,138,.2);color:#d5e2ee;border-color:rgba(95,133,162,.34)}
+.pill-green{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:#7ed2c7}
+.pill-indigo{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.3);color:#a5b4fc}
+.pill-blue{background:rgba(37,99,235,.12);border-color:rgba(37,99,235,.3);color:#93c5fd}
+.live{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:50px;background:rgba(15,118,110,.12);border:1px solid rgba(15,118,110,.32);font-size:11px;font-weight:700;color:#89d8cf}
+.dot{width:6px;height:6px;border-radius:50%;background:#7ed2c7;box-shadow:0 0 8px rgba(126,210,199,.7);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+</style></head>
+<body>
+<div class="title">Header Buttons</div>
+<div class="row">
+  <button class="btn btn-default">↻ Refresh</button>
+  <button class="btn btn-yellow">📊 CSV</button>
+  <button class="btn btn-green">🖨️ PDF</button>
+  <button class="btn btn-manager">👤 Manager View</button>
+  <div class="live"><div class="dot"></div>Live</div>
+</div>
+<div class="title">Nav Pills</div>
+<div class="row">
+  <button class="pill pill-active">Overview</button>
+  <button class="pill">Top Performers</button>
+  <button class="pill">Teams</button>
+  <button class="pill">Members</button>
+  <button class="pill pill-green">📦 Delivery Tracker ↗</button>
+  <button class="pill pill-indigo">🚀 Query Tracker ↗</button>
+  <button class="pill pill-blue">👤 Employee Portal ↗</button>
+</div>
+</body></html>

@@ -1,4 +1,5 @@
 import json, os, urllib.request, re, time, calendar
+from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, send_file, request, render_template
 from flask_cors import CORS
 import agent_engine
@@ -33,12 +34,34 @@ def api_sync():
 
 @app.route("/api/data")
 def api_data():
-    """Main Dashboard: Instant load from MongoDB summaries only."""
+    """Main Dashboard: Instant load from MongoDB summaries only, merged with member profiles."""
     try:
         db = get_db()
         dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
         team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
         member_docs   = list(db["member_summaries"].find({}, {"_id": 0}))
+        
+        # Merge target/name/role from 'members' collection
+        members_profiles = {m["id"]: m for m in db["members"].find()}
+        for m in member_docs:
+            prof = members_profiles.get(m.get("id"))
+            if prof:
+                if "target" in prof: m["target"] = prof["target"]
+                if "name" in prof: m["name"] = prof["name"]
+                if "role" in prof: m["role"] = prof["role"]
+                if "team" in prof: m["team"] = prof["team"]
+        
+        # Recalculate team targets based on updated members
+        if team_sum_doc and "teams" in team_sum_doc:
+            for team_name, team_data in team_sum_doc["teams"].items():
+                team_target = 0
+                for tm in team_data.get("members", []):
+                    prof = members_profiles.get(tm.get("id"))
+                    if prof and "target" in prof: tm["target"] = prof["target"]
+                    if prof and "name" in prof: tm["name"] = prof["name"]
+                    team_target += tm.get("target", 1100)
+                team_data["target"] = team_target
+                team_data["progress"] = min(100, round((team_data.get("stats",{}).get("deliveredAmt",0) / team_target * 100))) if team_target > 0 else 0
         
         if not dept_sum_doc:
             return jsonify({"status": "syncing", "message": "Database initializing..."})
@@ -47,8 +70,7 @@ def api_data():
             "dept": dept_sum_doc or {},
             "teams": team_sum_doc.get("teams", {}) if team_sum_doc else {},
             "totalAchieved": dept_sum_doc.get("achieved", 0),
-            "totalWip": dept_sum_doc.get("wipAmt", 0),
-            "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0),
+            "totaleOrders": dept_sum_doc.get("uniqueProjects", 0),
             "audit": {
                 "seoSmmRows": dept_sum_doc.get("seoSmmRows", 0),
                 "matchedRows": dept_sum_doc.get("matchedRows", 0),
@@ -156,39 +178,44 @@ def api_login():
         
         # Check both exactly typed ID and the float version potentially synced from Sheets (e.g. 17236 vs 17236.0)
         member = db["members"].find_one({"id": {"$in": [emp_id, f"{emp_id}.0"]}})
-        
+
         # If the member exists but doesn't have a password field in the DB yet, fallback to default 'pass123'
         if member:
             emp_id = member["id"]  # Use the DB's official ID key for subsequent queries
-            sum_doc = None
             stored_pass = member.get("password") or "pass123"
             if stored_pass == password:
                 sum_doc = db["member_summaries"].find_one({"id": emp_id}, {"_id": 0})
+                # Explicitly grant admin access to the specified IDs
+                admin_ids = ["17149", "17137", "17248", "17238"]
+                current_id_str = str(member.get("id")).split('.')[0]
+                is_admin = "Manager" in member.get("role", "") or "Leader" in member.get("role", "") or member.get("isAdmin", False) or current_id_str in admin_ids
+
                 if not sum_doc: sum_doc = {**member, "deliveredAmt": 0, "wipAmt": 0, "projects": [], "progress": 0}
                 tot_days, elap_days = get_month_working_stats(db)
                 res = {
-                "password": member.get("password", "pass123"),
-                "profile": {
-                    "id": member["id"], "name": member.get("name", ""), "fullName": member.get("fullName", ""),
-                    "role": member.get("role", "Member"), "department": member["team"],
-                    "email": member.get("email", ""), "phone": member.get("phone", ""),
-                    "joinDate": member.get("joinDate", ""), "manager": member.get("manager", ""),
-                    "avatar": member["name"][0], "avatarColor": "linear-gradient(135deg,#0f766e,#0d9488)",
-                    "employmentType": "Full-Time", "target": sum_doc.get("target", 1100)
-                },
-                "stats": {
-                    "workingDays": tot_days, "elapsedDays": elap_days, "deliveredAmt": sum_doc.get("deliveredAmt", 0),
-                    "wipAmt": sum_doc.get("wipAmt", 0), "present": sum_doc.get("delivered", 0),
-                    "leaveBalance": {
-                        "annual": {"label": "Annual Leave", "total": 15, "used": 2, "remaining": 13, "color": "#3b82f6"},
-                        "sick": {"label": "Sick Leave", "total": 10, "used": 0, "remaining": 10, "color": "#10b981"}
-                    }
-                },
-                "projects": sum_doc.get("projects", []),
-                "performance": [
-                    {"label": "Target Progress", "value": sum_doc.get("progress", 0), "target": 100, "unit": "%", "color": "#0f766e"}
-                ]
-            }
+                    "password": member.get("password", "pass123"),
+                    "profile": {
+                        "id": member["id"], "name": member.get("name", ""), "fullName": member.get("fullName", ""),
+                        "role": member.get("role", "Member"), "department": member.get("team", ""),
+                        "email": member.get("email", ""), "phone": member.get("phone", ""),
+                        "joinDate": member.get("joinDate", ""), "manager": member.get("manager", ""),
+                        "avatar": member.get("name", "?")[0], "avatarColor": "linear-gradient(135deg,#0f766e,#0d9488)",
+                        "employmentType": "Full-Time", "target": sum_doc.get("target", 1100),
+                        "isAdmin": is_admin
+                    },
+                    "stats": {
+                        "workingDays": tot_days, "elapsedDays": elap_days, "deliveredAmt": sum_doc.get("deliveredAmt", 0),
+                        "wipAmt": sum_doc.get("wipAmt", 0), "present": sum_doc.get("delivered", 0),
+                        "leaveBalance": {
+                            "annual": {"label": "Annual Leave", "total": 15, "used": 2, "remaining": 13, "color": "#3b82f6"},
+                            "sick": {"label": "Sick Leave", "total": 10, "used": 0, "remaining": 10, "color": "#10b981"}
+                        }
+                    },
+                    "projects": sum_doc.get("projects", []),
+                    "performance": [
+                        {"label": "Target Progress", "value": sum_doc.get("progress", 0), "target": 100, "unit": "%", "color": "#0f766e"}
+                    ]
+                }
                 return jsonify({"status": "ok", "user": res})
         return jsonify({"status": "error", "message": "Invalid credentials"}), 401
     except Exception as e: return jsonify({"error": str(e)}), 500
@@ -208,15 +235,146 @@ def get_attendance():
 
 @app.route("/api/attendance", methods=["POST"])
 def save_attendance():
-    """Update or insert a check-in/out record in MongoDB."""
+    """Update or insert a check-in/out record in MongoDB using SERVER time."""
     try:
         data = request.get_json(force=True)
-        if not data.get("emp_id") or not data.get("date"): return jsonify({"error": "invalid data"}), 400
+        emp_id = data.get("emp_id")
+        if not emp_id: return jsonify({"error": "invalid data"}), 400
+        
         db = get_db()
-        db["attendance"].update_one({"emp_id": data["emp_id"], "date": data["date"]}, {"$set": data}, upsert=True)
-        return jsonify({"ok": True})
+        tz_bd = timezone(timedelta(hours=6))
+        now = datetime.now(tz_bd)
+        today_str = now.strftime('%Y-%m-%d')
+        time_str = now.strftime('%I:%M %p')
+        ip = request.remote_addr
+        
+        is_checkin = "in" in data
+        existing = db["attendance"].find_one({"emp_id": emp_id, "date": today_str})
+        
+        if is_checkin:
+            if existing and existing.get("in"):
+                return jsonify({"error": "Already checked in today"}), 400
+                
+            cutoff = now.replace(hour=9, minute=15, second=0, microsecond=0)
+            status = "Late" if now > cutoff else "Present"
+            
+            update_doc = {
+                "in": time_str,
+                "ip_in": ip,
+                "status": status,
+                "date": today_str,
+                "emp_id": emp_id
+            }
+            db["attendance"].update_one({"emp_id": emp_id, "date": today_str}, {"$set": update_doc}, upsert=True)
+            return jsonify({"ok": True, "time": time_str, "status": status})
+            
+        else: # check-out
+            if not existing or not existing.get("in"):
+                return jsonify({"error": "Must check in first"}), 400
+            if existing.get("out"):
+                return jsonify({"error": "Already checked out"}), 400
+                
+            in_time_str = existing["in"]
+            in_time = datetime.strptime(in_time_str, '%I:%M %p').time()
+            in_dt = now.replace(hour=in_time.hour, minute=in_time.minute, second=0, microsecond=0)
+            duration = now - in_dt
+            hours = duration.seconds // 3600
+            minutes = (duration.seconds % 3600) // 60
+            duration_str = f"{hours}h {minutes}m"
+            
+            update_doc = {
+                "out": time_str,
+                "ip_out": ip,
+                "duration": duration_str
+            }
+            db["attendance"].update_one({"emp_id": emp_id, "date": today_str}, {"$set": update_doc})
+            return jsonify({"ok": True, "time": time_str, "duration": duration_str})
+            
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/notifications", methods=["GET"])
+def get_notifications():
+    emp_id = request.args.get("id")
+    if not emp_id: return jsonify([]), 400
+    db = get_db()
+    notifs = list(db["notifications"].find({"$or": [{"emp_id": emp_id}, {"emp_id": "all"}]}, {"_id": 0}).sort("timestamp", -1).limit(20))
+    return jsonify(notifs)
+
+@app.route("/api/notifications/mark-read", methods=["POST"])
+def mark_notifs_read():
+    data = request.get_json(force=True)
+    emp_id = data.get("id")
+    if not emp_id: return jsonify({"error": "missing id"}), 400
+    db = get_db()
+    db["notifications"].update_many({"emp_id": emp_id, "read": False}, {"$set": {"read": True}})
+    return jsonify({"ok": True})
+
+@app.route("/api/user/update", methods=["POST"])
+def update_user_profile():
+    data = request.get_json(force=True)
+    emp_id = data.get("id")
+    if not emp_id: return jsonify({"error": "missing id"}), 400
+    db = get_db()
+    allowed_fields = ["phone", "email", "fullName", "password"]
+    update_data = {k: v for k, v in data.items() if k in allowed_fields}
+    if update_data:
+        db["members"].update_one({"id": emp_id}, {"$set": update_data})
+        return jsonify({"ok": True})
+    return jsonify({"error": "no valid fields to update"}), 400
+
+@app.route("/api/admin/members", methods=["GET"])
+def admin_get_members():
+    db = get_db()
+    members = list(db["members"].find({}, {"_id": 0}))
+    return jsonify(members)
+
+@app.route("/api/admin/members/update", methods=["POST"])
+def admin_update_member():
+    data = request.get_json(force=True)
+    emp_id = data.get("id")
+    if not emp_id: return jsonify({"error": "missing id"}), 400
+    db = get_db()
+    # Allow updating more fields in admin mode
+    allowed_fields = ["name", "fullName", "role", "team", "target", "email", "phone", "isAdmin"]
+    update_data = {k: v for k, v in data.items() if k in allowed_fields}
+    db["members"].update_one({"id": emp_id}, {"$set": update_data})
+    return jsonify({"ok": True})
+
+@app.route("/api/admin/members/add", methods=["POST"])
+def admin_add_member():
+    data = request.get_json(force=True)
+    if not data.get("id") or not data.get("name"): return jsonify({"error": "missing data"}), 400
+    db = get_db()
+    db["members"].insert_one(data)
+    return jsonify({"ok": True})
+
+@app.route("/api/admin/members/delete", methods=["POST"])
+def admin_delete_member():
+    data = request.get_json(force=True)
+    emp_id = data.get("id")
+    if not emp_id: return jsonify({"error": "missing id"}), 400
+    db = get_db()
+    db["members"].delete_one({"id": emp_id})
+    return jsonify({"ok": True})
+
+@app.route("/api/admin/attendance", methods=["GET"])
+def admin_get_all_attendance():
+    db = get_db()
+    date_str = request.args.get("date", datetime.now(timezone(timedelta(hours=6))).strftime('%Y-%m-%d'))
+    records = list(db["attendance"].find({"date": date_str}, {"_id": 0}))
+    return jsonify(records)
+
+@app.route("/api/admin/attendance/update", methods=["POST"])
+def admin_update_attendance():
+    data = request.get_json(force=True)
+    emp_id = data.get("emp_id")
+    date_str = data.get("date")
+    if not emp_id or not date_str: return jsonify({"error": "missing data"}), 400
+    db = get_db()
+    update_data = {k: v for k, v in data.items() if k in ["in", "out", "status", "duration"]}
+    db["attendance"].update_one({"emp_id": emp_id, "date": date_str}, {"$set": update_data})
+    return jsonify({"ok": True})
 
 @app.route("/api/admin/calendar-config", methods=["GET", "POST"])
 def admin_calendar_config():

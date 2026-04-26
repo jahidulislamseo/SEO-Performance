@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;padding:20px;display:flex;flex-direction:column;gap:14px}
+.title{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#475569}
+.row{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end}
+.anim-box{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:8px}
+.anim-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#475569;margin-bottom:4px}
+.anim-name{font-size:11px;font-weight:800;color:#cbd5e1}
+.anim-spec{font-size:9px;font-weight:600;color:#475569;margin-top:1px;font-family:'Courier New',monospace}
+
+/* cardIn demo */
+.demo-card{width:120px;background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:12px;padding:10px 12px;animation:cardIn 1s ease infinite alternate}
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* shimmer demo */
+.shimmer-track{height:10px;background:rgba(148,163,184,.18);border-radius:50px;overflow:hidden;width:200px}
+.shimmer-fill{height:100%;width:65%;border-radius:50px;background:linear-gradient(90deg,#2f5d8a,#5f85a2,#4f8ea6);position:relative;overflow:hidden}
+.shimmer-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.28),transparent);animation:shimmer 2.5s linear infinite}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+
+/* pulse demo */
+.pulse-demo{display:flex;align-items:center;gap:8px}
+.pulse-dot{width:10px;height:10px;border-radius:50%;background:#7ed2c7;box-shadow:0 0 10px rgba(126,210,199,.7);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+.pulse-label{font-size:11px;font-weight:700;color:#89d8cf}
+
+/* mIn demo */
+.min-demo{width:130px;background:#090f1d;border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:12px 14px;animation:mIn 1.5s cubic-bezier(.4,0,.2,1) infinite alternate}
+@keyframes mIn{from{opacity:0;transform:scale(.92) translateY(18px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* tIn demo */
+.toast-demo{background:rgba(13,20,42,.97);border:1px solid rgba(148,163,184,.18);border-radius:10px;padding:9px 14px;font-size:11px;font-weight:700;color:#f1f5f9;display:flex;align-items:center;gap:6px;animation:tIn 1s ease infinite alternate;width:fit-content}
+@keyframes tIn{from{opacity:0;transform:translateY(12px) scale(.95)}to{opacity:1;transform:translateY(0) scale(1)}}
+
+/* rspin demo */
+.spin-demo{width:22px;height:22px;border:2.5px solid rgba(95,133,162,.2);border-top-color:#5f85a2;border-radius:50%;animation:rspin 1s linear infinite}
+@keyframes rspin{to{transform:rotate(360deg)}}
+
+.easing-row{display:flex;gap:8px;flex-wrap:wrap}
+.ease-chip{padding:5px 10px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12);font-size:10px;font-weight:700;color:#94a3b8;font-family:'Courier New',monospace}
+.dur-chip{padding:4px 9px;border-radius:8px;background:rgba(47,93,138,.12);border:1px solid rgba(95,133,162,.2);font-size:10px;font-weight:700;color:#7ea8c4;font-family:'Courier New',monospace}
+</style></head>
+<body>
+<div class="title">Animations — All System Keyframes</div>
+<div class="row">
+  <!-- cardIn -->
+  <div class="anim-box">
+    <div class="anim-label">cardIn</div>
+    <div class="demo-card">
+      <div style="font-size:11px;font-weight:800;color:#f1f5f9">Card Title</div>
+      <div style="font-size:9px;color:#64748b;margin-top:3px">Entrance</div>
+    </div>
+    <div class="anim-name">cardIn</div>
+    <div class="anim-spec">opacity 0→1 · translateY 16px→0</div>
+    <div class="anim-spec">0.4s ease · cards, members</div>
+  </div>
+
+  <!-- shimmer -->
+  <div class="anim-box">
+    <div class="anim-label">shimmer</div>
+    <div class="shimmer-track"><div class="shimmer-fill"></div></div>
+    <div class="anim-name">shimmer</div>
+    <div class="anim-spec">translateX -100%→200%</div>
+    <div class="anim-spec">2.5s linear infinite · progress bars</div>
+  </div>
+
+  <!-- pulse -->
+  <div class="anim-box">
+    <div class="anim-label">pulse</div>
+    <div class="pulse-demo"><div class="pulse-dot"></div><span class="pulse-label">Live</span></div>
+    <div class="anim-name">pulse</div>
+    <div class="anim-spec">scale + opacity 1→.5→1</div>
+    <div class="anim-spec">2s infinite · live dot, loading</div>
+  </div>
+
+  <!-- mIn (modal) -->
+  <div class="anim-box">
+    <div class="anim-label">mIn — Modal</div>
+    <div class="min-demo">
+      <div style="font-size:11px;font-weight:800;color:#f1f5f9">Modal</div>
+      <div style="font-size:9px;color:#64748b;margin-top:2px">scale + slide</div>
+    </div>
+    <div class="anim-name">mIn</div>
+    <div class="anim-spec">scale(.95)→(1) · translateY 18→0</div>
+    <div class="anim-spec">0.3s cubic-bezier(.4,0,.2,1)</div>
+  </div>
+
+  <!-- tIn (toast) -->
+  <div class="anim-box">
+    <div class="anim-label">tIn — Toast</div>
+    <div class="toast-demo">✅ Theme set to Dark Mode</div>
+    <div class="anim-name">tIn / tOut</div>
+    <div class="anim-spec">translateY 12px + scale .95→1</div>
+    <div class="anim-spec">0.3s ease · toasts, menus</div>
+  </div>
+
+  <!-- rspin -->
+  <div class="anim-box">
+    <div class="anim-label">rspin</div>
+    <div style="display:flex;align-items:center;gap:8px"><div class="spin-demo"></div><span style="font-size:10px;color:#94a3b8;font-weight:700">Loading...</span></div>
+    <div class="anim-name">rspin</div>
+    <div class="anim-spec">rotate 360deg</div>
+    <div class="anim-spec">1s linear infinite · refresh btn</div>
+  </div>
+</div>
+
+<div class="title" style="margin-top:4px">Easing Tokens</div>
+<div class="easing-row">
+  <div class="ease-chip">cubic-bezier(.4,0,.2,1) — standard</div>
+  <div class="ease-chip">ease — default</div>
+  <div class="ease-chip">linear — shimmer only</div>
+</div>
+
+<div class="title" style="margin-top:4px">Duration Tokens</div>
+<div class="easing-row">
+  <div class="dur-chip">0.2s — hover/transition</div>
+  <div class="dur-chip">0.3s — toast/modal</div>
+  <div class="dur-chip">0.4s — card entrance</div>
+  <div class="dur-chip">1.0s — spin</div>
+  <div class="dur-chip">1.8s — progress fill</div>
+  <div class="dur-chip">2.0s — pulse</div>
+  <div class="dur-chip">2.5s — shimmer</div>
+</div>
+</body></html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;color:#f1f5f9;padding:20px;display:flex;flex-direction:column;gap:14px}
+.card{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:16px;padding:16px 20px}
+.tag{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:2px;color:#cbd5e1;margin-bottom:4px}
+.heading{font-size:24px;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,#f3f6fa,#c6d2de,#879caf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:2px}
+.sub{font-size:12px;color:#cbd5e1;margin-bottom:12px}
+.kpis{display:flex;gap:16px}
+.kpi-val{font-size:22px;font-weight:900;letter-spacing:-.5px;color:#10b981;font-variant-numeric:tabular-nums}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#94a3b8;margin-top:2px}
+.stitle{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:1.8px;color:#cbd5e1;display:flex;align-items:center;gap:8px}
+.stitle::after{content:'';flex:1;height:1px;background:rgba(148,163,184,.18)}
+</style></head>
+<body>
+<div class="stitle">🏆 Top Performers</div>
+<div class="card">
+  <div class="tag">Department Overview</div>
+  <div class="heading">$24,350 delivered</div>
+  <div class="sub">GEO Rankers · 69.6% of $35,000 target</div>
+  <div class="kpis">
+    <div><div class="kpi-val">$24,350</div><div class="kpi-lbl">Delivered</div></div>
+    <div><div class="kpi-val" style="color:#f59e0b">$8,200</div><div class="kpi-lbl">WIP</div></div>
+    <div><div class="kpi-val" style="color:#cbd5e1">12</div><div class="kpi-lbl">Members</div></div>
+  </div>
+</div>
+</body></html>

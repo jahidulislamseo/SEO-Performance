@@ -63,6 +63,8 @@ COL = {
     "order_link": 14, # O
     "client": 10,     # K
     "date": 3,        # D
+    "profile": 6,     # G
+    "instruction": 15,# P
 }
 
 # ─── DATABASE ───────────────────────────────────────────────
