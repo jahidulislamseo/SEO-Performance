@@ -181,10 +181,25 @@ const statusBadge = (s) => {
 const AdminPanel = () => {
     const [members, setMembers] = React.useState([]);
     const [attendance, setAttendance] = React.useState([]);
-    const [view, setView] = React.useState('members'); // 'members' or 'attendance'
+    const [view, setView] = React.useState('members');
     const [editingMember, setEditingMember] = React.useState(null);
     const [editingAtt, setEditingAtt] = React.useState(null);
+    const [attDate, setAttDate] = React.useState(new Date().toLocaleDateString('en-CA'));
+    const [calendarCfg, setCalendarCfg] = React.useState({});
+    const [leaveRequests, setLeaveRequests] = React.useState([]);
+    const [auditLogs, setAuditLogs] = React.useState([]);
+    const [corrections, setCorrections] = React.useState([]);
+    const [dailyReports, setDailyReports] = React.useState([]);
+    const [memberSearch, setMemberSearch] = React.useState('');
+    const [teamFilter, setTeamFilter] = React.useState('All');
+    const [roleFilter, setRoleFilter] = React.useState('All');
+    const [leaveStatus, setLeaveStatus] = React.useState('');
+    const [correctionStatus, setCorrectionStatus] = React.useState('');
+    const [reportDate, setReportDate] = React.useState(new Date().toLocaleDateString('en-CA'));
+    const [announcement, setAnnouncement] = React.useState({target:'all', title:'Announcement', message:''});
     const [msg, setMsg] = React.useState('');
+    const year = String(new Date().getFullYear());
+    const month = String(new Date().getMonth() + 1);
 
     const fetchMembers = async () => {
         try {
@@ -195,26 +210,82 @@ const AdminPanel = () => {
 
     const fetchAttendance = async () => {
         try {
-            const res = await fetch('/api/admin/attendance');
+            const res = await fetch(`/api/admin/attendance?date=${attDate}`);
             setAttendance(await res.json());
+        } catch(e) { console.error(e); }
+    };
+
+    const fetchCalendar = async () => {
+        try {
+            const res = await fetch('/api/admin/calendar-config');
+            setCalendarCfg(await res.json());
+        } catch(e) { console.error(e); }
+    };
+
+    const fetchLeaveRequests = async () => {
+        try {
+            const res = await fetch(`/api/admin/leave-requests${leaveStatus ? `?status=${leaveStatus}` : ''}`);
+            setLeaveRequests(await res.json());
+        } catch(e) { console.error(e); }
+    };
+
+    const fetchAuditLogs = async () => {
+        try {
+            const res = await fetch('/api/admin/audit-logs');
+            setAuditLogs(await res.json());
+        } catch(e) { console.error(e); }
+    };
+
+    const fetchCorrections = async () => {
+        try {
+            const res = await fetch(`/api/admin/attendance-corrections${correctionStatus ? `?status=${correctionStatus}` : ''}`);
+            setCorrections(await res.json());
+        } catch(e) { console.error(e); }
+    };
+
+    const fetchDailyReports = async () => {
+        try {
+            const res = await fetch(`/api/admin/daily-reports${reportDate ? `?date=${reportDate}` : ''}`);
+            setDailyReports(await res.json());
         } catch(e) { console.error(e); }
     };
 
     React.useEffect(() => {
         if(view === 'members') fetchMembers();
-        else fetchAttendance();
-    }, [view]);
+        if(view === 'attendance') fetchAttendance();
+        if(view === 'settings') fetchCalendar();
+        if(view === 'leave') fetchLeaveRequests();
+        if(view === 'audit') fetchAuditLogs();
+        if(view === 'corrections') fetchCorrections();
+        if(view === 'reports') fetchDailyReports();
+    }, [view, attDate, leaveStatus, correctionStatus, reportDate]);
 
     const handleUpdateMember = async (m) => {
         setMsg('Saving...');
         try {
-            const res = await fetch('/api/admin/members/update', {
+            const payload = {...m, target: Number(m.target || 0) || 1100, isAdmin: !!m.isAdmin};
+            if(!payload.password) delete payload.password;
+            delete payload._isNew;
+            const res = await fetch(m._isNew ? '/api/admin/members/add' : '/api/admin/members/update', {
                 method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify(m)
+                body: JSON.stringify(payload)
             });
             if(res.ok) { setMsg('Saved!'); setEditingMember(null); fetchMembers(); }
             else setMsg('Error saving.');
         } catch(e) { setMsg('Error saving.'); }
+    };
+
+    const handleDeleteMember = async (m) => {
+        if(!confirm(`Delete ${m.name || m.id}?`)) return;
+        setMsg('Deleting...');
+        try {
+            const res = await fetch('/api/admin/members/delete', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({id:m.id})
+            });
+            if(res.ok) { setMsg('Deleted!'); setEditingMember(null); fetchMembers(); }
+            else setMsg('Delete failed.');
+        } catch(e) { setMsg('Delete failed.'); }
     };
 
     const handleUpdateAtt = async (a) => {
@@ -229,20 +300,121 @@ const AdminPanel = () => {
         } catch(e) { setMsg('Error saving.'); }
     };
 
+    const handleSaveCalendar = async () => {
+        setMsg('Saving calendar...');
+        try {
+            const res = await fetch('/api/admin/calendar-config', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(calendarCfg)
+            });
+            if(res.ok) { setMsg('Calendar saved!'); fetchCalendar(); }
+            else setMsg('Calendar save failed.');
+        } catch(e) { setMsg('Calendar save failed.'); }
+    };
+
+    const handleSendAnnouncement = async () => {
+        if(!announcement.message.trim()) { setMsg('Announcement message required.'); return; }
+        setMsg('Sending announcement...');
+        try {
+            const res = await fetch('/api/admin/announcements', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify(announcement)
+            });
+            if(res.ok) { setMsg('Announcement sent!'); setAnnouncement({...announcement, message:''}); }
+            else setMsg('Announcement failed.');
+        } catch(e) { setMsg('Announcement failed.'); }
+    };
+
+    const updateLeaveStatus = async (req, status) => {
+        setMsg(`${status} leave request...`);
+        try {
+            const res = await fetch('/api/admin/leave-requests/update', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({key:req.key, status})
+            });
+            if(res.ok) { setMsg(`Leave ${status.toLowerCase()}!`); fetchLeaveRequests(); }
+            else setMsg('Leave update failed.');
+        } catch(e) { setMsg('Leave update failed.'); }
+    };
+
+    const updateCorrectionStatus = async (req, status) => {
+        setMsg(`${status} correction...`);
+        try {
+            const res = await fetch('/api/admin/attendance-corrections/update', {
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body: JSON.stringify({key:req.key, status})
+            });
+            if(res.ok) { setMsg(`Correction ${status.toLowerCase()}!`); fetchCorrections(); }
+            else setMsg('Correction update failed.');
+        } catch(e) { setMsg('Correction update failed.'); }
+    };
+
+    const setMonthWorkingDays = (value) => {
+        setCalendarCfg({
+            ...calendarCfg,
+            [year]: {
+                ...(calendarCfg[year] || {}),
+                [month]: Number(value || 0)
+            }
+        });
+    };
+
+    const resetPassword = (m) => {
+        setEditingMember({...m, password:'pass123'});
+    };
+
+    const teams = [...new Set(members.map(m => m.team).filter(Boolean))].sort();
+    const roles = ['Member', 'Team Leader', 'Manager', 'Admin'];
+    const roleOptions = [...new Set([...roles, ...members.map(m => m.role).filter(Boolean)])];
+    const filteredMembers = [...members].filter(m => {
+        const q = memberSearch.toLowerCase();
+        const matchesSearch = !q || [m.id, m.name, m.fullName, m.email, m.phone].some(v => String(v || '').toLowerCase().includes(q));
+        const matchesTeam = teamFilter === 'All' || m.team === teamFilter;
+        const matchesRole = roleFilter === 'All' || m.role === roleFilter;
+        return matchesSearch && matchesTeam && matchesRole;
+    }).sort((a,b)=>String(a.name || '').localeCompare(String(b.name || '')));
+    const adminCount = members.filter(m => m.isAdmin || String(m.role || '').includes('Leader') || String(m.role || '').includes('Manager')).length;
+    const presentCount = attendance.filter(a => ['Present', 'Late'].includes(a.status)).length;
+    const lateCount = attendance.filter(a => a.status === 'Late').length;
+
+    const fieldStyle = {width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'};
+    const tabStyle = {padding:'7px 12px', fontSize:11};
+    const statusColor = (s) => s === 'Late' ? '#ef4444' : s === 'Absent' ? '#f87171' : '#10b981';
+
     return (
         <div className="emp-card" style={{gridColumn:'1/-1'}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:16, flexWrap:'wrap', marginBottom:20}}>
                 <div className="emp-card-title" style={{margin:0}}>🛡️ Admin Control Panel</div>
-                <div style={{display:'flex', gap:8}}>
-                    <button className={`nav-btn ${view==='members'?'active':''}`} onClick={()=>setView('members')} style={{padding:'6px 12px', fontSize:11}}>👥 Members</button>
-                    <button className={`nav-btn ${view==='attendance'?'active':''}`} onClick={()=>setView('attendance')} style={{padding:'6px 12px', fontSize:11}}>📅 Today's Attendance</button>
+                <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
+                    <button className={`nav-btn ${view==='members'?'active':''}`} onClick={()=>setView('members')} style={tabStyle}>👥 Members</button>
+                    <button className={`nav-btn ${view==='attendance'?'active':''}`} onClick={()=>setView('attendance')} style={tabStyle}>📅 Attendance</button>
+                    <button className={`nav-btn ${view==='leave'?'active':''}`} onClick={()=>setView('leave')} style={tabStyle}>🌴 Leave</button>
+                    <button className={`nav-btn ${view==='corrections'?'active':''}`} onClick={()=>setView('corrections')} style={tabStyle}>🕒 Corrections</button>
+                    <button className={`nav-btn ${view==='reports'?'active':''}`} onClick={()=>setView('reports')} style={tabStyle}>📝 Reports</button>
+                    <button className={`nav-btn ${view==='announce'?'active':''}`} onClick={()=>setView('announce')} style={tabStyle}>🔔 Notice</button>
+                    <button className={`nav-btn ${view==='settings'?'active':''}`} onClick={()=>setView('settings')} style={tabStyle}>⚙️ Settings</button>
+                    <button className={`nav-btn ${view==='audit'?'active':''}`} onClick={()=>setView('audit')} style={tabStyle}>🧾 Audit</button>
                 </div>
             </div>
             
             {msg && <div style={{padding:10, background:'rgba(16,185,129,.1)', color:'#10b981', borderRadius:8, marginBottom:16, fontSize:12, fontWeight:700}}>{msg}</div>}
 
+            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:12, marginBottom:18}}>
+                <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:12}}><div style={{fontSize:10,color:'#64748b',fontWeight:800}}>Members</div><div style={{fontSize:22,fontWeight:900}}>{members.length}</div></div>
+                <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:12}}><div style={{fontSize:10,color:'#64748b',fontWeight:800}}>Admins/Leads</div><div style={{fontSize:22,fontWeight:900,color:'#a5b4fc'}}>{adminCount}</div></div>
+                <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:12}}><div style={{fontSize:10,color:'#64748b',fontWeight:800}}>Present</div><div style={{fontSize:22,fontWeight:900,color:'#10b981'}}>{presentCount}</div></div>
+                <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:12}}><div style={{fontSize:10,color:'#64748b',fontWeight:800}}>Late</div><div style={{fontSize:22,fontWeight:900,color:'#ef4444'}}>{lateCount}</div></div>
+            </div>
+
             {view === 'members' && (
-                <div style={{overflowX:'auto'}}>
+                <div>
+                    <div style={{display:'grid', gridTemplateColumns:'minmax(180px,1fr) 170px 170px auto', gap:10, marginBottom:12, alignItems:'center'}}>
+                        <input value={memberSearch} onChange={e=>setMemberSearch(e.target.value)} placeholder="Search name, ID, email, phone" style={fieldStyle}/>
+                        <select value={teamFilter} onChange={e=>setTeamFilter(e.target.value)} style={fieldStyle}><option>All</option>{teams.map(t=><option key={t}>{t}</option>)}</select>
+                        <select value={roleFilter} onChange={e=>setRoleFilter(e.target.value)} style={fieldStyle}><option>All</option>{roleOptions.map(r=><option key={r}>{r}</option>)}</select>
+                        <button onClick={()=>setEditingMember({_isNew:true, id:'', name:'', role:'Member', team:teams[0] || '', target:1100, password:'pass123', isAdmin:false})} style={{background:'#10b981', color:'#fff', border:'none', padding:'8px 12px', borderRadius:6, cursor:'pointer', fontWeight:800, fontSize:12}}>Add Member</button>
+                    </div>
+                    <div style={{overflowX:'auto'}}>
                     <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
                         <thead>
                             <tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}>
@@ -251,29 +423,129 @@ const AdminPanel = () => {
                                 <th style={{padding:10}}>Team</th>
                                 <th style={{padding:10}}>Role</th>
                                 <th style={{padding:10}}>Target</th>
+                                <th style={{padding:10}}>Admin</th>
                                 <th style={{padding:10}}>Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {members.map(m => (
+                            {filteredMembers.map(m => (
                                 <tr key={m.id} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}>
                                     <td style={{padding:10}}>{m.id}</td>
-                                    <td style={{padding:10}}>{m.name}</td>
+                                    <td style={{padding:10}}><b>{m.name}</b><div style={{color:'#64748b', fontSize:10}}>{m.email || m.phone || ''}</div></td>
                                     <td style={{padding:10}}>{m.team}</td>
                                     <td style={{padding:10}}>{m.role}</td>
                                     <td style={{padding:10}}>${m.target || 1100}</td>
+                                    <td style={{padding:10}}>{m.isAdmin ? 'Yes' : '-'}</td>
                                     <td style={{padding:10}}>
-                                        <button onClick={()=>setEditingMember(m)} style={{background:'rgba(255,255,255,.1)', border:'none', color:'#f1f5f9', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Edit</button>
+                                        <div style={{display:'flex', gap:6}}>
+                                            <button onClick={()=>setEditingMember({...m})} style={{background:'rgba(255,255,255,.1)', border:'none', color:'#f1f5f9', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Edit</button>
+                                            <button onClick={()=>resetPassword(m)} style={{background:'rgba(59,130,246,.14)', border:'none', color:'#93c5fd', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Reset</button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
+                            {filteredMembers.length === 0 && <tr><td colSpan="7" style={{padding:20, textAlign:'center', color:'#64748b'}}>No members matched.</td></tr>}
                         </tbody>
                     </table>
+                    </div>
+                </div>
+            )}
+
+            {view === 'corrections' && (
+                <div>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:12, flexWrap:'wrap'}}>
+                        <div style={{fontSize:12, color:'#94a3b8', fontWeight:700}}>Review attendance correction requests</div>
+                        <select value={correctionStatus} onChange={e=>setCorrectionStatus(e.target.value)} style={{...fieldStyle, width:170}}><option value="">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
+                    </div>
+                    <div style={{overflowX:'auto'}}>
+                        <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
+                            <thead><tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}><th style={{padding:10}}>Employee</th><th style={{padding:10}}>Date</th><th style={{padding:10}}>In/Out</th><th style={{padding:10}}>Reason</th><th style={{padding:10}}>Status</th><th style={{padding:10}}>Action</th></tr></thead>
+                            <tbody>
+                                {corrections.map(r => (
+                                    <tr key={r.key} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}>
+                                        <td style={{padding:10}}><b>{r.name || r.emp_id}</b><div style={{color:'#64748b', fontSize:10}}>{r.emp_id}</div></td>
+                                        <td style={{padding:10}}>{r.date}</td>
+                                        <td style={{padding:10}}>{r.in || '-'} / {r.out || '-'}</td>
+                                        <td style={{padding:10, maxWidth:260}}>{r.reason || '-'}</td>
+                                        <td style={{padding:10, color:statusColor(r.status)}}>{r.status}</td>
+                                        <td style={{padding:10}}><div style={{display:'flex', gap:6}}><button onClick={()=>updateCorrectionStatus(r,'Approved')} style={{background:'#10b981', color:'#fff', border:'none', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Approve</button><button onClick={()=>updateCorrectionStatus(r,'Rejected')} style={{background:'#ef4444', color:'#fff', border:'none', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Reject</button></div></td>
+                                    </tr>
+                                ))}
+                                {corrections.length === 0 && <tr><td colSpan="6" style={{padding:20, textAlign:'center', color:'#64748b'}}>No correction requests found.</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {view === 'reports' && (
+                <div>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:12, flexWrap:'wrap'}}>
+                        <div style={{fontSize:12, color:'#94a3b8', fontWeight:700}}>Daily work reports</div>
+                        <input type="date" value={reportDate} onChange={e=>setReportDate(e.target.value)} style={{...fieldStyle, width:170}}/>
+                    </div>
+                    <div style={{display:'grid', gap:10}}>
+                        {dailyReports.map(r => (
+                            <div key={r.key} style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:10, padding:14}}>
+                                <div style={{display:'flex', justifyContent:'space-between', gap:12, marginBottom:8}}><b>{r.name || r.emp_id}</b><span style={{fontSize:11, color:'#94a3b8'}}>{r.date} · {r.hours || 0}h</span></div>
+                                <div style={{fontSize:12, color:'#cbd5e1', lineHeight:1.6}}>{r.summary || '-'}</div>
+                                {r.blockers && <div style={{fontSize:11, color:'#f59e0b', marginTop:8}}>Blockers: {r.blockers}</div>}
+                            </div>
+                        ))}
+                        {dailyReports.length === 0 && <div style={{padding:20, textAlign:'center', color:'#64748b'}}>No reports found for this date.</div>}
+                    </div>
+                </div>
+            )}
+
+            {view === 'leave' && (
+                <div>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:12, flexWrap:'wrap'}}>
+                        <div style={{fontSize:12, color:'#94a3b8', fontWeight:700}}>Review employee leave requests</div>
+                        <select value={leaveStatus} onChange={e=>setLeaveStatus(e.target.value)} style={{...fieldStyle, width:170}}><option value="">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
+                    </div>
+                    <div style={{overflowX:'auto'}}>
+                        <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
+                            <thead><tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}><th style={{padding:10}}>Employee</th><th style={{padding:10}}>Type</th><th style={{padding:10}}>Dates</th><th style={{padding:10}}>Reason</th><th style={{padding:10}}>Status</th><th style={{padding:10}}>Action</th></tr></thead>
+                            <tbody>
+                                {leaveRequests.map(r => (
+                                    <tr key={r.key} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}>
+                                        <td style={{padding:10}}><b>{r.name || r.emp_id}</b><div style={{color:'#64748b', fontSize:10}}>{r.emp_id}</div></td>
+                                        <td style={{padding:10}}>{r.type}</td>
+                                        <td style={{padding:10}}>{r.from} → {r.to}</td>
+                                        <td style={{padding:10, maxWidth:260}}>{r.reason || '-'}</td>
+                                        <td style={{padding:10, color:statusColor(r.status)}}>{r.status}</td>
+                                        <td style={{padding:10}}><div style={{display:'flex', gap:6}}><button onClick={()=>updateLeaveStatus(r,'Approved')} style={{background:'#10b981', color:'#fff', border:'none', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Approve</button><button onClick={()=>updateLeaveStatus(r,'Rejected')} style={{background:'#ef4444', color:'#fff', border:'none', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Reject</button></div></td>
+                                    </tr>
+                                ))}
+                                {leaveRequests.length === 0 && <tr><td colSpan="6" style={{padding:20, textAlign:'center', color:'#64748b'}}>No leave requests found.</td></tr>}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            )}
+
+            {view === 'announce' && (
+                <div style={{display:'grid', gridTemplateColumns:'minmax(260px,520px) 1fr', gap:14}}>
+                    <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:16}}>
+                        <div className="emp-card-title" style={{fontSize:14}}>Send Announcement</div>
+                        <div style={{display:'grid', gap:10}}>
+                            <input value={announcement.title} onChange={e=>setAnnouncement({...announcement, title:e.target.value})} placeholder="Title" style={fieldStyle}/>
+                            <select value={announcement.target} onChange={e=>setAnnouncement({...announcement, target:e.target.value})} style={fieldStyle}><option value="all">All employees</option>{teams.map(t=><option key={t} value={t}>Team: {t}</option>)}{members.map(m=><option key={m.id} value={m.id}>{m.name} ({m.id})</option>)}</select>
+                            <textarea value={announcement.message} onChange={e=>setAnnouncement({...announcement, message:e.target.value})} placeholder="Write notice..." rows="5" style={{...fieldStyle, resize:'vertical'}}></textarea>
+                            <button onClick={handleSendAnnouncement} style={{background:'#2563eb', color:'#fff', border:'none', padding:'9px 12px', borderRadius:6, cursor:'pointer', fontWeight:800}}>Send Notice</button>
+                        </div>
+                    </div>
+                    <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:16, fontSize:12, color:'#94a3b8', lineHeight:1.7}}>Notice bell-এ message দেখাবে. Target হিসেবে all, team, অথবা exact employee ID ব্যবহার করা যাবে। Team select করলে backend ওই team-এর সব member-কে notification পাঠাবে।</div>
                 </div>
             )}
 
             {view === 'attendance' && (
-                <div style={{overflowX:'auto'}}>
+                <div>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:12, flexWrap:'wrap'}}>
+                        <div style={{fontSize:12, color:'#94a3b8', fontWeight:700}}>Date wise attendance control</div>
+                        <input type="date" value={attDate} onChange={e=>setAttDate(e.target.value)} style={{...fieldStyle, width:170}}/>
+                    </div>
+                    <div style={{overflowX:'auto'}}>
                     <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
                         <thead>
                             <tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}>
@@ -294,15 +566,44 @@ const AdminPanel = () => {
                                     <td style={{padding:10, color:'#10b981', fontWeight:800}}>{a.in || '-'}</td>
                                     <td style={{padding:10, color:'#f59e0b', fontWeight:800}}>{a.out || '-'}</td>
                                     <td style={{padding:10}}>
-                                        <span style={{padding:'2px 8px', borderRadius:10, fontSize:10, background:a.status==='Late'?'rgba(239,68,68,.1)':'rgba(16,185,129,.1)', color:a.status==='Late'?'#ef4444':'#10b981'}}>{a.status}</span>
+                                        <span style={{padding:'2px 8px', borderRadius:10, fontSize:10, background:'rgba(255,255,255,.06)', color:statusColor(a.status)}}>{a.status}</span>
                                     </td>
                                     <td style={{padding:10}}>{a.duration || '-'}</td>
                                     <td style={{padding:10}}>
-                                        <button onClick={()=>setEditingAtt(a)} style={{background:'rgba(255,255,255,.1)', border:'none', color:'#f1f5f9', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Fix Time</button>
+                                        <button onClick={()=>setEditingAtt({...a})} style={{background:'rgba(255,255,255,.1)', border:'none', color:'#f1f5f9', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Fix Time</button>
                                     </td>
                                 </tr>
                             ))}
                             {attendance.length === 0 && <tr><td colSpan="7" style={{padding:20, textAlign:'center', color:'#64748b'}}>No attendance records for today.</td></tr>}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            )}
+
+            {view === 'settings' && (
+                <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:14}}>
+                    <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:16}}>
+                        <div className="emp-card-title" style={{fontSize:14}}>Working Days</div>
+                        <div style={{fontSize:11, color:'#64748b', marginBottom:12}}>Current month override for attendance and progress calculation.</div>
+                        <label style={{fontSize:11, color:'#94a3b8'}}>April 2026 working days</label>
+                        <input type="number" value={(calendarCfg[year] && calendarCfg[year][month]) || ''} onChange={e=>setMonthWorkingDays(e.target.value)} placeholder="e.g. 22" style={{...fieldStyle, marginTop:6}}/>
+                        <button onClick={handleSaveCalendar} style={{marginTop:12, background:'#2563eb', color:'#fff', border:'none', padding:'9px 12px', borderRadius:6, cursor:'pointer', fontWeight:800}}>Save Calendar</button>
+                    </div>
+                    <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:16}}>
+                        <div className="emp-card-title" style={{fontSize:14}}>Admin Access</div>
+                        <div style={{fontSize:11, color:'#64748b', lineHeight:1.7}}>Member edit modal থেকে role, admin access, target, contact info, and password reset করা যাবে. Team Leader and Manager role login করলেও Admin panel পাবে.</div>
+                    </div>
+                </div>
+            )}
+
+            {view === 'audit' && (
+                <div style={{overflowX:'auto'}}>
+                    <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
+                        <thead><tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}><th style={{padding:10}}>Time</th><th style={{padding:10}}>Action</th><th style={{padding:10}}>Detail</th><th style={{padding:10}}>Actor</th></tr></thead>
+                        <tbody>
+                            {auditLogs.map((l,i) => <tr key={i} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}><td style={{padding:10}}>{new Date((l.timestamp || 0) * 1000).toLocaleString()}</td><td style={{padding:10, color:'#a5b4fc', fontWeight:800}}>{l.action}</td><td style={{padding:10}}>{l.detail}</td><td style={{padding:10}}>{l.actor || 'admin'}</td></tr>)}
+                            {auditLogs.length === 0 && <tr><td colSpan="4" style={{padding:20, textAlign:'center', color:'#64748b'}}>No audit logs yet.</td></tr>}
                         </tbody>
                     </table>
                 </div>
@@ -311,15 +612,25 @@ const AdminPanel = () => {
             {/* Edit Member Modal */}
             {editingMember && (
                 <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100}}>
-                    <div style={{background:'#0f172a', padding:24, borderRadius:16, width:300, border:'1px solid rgba(148,163,184,.2)'}}>
-                        <h3 style={{marginTop:0, marginBottom:16}}>Edit Member</h3>
-                        <div style={{display:'flex', flexDirection:'column', gap:10}}>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Name</label><input value={editingMember.name} onChange={e=>setEditingMember({...editingMember, name:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Role</label><input value={editingMember.role} onChange={e=>setEditingMember({...editingMember, role:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Target ($)</label><input type="number" value={editingMember.target || ''} onChange={e=>setEditingMember({...editingMember, target:parseInt(e.target.value)})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
+                    <div style={{background:'#0f172a', padding:24, borderRadius:16, width:'min(560px, 92vw)', maxHeight:'86vh', overflowY:'auto', border:'1px solid rgba(148,163,184,.2)'}}>
+                        <h3 style={{marginTop:0, marginBottom:16}}>{editingMember._isNew ? 'Add Member' : 'Edit Member'}</h3>
+                        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:10}}>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Employee ID</label><input value={editingMember.id || ''} disabled={!editingMember._isNew} onChange={e=>setEditingMember({...editingMember, id:e.target.value})} style={{...fieldStyle, opacity:editingMember._isNew?1:.65}}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Name</label><input value={editingMember.name || ''} onChange={e=>setEditingMember({...editingMember, name:e.target.value})} style={fieldStyle}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Full Name</label><input value={editingMember.fullName || ''} onChange={e=>setEditingMember({...editingMember, fullName:e.target.value})} style={fieldStyle}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Role</label><select value={editingMember.role || 'Member'} onChange={e=>setEditingMember({...editingMember, role:e.target.value})} style={fieldStyle}>{roles.map(r=><option key={r}>{r}</option>)}</select></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Team</label><input list="adminTeams" value={editingMember.team || ''} onChange={e=>setEditingMember({...editingMember, team:e.target.value})} style={fieldStyle}/><datalist id="adminTeams">{teams.map(t=><option key={t} value={t}/>)}</datalist></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Target ($)</label><input type="number" value={editingMember.target || ''} onChange={e=>setEditingMember({...editingMember, target:e.target.value})} style={fieldStyle}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Password</label><input value={editingMember.password || ''} placeholder="Leave blank to keep current" onChange={e=>setEditingMember({...editingMember, password:e.target.value})} style={fieldStyle}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Email</label><input value={editingMember.email || ''} onChange={e=>setEditingMember({...editingMember, email:e.target.value})} style={fieldStyle}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Phone</label><input value={editingMember.phone || ''} onChange={e=>setEditingMember({...editingMember, phone:e.target.value})} style={fieldStyle}/></div>
+                            <label style={{display:'flex', alignItems:'center', gap:8, fontSize:12, color:'#cbd5e1', fontWeight:800, marginTop:18}}>
+                                <input type="checkbox" checked={!!editingMember.isAdmin} onChange={e=>setEditingMember({...editingMember, isAdmin:e.target.checked})}/> Admin access
+                            </label>
                         </div>
                         <div style={{display:'flex', gap:8, marginTop:20}}>
                             <button onClick={()=>handleUpdateMember(editingMember)} style={{flex:1, background:'#2563eb', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Save</button>
+                            {!editingMember._isNew && <button onClick={()=>handleDeleteMember(editingMember)} style={{flex:1, background:'#ef4444', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Delete</button>}
                             <button onClick={()=>setEditingMember(null)} style={{flex:1, background:'rgba(255,255,255,.1)', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Cancel</button>
                         </div>
                     </div>
@@ -332,10 +643,10 @@ const AdminPanel = () => {
                     <div style={{background:'#0f172a', padding:24, borderRadius:16, width:300, border:'1px solid rgba(148,163,184,.2)'}}>
                         <h3 style={{marginTop:0, marginBottom:16}}>Override Time</h3>
                         <div style={{display:'flex', flexDirection:'column', gap:10}}>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>In Time (e.g. 09:10 AM)</label><input value={editingAtt.in || ''} onChange={e=>setEditingAtt({...editingAtt, in:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Out Time (e.g. 06:00 PM)</label><input value={editingAtt.out || ''} onChange={e=>setEditingAtt({...editingAtt, out:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Status</label><input value={editingAtt.status || ''} onChange={e=>setEditingAtt({...editingAtt, status:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Duration (e.g. 8h 30m)</label><input value={editingAtt.duration || ''} onChange={e=>setEditingAtt({...editingAtt, duration:e.target.value})} style={{width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>In Time (e.g. 09:10 AM)</label><input value={editingAtt.in || ''} onChange={e=>setEditingAtt({...editingAtt, in:e.target.value})} style={fieldStyle}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Out Time (e.g. 06:00 PM)</label><input value={editingAtt.out || ''} onChange={e=>setEditingAtt({...editingAtt, out:e.target.value})} style={fieldStyle}/></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Status</label><select value={editingAtt.status || 'Present'} onChange={e=>setEditingAtt({...editingAtt, status:e.target.value})} style={fieldStyle}><option>Present</option><option>Late</option><option>Absent</option><option>Leave</option></select></div>
+                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Duration (e.g. 8h 30m)</label><input value={editingAtt.duration || ''} onChange={e=>setEditingAtt({...editingAtt, duration:e.target.value})} style={fieldStyle}/></div>
                         </div>
                         <div style={{display:'flex', gap:8, marginTop:20}}>
                             <button onClick={()=>handleUpdateAtt(editingAtt)} style={{flex:1, background:'#2563eb', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Save</button>
@@ -362,6 +673,17 @@ const App = () => {
   const [showNotifs, setShowNotifs] = React.useState(false);
   const [updMsg, setUpdMsg] = React.useState('');
   const [projFilter, setProjFilter] = React.useState('All');
+  const [myLeaveRequests, setMyLeaveRequests] = React.useState([]);
+  const [leaveMsg, setLeaveMsg] = React.useState('');
+  const [leaveForm, setLeaveForm] = React.useState({type:'Annual', from:'', to:'', reason:''});
+  const [myCorrections, setMyCorrections] = React.useState([]);
+  const [correctionMsg, setCorrectionMsg] = React.useState('');
+  const [correctionForm, setCorrectionForm] = React.useState({date:new Date().toLocaleDateString('en-CA'), in:'', out:'', reason:''});
+  const [myReports, setMyReports] = React.useState([]);
+  const [reportMsg, setReportMsg] = React.useState('');
+  const [reportForm, setReportForm] = React.useState({date:new Date().toLocaleDateString('en-CA'), hours:'8', summary:'', blockers:''});
+  const [teamBoard, setTeamBoard] = React.useState({team:'', members:[]});
+  const [passwordForm, setPasswordForm] = React.useState({password:'', confirm:''});
 
   const doLogin = async (id) => {
     const uid = id || empId.trim().toUpperCase();
@@ -469,6 +791,110 @@ const App = () => {
     } catch(e) { setUpdMsg('Error updating profile.'); }
   };
 
+  const fetchMyLeaveRequests = async () => {
+    if(!user) return;
+    try {
+        const res = await fetch(`/api/leave-requests?id=${user.id}`);
+        setMyLeaveRequests(await res.json());
+    } catch(e) { console.error(e); }
+  };
+
+  const fetchMyCorrections = async () => {
+    if(!user) return;
+    try {
+        const res = await fetch(`/api/attendance-corrections?id=${user.id}`);
+        setMyCorrections(await res.json());
+    } catch(e) { console.error(e); }
+  };
+
+  const fetchMyReports = async () => {
+    if(!user) return;
+    try {
+        const res = await fetch(`/api/daily-reports?id=${user.id}`);
+        setMyReports(await res.json());
+    } catch(e) { console.error(e); }
+  };
+
+  const fetchTeamBoard = async () => {
+    if(!user) return;
+    try {
+        const res = await fetch(`/api/team-leaderboard?id=${user.id}`);
+        setTeamBoard(await res.json());
+    } catch(e) { console.error(e); }
+  };
+
+  React.useEffect(() => {
+    if(user && navItem === 'leave') fetchMyLeaveRequests();
+    if(user && navItem === 'attendance') fetchMyCorrections();
+    if(user && navItem === 'reports') fetchMyReports();
+    if(user && navItem === 'team') fetchTeamBoard();
+  }, [user, navItem]);
+
+  const submitLeaveRequest = async (e) => {
+    e.preventDefault();
+    setLeaveMsg('Submitting...');
+    try {
+        const res = await fetch('/api/leave-requests', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({...leaveForm, emp_id:user.id, name:user.name})
+        });
+        if(res.ok) {
+            setLeaveMsg('Leave request submitted!');
+            setLeaveForm({type:'Annual', from:'', to:'', reason:''});
+            fetchMyLeaveRequests();
+        } else setLeaveMsg('Leave request failed.');
+    } catch(e) { setLeaveMsg('Leave request failed.'); }
+  };
+
+  const submitCorrectionRequest = async (e) => {
+    e.preventDefault();
+    setCorrectionMsg('Submitting...');
+    try {
+        const res = await fetch('/api/attendance-corrections', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({...correctionForm, emp_id:user.id, name:user.name})
+        });
+        if(res.ok) {
+            setCorrectionMsg('Correction request submitted!');
+            setCorrectionForm({date:new Date().toLocaleDateString('en-CA'), in:'', out:'', reason:''});
+            fetchMyCorrections();
+        } else setCorrectionMsg('Correction request failed.');
+    } catch(e) { setCorrectionMsg('Correction request failed.'); }
+  };
+
+  const submitDailyReport = async (e) => {
+    e.preventDefault();
+    setReportMsg('Submitting...');
+    try {
+        const res = await fetch('/api/daily-reports', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({...reportForm, emp_id:user.id, name:user.name})
+        });
+        if(res.ok) {
+            setReportMsg('Daily report saved!');
+            setReportForm({...reportForm, summary:'', blockers:''});
+            fetchMyReports();
+        } else setReportMsg('Daily report failed.');
+    } catch(e) { setReportMsg('Daily report failed.'); }
+  };
+
+  const changePassword = async (e) => {
+    e.preventDefault();
+    if(!passwordForm.password || passwordForm.password !== passwordForm.confirm) {
+        setUpdMsg('Passwords do not match.');
+        return;
+    }
+    setUpdMsg('Updating password...');
+    try {
+        const res = await fetch('/api/user/update', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({id:user.id, password:passwordForm.password})
+        });
+        if(res.ok) { setUpdMsg('Password updated successfully!'); setPasswordForm({password:'', confirm:''}); }
+        else setUpdMsg('Password update failed.');
+    } catch(e) { setUpdMsg('Password update failed.'); }
+  };
+
   const markRead = async () => {
     setShowNotifs(!showNotifs);
     if(!showNotifs && notifications.some(n => !n.read)) {
@@ -494,6 +920,8 @@ const App = () => {
     { id:'attendance', icon:'📅', label:'Attendance' },
     { id:'projects', icon:'📁', label:'My Projects' },
     { id:'performance', icon:'🏆', label:'Performance' },
+    { id:'reports', icon:'📝', label:'Daily Report' },
+    { id:'team', icon:'👥', label:'My Team' },
     { id:'leave', icon:'🌴', label:'Leave Balance' },
     { id:'settings', icon:'⚙️', label:'Settings' },
     ...(user?.isAdmin ? [{ id:'admin', icon:'🛡️', label:'Admin Control' }] : []),
@@ -632,7 +1060,7 @@ const App = () => {
                              notifications.map((n,i) => (
                                 <div key={i} style={{padding:'8px 0',borderBottom:i<notifications.length-1?'1px solid rgba(148,163,184,.05)':''}}>
                                     <div style={{fontSize:11,fontWeight:800,color:n.read?'#94a3b8':'#f1f5f9'}}>{n.title}</div>
-                                    <div style={{fontSize:10,color:'#64748b',lineHeight:1.4}}>{n.message}</div>
+                                    <div style={{fontSize:10,color:'#64748b',lineHeight:1.4}}>{n.text || n.message}</div>
                                 </div>
                             ))}
                         </div>
@@ -804,6 +1232,31 @@ const App = () => {
                 </div>
               ))}
             </div>
+            <div style={{display:'grid', gridTemplateColumns:'minmax(260px,420px) 1fr', gap:18, marginTop:22}}>
+              <form onSubmit={submitCorrectionRequest} style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16, display:'grid', gap:10}}>
+                <div className="emp-card-title" style={{fontSize:14}}>Request Correction</div>
+                <input type="date" value={correctionForm.date} required onChange={e=>setCorrectionForm({...correctionForm, date:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
+                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
+                  <input placeholder="In time e.g. 09:10 AM" value={correctionForm.in} onChange={e=>setCorrectionForm({...correctionForm, in:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
+                  <input placeholder="Out time e.g. 06:00 PM" value={correctionForm.out} onChange={e=>setCorrectionForm({...correctionForm, out:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
+                </div>
+                <textarea required value={correctionForm.reason} onChange={e=>setCorrectionForm({...correctionForm, reason:e.target.value})} placeholder="Why correction is needed" rows="3" style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff', resize:'vertical'}}></textarea>
+                {correctionMsg && <div style={{fontSize:11, fontWeight:800, color:correctionMsg.includes('submitted')?'#10b981':'#ef4444'}}>{correctionMsg}</div>}
+                <button className="lf-submit" style={{marginTop:0}}>Submit Correction</button>
+              </form>
+              <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16}}>
+                <div className="emp-card-title" style={{fontSize:14}}>Correction History</div>
+                <div style={{display:'grid', gap:8}}>
+                  {myCorrections.map(r => (
+                    <div key={r.key} style={{display:'grid', gridTemplateColumns:'1fr auto', gap:10, padding:'10px 0', borderBottom:'1px solid rgba(148,163,184,.08)'}}>
+                      <div><div style={{fontSize:12, fontWeight:800}}>{r.date} · {r.in || '-'} / {r.out || '-'}</div><div style={{fontSize:10, color:'#64748b'}}>{r.reason || 'No reason'}</div></div>
+                      <div style={{fontSize:11, fontWeight:900, color:r.status==='Approved'?'#10b981':r.status==='Rejected'?'#ef4444':'#f59e0b'}}>{r.status}</div>
+                    </div>
+                  ))}
+                  {myCorrections.length === 0 && <div style={{fontSize:12, color:'#64748b', textAlign:'center', padding:18}}>No correction requests yet.</div>}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
@@ -944,6 +1397,60 @@ const App = () => {
           </div>
         )}
 
+        { navItem === 'reports' && (
+          <div className="emp-card">
+            <div className="emp-card-title">📝 Daily Work Report</div>
+            <div style={{display:'grid', gridTemplateColumns:'minmax(280px,460px) 1fr', gap:18}}>
+              <form onSubmit={submitDailyReport} style={{display:'grid', gap:12}}>
+                <div style={{display:'grid', gridTemplateColumns:'1fr 110px', gap:10}}>
+                  <input type="date" value={reportForm.date} onChange={e=>setReportForm({...reportForm, date:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
+                  <input type="number" min="0" step="0.5" value={reportForm.hours} onChange={e=>setReportForm({...reportForm, hours:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
+                </div>
+                <textarea required value={reportForm.summary} onChange={e=>setReportForm({...reportForm, summary:e.target.value})} placeholder="What did you complete today?" rows="6" style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff', resize:'vertical'}}></textarea>
+                <textarea value={reportForm.blockers} onChange={e=>setReportForm({...reportForm, blockers:e.target.value})} placeholder="Any blockers or notes?" rows="3" style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff', resize:'vertical'}}></textarea>
+                {reportMsg && <div style={{fontSize:11, fontWeight:800, color:reportMsg.includes('saved')?'#10b981':'#ef4444'}}>{reportMsg}</div>}
+                <button className="lf-submit" style={{marginTop:0}}>Save Report</button>
+              </form>
+              <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16}}>
+                <div className="emp-card-title" style={{fontSize:14}}>Recent Reports</div>
+                <div style={{display:'grid', gap:10}}>
+                  {myReports.map(r => (
+                    <div key={r.key} style={{padding:'10px 0', borderBottom:'1px solid rgba(148,163,184,.08)'}}>
+                      <div style={{display:'flex', justifyContent:'space-between', gap:10}}><b style={{fontSize:12}}>{r.date}</b><span style={{fontSize:11, color:'#94a3b8'}}>{r.hours || 0}h</span></div>
+                      <div style={{fontSize:11, color:'#cbd5e1', marginTop:5, lineHeight:1.5}}>{r.summary}</div>
+                      {r.blockers && <div style={{fontSize:10, color:'#f59e0b', marginTop:5}}>Blockers: {r.blockers}</div>}
+                    </div>
+                  ))}
+                  {myReports.length === 0 && <div style={{fontSize:12, color:'#64748b', textAlign:'center', padding:18}}>No reports yet.</div>}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        { navItem === 'team' && (
+          <div className="emp-card">
+            <div className="emp-card-title">👥 {teamBoard.team || user.team} Team Leaderboard</div>
+            <div style={{overflowX:'auto'}}>
+              <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
+                <thead><tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}><th style={{padding:10}}>Rank</th><th style={{padding:10}}>Member</th><th style={{padding:10}}>Delivered</th><th style={{padding:10}}>Target</th><th style={{padding:10}}>Progress</th></tr></thead>
+                <tbody>
+                  {(teamBoard.members || []).map((m,i) => (
+                    <tr key={m.id} style={{borderBottom:'1px solid rgba(148,163,184,.1)', background:m.id===user.id?'rgba(59,130,246,.08)':'transparent'}}>
+                      <td style={{padding:10, fontWeight:900, color:i<3?'#f59e0b':'#94a3b8'}}>#{i+1}</td>
+                      <td style={{padding:10}}><b>{m.name}</b><div style={{fontSize:10, color:'#64748b'}}>{m.role}</div></td>
+                      <td style={{padding:10, color:'#10b981', fontWeight:900}}>${(m.deliveredAmt || 0).toLocaleString()}</td>
+                      <td style={{padding:10}}>${(m.target || 0).toLocaleString()}</td>
+                      <td style={{padding:10}}><div style={{display:'flex', alignItems:'center', gap:8}}><div style={{height:6, width:120, background:'rgba(255,255,255,.08)', borderRadius:20, overflow:'hidden'}}><div style={{height:'100%', width:`${Math.min(100,m.progress || 0)}%`, background:'#10b981'}}></div></div><b>{m.progress || 0}%</b></div></td>
+                    </tr>
+                  ))}
+                  {(!teamBoard.members || teamBoard.members.length === 0) && <tr><td colSpan="5" style={{padding:20, textAlign:'center', color:'#64748b'}}>No team data found.</td></tr>}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         { navItem === 'leave' && (
           <div className="emp-card">
             <div className="emp-card-title">🌴 My Leave Balance</div>
@@ -961,6 +1468,31 @@ const App = () => {
                   <div style={{fontSize:9, color:'#475569', marginTop:8, fontWeight:700}}>{l.used} used / {l.total} total</div>
                 </div>
               ))}
+            </div>
+            <div style={{display:'grid', gridTemplateColumns:'minmax(260px,420px) 1fr', gap:18, marginTop:22}}>
+              <form onSubmit={submitLeaveRequest} style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16, display:'grid', gap:10}}>
+                <div className="emp-card-title" style={{fontSize:14}}>Apply Leave</div>
+                <select value={leaveForm.type} onChange={e=>setLeaveForm({...leaveForm, type:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}><option>Annual</option><option>Sick</option><option>Casual</option><option>Emergency</option></select>
+                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
+                  <input type="date" value={leaveForm.from} required onChange={e=>setLeaveForm({...leaveForm, from:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
+                  <input type="date" value={leaveForm.to} required onChange={e=>setLeaveForm({...leaveForm, to:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
+                </div>
+                <textarea value={leaveForm.reason} onChange={e=>setLeaveForm({...leaveForm, reason:e.target.value})} placeholder="Reason" rows="3" style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff', resize:'vertical'}}></textarea>
+                {leaveMsg && <div style={{fontSize:11, fontWeight:800, color:leaveMsg.includes('submitted')?'#10b981':'#ef4444'}}>{leaveMsg}</div>}
+                <button className="lf-submit" style={{marginTop:0}}>Submit Request</button>
+              </form>
+              <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16}}>
+                <div className="emp-card-title" style={{fontSize:14}}>My Requests</div>
+                <div style={{display:'grid', gap:8}}>
+                  {myLeaveRequests.map(r => (
+                    <div key={r.key} style={{display:'grid', gridTemplateColumns:'1fr auto', gap:10, padding:'10px 0', borderBottom:'1px solid rgba(148,163,184,.08)'}}>
+                      <div><div style={{fontSize:12, fontWeight:800}}>{r.type} · {r.from} → {r.to}</div><div style={{fontSize:10, color:'#64748b'}}>{r.reason || 'No reason'}</div></div>
+                      <div style={{fontSize:11, fontWeight:900, color:r.status==='Approved'?'#10b981':r.status==='Rejected'?'#ef4444':'#f59e0b'}}>{r.status}</div>
+                    </div>
+                  ))}
+                  {myLeaveRequests.length === 0 && <div style={{fontSize:12, color:'#64748b', textAlign:'center', padding:18}}>No leave requests yet.</div>}
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -986,7 +1518,12 @@ const App = () => {
                 </form>
                 <div style={{marginTop:32, paddingTop:24, borderTop:'1px solid rgba(148,163,184,.1)'}}>
                     <div className="emp-card-title" style={{fontSize:14}}>Security</div>
-                    <p style={{fontSize:11, color:'#64748b', marginBottom:12}}>Contact admin to reset your password or change your department.</p>
+                    <form onSubmit={changePassword} style={{display:'grid', gap:10, maxWidth:400}}>
+                        <input className="lf-input" type="password" style={{paddingLeft:12}} placeholder="New password" value={passwordForm.password} onChange={e=>setPasswordForm({...passwordForm, password:e.target.value})}/>
+                        <input className="lf-input" type="password" style={{paddingLeft:12}} placeholder="Confirm password" value={passwordForm.confirm} onChange={e=>setPasswordForm({...passwordForm, confirm:e.target.value})}/>
+                        <button type="submit" className="lf-submit" style={{marginTop:0}}>Change Password</button>
+                    </form>
+                    <p style={{fontSize:11, color:'#64748b', marginTop:12}}>Department or role changes still require admin approval.</p>
                 </div>
             </div>
         )}

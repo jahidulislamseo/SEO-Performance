@@ -1,4 +1,4 @@
-import json, os, urllib.request, re, time, calendar
+import gzip, json, os, urllib.request, re, time, calendar
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, send_file, request, render_template
 from flask_cors import CORS
@@ -9,7 +9,54 @@ from shared_utils import (
 )
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 86400
 CORS(app)
+
+API_CACHE_TTL = 15
+_api_cache = {}
+
+def clear_api_cache():
+    _api_cache.clear()
+
+def cached_json(key, ttl, builder):
+    now = time.time()
+    item = _api_cache.get(key)
+    if item and now - item["time"] < ttl:
+        resp = jsonify(item["data"])
+        resp.headers["X-Cache"] = "HIT"
+        return resp
+    data = builder()
+    _api_cache[key] = {"time": now, "data": data}
+    resp = jsonify(data)
+    resp.headers["X-Cache"] = "MISS"
+    return resp
+
+@app.after_request
+def add_perf_headers(response):
+    path = request.path
+    if path.startswith("/static/"):
+        response.headers["Cache-Control"] = "public, max-age=86400"
+    elif path.startswith("/api/"):
+        response.headers.setdefault("Cache-Control", "private, max-age=10")
+    else:
+        response.headers.setdefault("Cache-Control", "no-cache")
+
+    accept_encoding = request.headers.get("Accept-Encoding", "")
+    compressible = (
+        "gzip" in accept_encoding
+        and response.status_code == 200
+        and not response.headers.get("Content-Encoding")
+        and response.mimetype in {"application/json", "text/html", "text/css", "application/javascript", "text/javascript"}
+        and not response.direct_passthrough
+    )
+    if compressible:
+        data = response.get_data()
+        if len(data) > 1024:
+            response.set_data(gzip.compress(data, compresslevel=5))
+            response.headers["Content-Encoding"] = "gzip"
+            response.headers["Vary"] = "Accept-Encoding"
+            response.headers["Content-Length"] = str(len(response.get_data()))
+    return response
 
 @app.route("/")
 def index():
@@ -28,6 +75,7 @@ def api_sync():
     """Manually trigger data recalculation (Full Dashboard)."""
     try:
         agent_engine.calculate_summaries()
+        clear_api_cache()
         return jsonify({"status": "ok", "message": "Manual sync completed. Database updated."})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
@@ -35,6 +83,63 @@ def api_sync():
 @app.route("/api/data")
 def api_data():
     """Main Dashboard: Instant load from MongoDB summaries only, merged with member profiles."""
+    try:
+        def build_payload():
+            db = get_db()
+            dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
+            team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
+            member_docs = list(db["member_summaries"].find({}, {"_id": 0}))
+
+            members_profiles = {m["id"]: m for m in db["members"].find({}, {"_id": 0}) if m.get("id")}
+            for m in member_docs:
+                prof = members_profiles.get(m.get("id"))
+                if prof:
+                    if "target" in prof: m["target"] = prof["target"]
+                    if "name" in prof: m["name"] = prof["name"]
+                    if "role" in prof: m["role"] = prof["role"]
+                    if "team" in prof: m["team"] = prof["team"]
+
+            if team_sum_doc and "teams" in team_sum_doc:
+                for team_name, team_data in team_sum_doc["teams"].items():
+                    team_target = 0
+                    for tm in team_data.get("members", []):
+                        prof = members_profiles.get(tm.get("id"))
+                        if prof and "target" in prof: tm["target"] = prof["target"]
+                        if prof and "name" in prof: tm["name"] = prof["name"]
+                        team_target += tm.get("target", 1100)
+                    team_data["target"] = team_target
+                    team_data["progress"] = min(100, round((team_data.get("stats",{}).get("deliveredAmt",0) / team_target * 100))) if team_target > 0 else 0
+
+            if not dept_sum_doc:
+                return {"status": "syncing", "message": "Database initializing..."}
+
+            summary = {
+                "dept": dept_sum_doc or {},
+                "teams": team_sum_doc.get("teams", {}) if team_sum_doc else {},
+                "totalAchieved": dept_sum_doc.get("achieved", 0),
+                "totaleOrders": dept_sum_doc.get("uniqueProjects", 0),
+                "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0),
+                "audit": {
+                    "seoSmmRows": dept_sum_doc.get("seoSmmRows", 0),
+                    "matchedRows": dept_sum_doc.get("matchedRows", 0),
+                    "unmatchedRows": dept_sum_doc.get("unmatchedRows", 0),
+                    "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0),
+                    "unmatchedItems": []
+                }
+            }
+            return {
+                "status": "ok", "data": member_docs, "summary": summary, "audit": summary["audit"],
+                "projectCount": summary["uniqueOrders"], "memberCount": len(member_docs),
+                "lastSync": dept_sum_doc.get("last_updated", 0)
+            }
+
+        return cached_json("api_data", API_CACHE_TTL, build_payload)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/data-live")
+def api_data_live():
+    """Uncached copy kept for debugging."""
     try:
         db = get_db()
         dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
@@ -167,6 +272,17 @@ def get_month_working_stats(db):
 def calculate_monthly_working_days(db):
     total, _ = get_month_working_stats(db)
     return total
+
+def audit_log(db, action, detail="", actor="admin"):
+    try:
+        db["audit_logs"].insert_one({
+            "action": action,
+            "detail": detail,
+            "actor": actor,
+            "timestamp": time.time()
+        })
+    except Exception:
+        pass
 
 @app.route("/api/login", methods=["POST"])
 def api_login():
@@ -307,8 +423,115 @@ def mark_notifs_read():
     emp_id = data.get("id")
     if not emp_id: return jsonify({"error": "missing id"}), 400
     db = get_db()
-    db["notifications"].update_many({"emp_id": emp_id, "read": False}, {"$set": {"read": True}})
+    db["notifications"].update_many({"emp_id": {"$in": [emp_id, "all"]}, "read": False}, {"$set": {"read": True}})
     return jsonify({"ok": True})
+
+@app.route("/api/leave-requests", methods=["GET", "POST"])
+def leave_requests():
+    db = get_db()
+    if request.method == "GET":
+        emp_id = request.args.get("id")
+        query = {"emp_id": emp_id} if emp_id else {}
+        docs = list(db["leave_requests"].find(query, {"_id": 0}).sort("created_at", -1).limit(50))
+        return jsonify(docs)
+
+    data = request.get_json(force=True)
+    emp_id = data.get("emp_id")
+    if not emp_id: return jsonify({"error": "emp_id required"}), 400
+    doc = {
+        "key": f"{emp_id}_{int(time.time() * 1000)}",
+        "emp_id": emp_id,
+        "name": data.get("name", ""),
+        "type": data.get("type", "Annual"),
+        "from": data.get("from", ""),
+        "to": data.get("to", ""),
+        "reason": data.get("reason", ""),
+        "status": "Pending",
+        "created_at": time.time()
+    }
+    db["leave_requests"].insert_one(doc)
+    audit_log(db, "leave_requested", f"{doc['name'] or emp_id} requested {doc['type']} leave")
+    return jsonify({"ok": True, "request": {k: v for k, v in doc.items() if k != "_id"}})
+
+@app.route("/api/attendance-corrections", methods=["GET", "POST"])
+def attendance_corrections():
+    db = get_db()
+    if request.method == "GET":
+        emp_id = request.args.get("id")
+        query = {"emp_id": emp_id} if emp_id else {}
+        docs = list(db["attendance_corrections"].find(query, {"_id": 0}).sort("created_at", -1).limit(50))
+        return jsonify(docs)
+
+    data = request.get_json(force=True)
+    emp_id = data.get("emp_id")
+    if not emp_id: return jsonify({"error": "emp_id required"}), 400
+    doc = {
+        "key": f"cor_{emp_id}_{int(time.time() * 1000)}",
+        "emp_id": emp_id,
+        "name": data.get("name", ""),
+        "date": data.get("date", ""),
+        "in": data.get("in", ""),
+        "out": data.get("out", ""),
+        "reason": data.get("reason", ""),
+        "status": "Pending",
+        "created_at": time.time()
+    }
+    db["attendance_corrections"].insert_one(doc)
+    audit_log(db, "attendance_correction_requested", f"{doc['name'] or emp_id} requested correction for {doc['date']}")
+    return jsonify({"ok": True})
+
+@app.route("/api/daily-reports", methods=["GET", "POST"])
+def daily_reports():
+    db = get_db()
+    if request.method == "GET":
+        emp_id = request.args.get("id")
+        query = {"emp_id": emp_id} if emp_id else {}
+        docs = list(db["daily_reports"].find(query, {"_id": 0}).sort("date", -1).limit(80))
+        return jsonify(docs)
+
+    data = request.get_json(force=True)
+    emp_id = data.get("emp_id")
+    date_str = data.get("date") or datetime.now(timezone(timedelta(hours=6))).strftime("%Y-%m-%d")
+    if not emp_id: return jsonify({"error": "emp_id required"}), 400
+    doc = {
+        "key": f"{emp_id}_{date_str}",
+        "emp_id": emp_id,
+        "name": data.get("name", ""),
+        "date": date_str,
+        "summary": data.get("summary", ""),
+        "blockers": data.get("blockers", ""),
+        "hours": data.get("hours", ""),
+        "created_at": time.time()
+    }
+    db["daily_reports"].update_one({"key": doc["key"]}, {"$set": doc}, upsert=True)
+    audit_log(db, "daily_report_submitted", f"{doc['name'] or emp_id} submitted report for {date_str}")
+    return jsonify({"ok": True})
+
+@app.route("/api/team-leaderboard")
+def team_leaderboard():
+    emp_id = request.args.get("id", "")
+    db = get_db()
+    member = db["members"].find_one({"id": {"$in": [emp_id, f"{emp_id}.0"]}}, {"_id": 0})
+    if not member: return jsonify({"team": "", "members": []})
+    team = member.get("team", "")
+    team_members = list(db["members"].find({"team": team}, {"_id": 0}))
+    summaries = {m.get("id"): m for m in db["member_summaries"].find({}, {"_id": 0})}
+    rows = []
+    for m in team_members:
+        summary = summaries.get(m.get("id"), {})
+        delivered_amt = summary.get("deliveredAmt", 0)
+        target = m.get("target") or summary.get("target") or 1100
+        rows.append({
+            "id": m.get("id"),
+            "name": m.get("name", ""),
+            "role": m.get("role", "Member"),
+            "target": target,
+            "deliveredAmt": delivered_amt,
+            "delivered": summary.get("delivered", 0),
+            "progress": round((delivered_amt / target) * 100, 1) if target else 0
+        })
+    rows.sort(key=lambda x: x.get("deliveredAmt", 0), reverse=True)
+    return jsonify({"team": team, "members": rows})
 
 @app.route("/api/user/update", methods=["POST"])
 def update_user_profile():
@@ -336,9 +559,11 @@ def admin_update_member():
     if not emp_id: return jsonify({"error": "missing id"}), 400
     db = get_db()
     # Allow updating more fields in admin mode
-    allowed_fields = ["name", "fullName", "role", "team", "target", "email", "phone", "isAdmin"]
+    allowed_fields = ["name", "fullName", "role", "team", "target", "email", "phone", "password", "isAdmin"]
     update_data = {k: v for k, v in data.items() if k in allowed_fields}
     db["members"].update_one({"id": emp_id}, {"$set": update_data})
+    clear_api_cache()
+    audit_log(db, "member_updated", f"Updated member {emp_id}")
     return jsonify({"ok": True})
 
 @app.route("/api/admin/members/add", methods=["POST"])
@@ -347,6 +572,8 @@ def admin_add_member():
     if not data.get("id") or not data.get("name"): return jsonify({"error": "missing data"}), 400
     db = get_db()
     db["members"].insert_one(data)
+    clear_api_cache()
+    audit_log(db, "member_added", f"Added member {data.get('id')} - {data.get('name')}")
     return jsonify({"ok": True})
 
 @app.route("/api/admin/members/delete", methods=["POST"])
@@ -356,6 +583,8 @@ def admin_delete_member():
     if not emp_id: return jsonify({"error": "missing id"}), 400
     db = get_db()
     db["members"].delete_one({"id": emp_id})
+    clear_api_cache()
+    audit_log(db, "member_deleted", f"Deleted member {emp_id}")
     return jsonify({"ok": True})
 
 @app.route("/api/admin/attendance", methods=["GET"])
@@ -374,7 +603,116 @@ def admin_update_attendance():
     db = get_db()
     update_data = {k: v for k, v in data.items() if k in ["in", "out", "status", "duration"]}
     db["attendance"].update_one({"emp_id": emp_id, "date": date_str}, {"$set": update_data})
+    audit_log(db, "attendance_updated", f"Updated attendance for {emp_id} on {date_str}")
     return jsonify({"ok": True})
+
+@app.route("/api/admin/announcements", methods=["POST"])
+def admin_send_announcement():
+    data = request.get_json(force=True)
+    message = str(data.get("message", "")).strip()
+    target = str(data.get("target", "all")).strip() or "all"
+    if not message: return jsonify({"error": "message required"}), 400
+    db = get_db()
+    title = data.get("title", "Announcement")
+    recipients = [target]
+    if target == "all":
+        all_members = list(db["members"].find({}, {"id": 1, "_id": 0}))
+        recipients = [m["id"] for m in all_members if m.get("id")] or ["all"]
+    else:
+        team_members = list(db["members"].find({"team": target}, {"id": 1, "_id": 0}))
+        if team_members:
+            recipients = [m["id"] for m in team_members if m.get("id")]
+    docs = [{
+        "emp_id": recipient,
+        "text": message,
+        "title": title,
+        "read": False,
+        "timestamp": time.time()
+    } for recipient in recipients]
+    if docs:
+        db["notifications"].insert_many(docs)
+    audit_log(db, "announcement_sent", f"Sent announcement to {target}")
+    return jsonify({"ok": True})
+
+@app.route("/api/admin/leave-requests", methods=["GET"])
+def admin_get_leave_requests():
+    db = get_db()
+    status = request.args.get("status", "")
+    query = {"status": status} if status else {}
+    docs = list(db["leave_requests"].find(query, {"_id": 0}).sort("created_at", -1).limit(100))
+    return jsonify(docs)
+
+@app.route("/api/admin/leave-requests/update", methods=["POST"])
+def admin_update_leave_request():
+    data = request.get_json(force=True)
+    key = data.get("key")
+    status = data.get("status")
+    if not key or status not in ["Approved", "Rejected", "Pending"]:
+        return jsonify({"error": "invalid data"}), 400
+    db = get_db()
+    req = db["leave_requests"].find_one({"key": key}, {"_id": 0})
+    if not req: return jsonify({"error": "not found"}), 404
+    db["leave_requests"].update_one({"key": key}, {"$set": {"status": status, "reviewed_at": time.time()}})
+    db["notifications"].insert_one({
+        "emp_id": req.get("emp_id"),
+        "text": f"Your leave request ({req.get('from')} to {req.get('to')}) was {status.lower()}.",
+        "title": "Leave Request",
+        "read": False,
+        "timestamp": time.time()
+    })
+    audit_log(db, f"leave_{status.lower()}", f"{status} leave request for {req.get('emp_id')}")
+    return jsonify({"ok": True})
+
+@app.route("/api/admin/attendance-corrections", methods=["GET"])
+def admin_get_attendance_corrections():
+    db = get_db()
+    status = request.args.get("status", "")
+    query = {"status": status} if status else {}
+    docs = list(db["attendance_corrections"].find(query, {"_id": 0}).sort("created_at", -1).limit(100))
+    return jsonify(docs)
+
+@app.route("/api/admin/attendance-corrections/update", methods=["POST"])
+def admin_update_attendance_correction():
+    data = request.get_json(force=True)
+    key = data.get("key")
+    status = data.get("status")
+    if not key or status not in ["Approved", "Rejected", "Pending"]:
+        return jsonify({"error": "invalid data"}), 400
+    db = get_db()
+    req = db["attendance_corrections"].find_one({"key": key}, {"_id": 0})
+    if not req: return jsonify({"error": "not found"}), 404
+    db["attendance_corrections"].update_one({"key": key}, {"$set": {"status": status, "reviewed_at": time.time()}})
+    if status == "Approved":
+        update_data = {k: req.get(k, "") for k in ["in", "out"] if req.get(k)}
+        if update_data:
+            db["attendance"].update_one(
+                {"emp_id": req.get("emp_id"), "date": req.get("date")},
+                {"$set": {**update_data, "status": "Present"}},
+                upsert=True
+            )
+    db["notifications"].insert_one({
+        "emp_id": req.get("emp_id"),
+        "title": "Attendance Correction",
+        "text": f"Your attendance correction for {req.get('date')} was {status.lower()}.",
+        "read": False,
+        "timestamp": time.time()
+    })
+    audit_log(db, f"attendance_correction_{status.lower()}", f"{status} correction for {req.get('emp_id')} on {req.get('date')}")
+    return jsonify({"ok": True})
+
+@app.route("/api/admin/daily-reports", methods=["GET"])
+def admin_get_daily_reports():
+    db = get_db()
+    date_str = request.args.get("date", "")
+    query = {"date": date_str} if date_str else {}
+    docs = list(db["daily_reports"].find(query, {"_id": 0}).sort("date", -1).limit(120))
+    return jsonify(docs)
+
+@app.route("/api/admin/audit-logs", methods=["GET"])
+def admin_audit_logs():
+    db = get_db()
+    docs = list(db["audit_logs"].find({}, {"_id": 0}).sort("timestamp", -1).limit(80))
+    return jsonify(docs)
 
 @app.route("/api/admin/calendar-config", methods=["GET", "POST"])
 def admin_calendar_config():
@@ -395,6 +733,8 @@ def admin_calendar_config():
                 {"$set": data},
                 upsert=True
             )
+            clear_api_cache()
+            audit_log(db, "calendar_updated", "Updated working day calendar")
             return jsonify({"ok": True})
         except Exception as e: return jsonify({"error": str(e)}), 500
 
@@ -413,6 +753,7 @@ def sync_delivered():
     """Manual: Force pull from Sheets, Update Archive, then return data."""
     try:
         agent_engine.calculate_summaries() 
+        clear_api_cache()
         return get_delivered_from_db()
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -423,13 +764,11 @@ def background_sync_task():
         try:
             print("Background Sync: Updating Database from Google Sheets...")
             agent_engine.calculate_summaries()
+            clear_api_cache()
             print("Background Sync: Complete.")
         except Exception as e:
             print(f"Background Sync Error: {e}")
         time.sleep(600)
-
-import threading
-threading.Thread(target=background_sync_task, daemon=True).start()
 
 @app.route("/api/months")
 def get_archive_months():
@@ -537,6 +876,7 @@ def start_background_sync():
             try:
                 print("⏳ Running automated background sync (10-min interval)...")
                 sync_mongo.sync()
+                clear_api_cache()
             except Exception as e:
                 print(f"❌ Background scheduler error: {e}")
 
