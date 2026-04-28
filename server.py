@@ -8,7 +8,10 @@ from shared_utils import (
     get_db, parse_gviz_date, normalize_assignee_token, get_members_from_db, fetch_sheet_data_gviz
 )
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+app = Flask(__name__, 
+            template_folder='frontend/dist', 
+            static_folder='frontend/dist/assets',
+            static_url_path='/assets')
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 86400
 CORS(app)
 
@@ -59,16 +62,11 @@ def add_perf_headers(response):
     return response
 
 @app.route("/")
+@app.route("/delivery-tracker")
+@app.route("/employee")
+@app.route("/query-tracker")
 def index():
     return render_template("index.html")
-
-@app.route("/delivery-tracker")
-def delivery_tracker():
-    return render_template("delivery-tracker.html")
-
-@app.route("/employee")
-def employee_dashboard():
-    return render_template("employee-dashboard.html")
 
 @app.route("/api/sync")
 def api_sync():
@@ -860,9 +858,186 @@ def save_query_remark():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/finance")
+def finance_dashboard():
+    return render_template("team-finance.html")
+
+@app.route("/sales-analytics")
+def sales_analytics():
+    return render_template("sales-analytics.html")
+
+@app.route("/api/finance-stats")
+def api_finance_stats():
+    try:
+        db = get_db()
+        members = list(db["members"].find({}, {"_id": 0, "name": 1, "team": 1}))
+        name_to_team = {}
+        for m in members:
+            name = m.get("name")
+            team = m.get("team")
+            if name and team:
+                name_to_team[name.strip().lower()] = team
+        
+        seo_teams = ["GEO Rankers", "Rank Riser", "Search Apex"]
+        smm_teams = ["SMM"]
+
+        delivered = list(db["projects_archive"].find({"status": "Delivered"}))
+        delivered.sort(key=lambda x: x.get("deliveredDate") or x.get("date") or "")
+        
+        monthly_stats = {}
+        client_history = set()
+        
+        for p in delivered:
+            month = p.get("month")
+            if not month: continue
+            if month not in monthly_stats:
+                monthly_stats[month] = {
+                    "total_sales": 0,
+                    "total_deliveries": 0,
+                    "platforms": {"Fiverr": 0, "Upwork": 0, "B2B": 0, "PPH": 0},
+                    "repeat_sales": 0,
+                    "SEO": {"Fiverr": 0, "Upwork": 0, "B2B": 0, "PPH": 0},
+                    "SMM": {"Fiverr": 0, "Upwork": 0, "B2B": 0, "PPH": 0}
+                }
+            
+            amt = float(p.get("amtX", 0))
+            if amt <= 0: continue
+            
+            client = str(p.get("client", "")).strip().lower()
+            is_repeat = False
+            if client:
+                if client in client_history:
+                    is_repeat = True
+                else:
+                    client_history.add(client)
+            
+            assignees = p.get("assign", "")
+            assigned_names = [n.strip().lower() for n in str(assignees).split('/')]
+            p_team = None
+            for n in assigned_names:
+                t = name_to_team.get(n)
+                if t:
+                    if t in seo_teams: p_team = "SEO"
+                    elif t in smm_teams: p_team = "SMM"
+                    break
+            
+            if not p_team:
+                p_team = "SEO"
+                
+            profile = str(p.get("profile", "")).lower()
+            platform = "B2B"
+            if "fiverr" in profile: platform = "Fiverr"
+            elif "upwork" in profile: platform = "Upwork"
+            elif "pph" in profile: platform = "PPH"
+            
+            monthly_stats[month]["total_sales"] += amt
+            monthly_stats[month]["total_deliveries"] += 1
+            monthly_stats[month]["platforms"][platform] += amt
+            if is_repeat:
+                monthly_stats[month]["repeat_sales"] += amt
+                
+            monthly_stats[month][p_team][platform] += amt
+
+        sorted_months = sorted(monthly_stats.keys())[-12:]
+        
+        for i, m in enumerate(sorted_months):
+            stats = monthly_stats[m]
+            if i == 0:
+                stats["focus"] = "🚀 Start of period. Push all channels."
+                continue
+            
+            prev_m = sorted_months[i-1]
+            prev_stats = monthly_stats[prev_m]
+            
+            focus_msg = ""
+            if stats["platforms"]["Fiverr"] < prev_stats["platforms"]["Fiverr"] * 0.8:
+                focus_msg = "🔴 Fiverr dropped >20%. Optimize gigs!"
+            elif stats["platforms"]["B2B"] > prev_stats["platforms"]["B2B"] * 1.2 and prev_stats["platforms"]["B2B"] > 0:
+                focus_msg = "🟢 B2B growing fast! Double down on outreach."
+            elif stats["repeat_sales"] < prev_stats["repeat_sales"]:
+                focus_msg = "⚠️ Repeat clients down. Send follow-ups."
+            else:
+                focus_msg = "⭐ Stable growth. Maintain quality control."
+                
+            stats["focus"] = focus_msg
+        
+        return jsonify({
+            "status": "ok",
+            "months": sorted_months,
+            "data": monthly_stats
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/status")
 def api_status():
     return jsonify({"status": "running", "sheetId": SHEET_ID})
+
+# ── Team Finance ──────────────────────────────────────────────────────────────
+
+_Z12 = [0] * 12
+
+FINANCE_DATA = {
+    "months": ["Jul '26","Aug '26","Sep '26","Oct '26","Nov '26","Dec '26",
+               "Jan '27","Feb '27","Mar '27","Apr '27","May '27","Jun '27"],
+    "star_months": [5, 8, 9],
+    "teams": [
+        {
+            "id": "seo", "name": "Team SEO",
+            "subtitle": "Marketplace & B2B Sales", "color": "#10D9A0",
+            "profiles": [
+                {"sl":1,"name":"Fiverr","type":"Marketplace",
+                 "monthly":[32000,32000,33000,35000,36000,38000,40000,40000,40000,42000,43000,45000]},
+                {"sl":2,"name":"Upwork","type":"Marketplace","monthly":_Z12},
+                {"sl":3,"name":"PPH",   "type":"Marketplace","monthly":_Z12},
+                {"sl":4,"name":"B2B",   "type":"B2B Sales",  "monthly":_Z12}
+            ],
+            "manpower": {
+                "total":     [41,41,41,45,45,48,53,53,53,53,55,55],
+                "sales":     [12,12,12,12,12,12,12,12,12,12,12,12],
+                "operation": [28,28,28,32,32,35,40,40,40,40,42,42],
+                "bdt":       [1,1,1,1,1,1,1,1,1,1,1,1],
+                "b2b_sales": _Z12,
+                "sp_budget": [9600,9600,9900,10500,10800,11400,12000,12000,12000,12600,12900,13500],
+                "tool_cost": _Z12
+            },
+            "kpi": [300,300,300,231,308,308,313,375,375,389,500,556]
+        },
+        {
+            "id": "smm", "name": "Team SMM",
+            "subtitle": "Social Media Marketing", "color": "#A855F7",
+            "profiles": [
+                {"sl":1,"name":"Fiverr","type":"Marketplace",
+                 "monthly":[3000,3000,3000,3000,4000,4000,5000,6000,6000,7000,9000,10000]},
+                {"sl":2,"name":"Upwork","type":"Marketplace","monthly":_Z12},
+                {"sl":3,"name":"PPH",   "type":"Marketplace","monthly":_Z12},
+                {"sl":4,"name":"B2B",   "type":"B2B Sales",  "monthly":_Z12}
+            ],
+            "manpower": {
+                "total":     [10,10,10,13,13,13,16,16,16,18,18,18],
+                "sales":     [3,3,3,3,3,3,6,6,6,6,6,6],
+                "operation": [7,7,7,10,10,10,10,10,10,12,12,12],
+                "bdt":       _Z12,
+                "b2b_sales": _Z12,
+                "sp_budget": [900,900,900,900,1200,1200,1500,1800,1800,2100,2700,3000],
+                "tool_cost": _Z12
+            },
+            "kpi": [703,723,716,731,746,746,722,750,750,778,806,833]
+        }
+    ]
+}
+
+@app.route("/team-finance")
+def team_finance():
+    return render_template("team-finance.html")
+
+@app.route("/target-tracking")
+def target_tracking():
+    return render_template("target-tracking.html")
+
+@app.route("/api/finance")
+def api_finance():
+    return jsonify(FINANCE_DATA)
 
 import threading
 

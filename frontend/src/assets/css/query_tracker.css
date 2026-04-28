@@ -1,0 +1,130 @@
+/* ── QUERY TRACKER STYLES ── */
+.qc {
+  background: rgba(14, 24, 38, 0.97);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  border-radius: 16px;
+  padding: 18px 20px;
+  animation: cardIn 0.4s ease;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.qc:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+}
+
+.qc.new-q { border-left: 3px solid #60a5fa; }
+.qc.pending-q { border-left: 3px solid #f59e0b; }
+.qc.closed-q { border-left: 3px solid #10b981; }
+
+.q-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.q-client-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.q-av {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.q-client {
+  font-size: 16px;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: -0.3px;
+}
+
+.q-date {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 3px;
+  font-weight: 600;
+}
+
+.q-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.q-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #475569;
+  font-weight: 800;
+  margin-bottom: 4px;
+}
+
+.q-val {
+  font-size: 13px;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.q-val.hi { color: #10b981; }
+.q-val a { color: #6366f1; text-decoration: none; }
+.q-val a:hover { text-decoration: underline; }
+
+.q-remarks {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(148, 163, 184, 0.15);
+}
+
+.q-remarks-label {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #475569;
+  margin-bottom: 8px;
+}
+
+.q-remark-text {
+  font-size: 13px;
+  color: #94a3b8;
+  font-style: italic;
+  line-height: 1.6;
+}
+
+.q-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(148, 163, 184, 0.08);
+}
+
+.q-action-btn {
+  padding: 6px 12px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  border: 1px solid;
+  transition: all 0.2s;
+}
+
+/* Status Badges */
+.st-new-b { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+.st-pending-b { background: rgba(245, 158, 11, 0.12); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.28); }
+.st-closed-b { background: rgba(16, 185, 129, 0.12); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.28); }

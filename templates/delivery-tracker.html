@@ -1,113 +1,324 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Delivery Follow-Up Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/static/css/base.css" />
-<link rel="stylesheet" href="/static/css/tracker.css" />
-<script src="/static/js/themes.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;color:#f1f5f9;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(95,133,162,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(95,133,162,.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+.g1{position:fixed;top:-200px;left:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(61,111,155,.16) 0%,transparent 70%);pointer-events:none;z-index:0}
+.g2{position:fixed;bottom:-150px;right:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(15,118,110,.10) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+@keyframes shimmer{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:50;height:64px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(9,17,31,.9);backdrop-filter:blur(24px);border-bottom:1px solid rgba(148,163,184,.18)}
+.hl{display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#0f766e,#10b981);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 10px 24px rgba(15,118,110,.3)}
+.htitle{font-size:16px;font-weight:900;letter-spacing:-.4px;background:linear-gradient(135deg,#f8fafc,#c7d3df,#6f879c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hsub{font-size:10px;color:#64748b;font-weight:600}
+.hr{display:flex;align-items:center;gap:7px}
+.hbtn{padding:6px 11px;border-radius:9px;background:rgba(61,111,155,.12);border:1px solid rgba(95,133,162,.28);color:#c4d4e2;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;transition:all .2s;text-decoration:none}
+.hbtn:hover{background:rgba(61,111,155,.2);border-color:rgba(95,133,162,.4)}
+.hbtn.green{background:rgba(15,118,110,.12);border-color:rgba(15,118,110,.28);color:#7ed2c7}
+.hbtn.purple{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.28);color:#a5b4fc}
+.live-pill{display:flex;align-items:center;gap:6px;padding:5px 11px;border-radius:50px;background:rgba(15,118,110,.12);border:1px solid rgba(15,118,110,.32);font-size:11px;font-weight:700;color:#89d8cf}
+.ldot{width:6px;height:6px;border-radius:50%;background:#7ed2c7;box-shadow:0 0 7px rgba(126,210,199,.7);animation:pulse 2s infinite}
+
+/* MAIN */
+.main{position:relative;z-index:5;padding:22px 28px;max-width:1600px;margin:0 auto}
+
+/* KPI BAR */
+.kpi-bar{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+.kpi-box{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:14px 16px;animation:cardIn .4s ease}
+.kpi-num{font-size:26px;font-weight:900;letter-spacing:-1px;font-variant-numeric:tabular-nums;color:var(--kc,#f1f5f9)}
+.kpi-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:#64748b;margin-top:3px}
+
+/* CONTROLS */
+.controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.srch-wrap{position:relative;display:flex;align-items:center}
+.srch-icon{position:absolute;left:10px;font-size:12px}
+.srch{padding:8px 12px 8px 28px;border-radius:10px;background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);color:#f1f5f9;font-size:12px;font-weight:600;font-family:inherit;outline:none;width:220px;transition:all .2s}
+.srch:focus{border-color:rgba(95,133,162,.5)}
+.sel{padding:8px 12px;border-radius:10px;background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);color:#f1f5f9;font-size:11px;font-weight:700;font-family:inherit;outline:none;cursor:pointer}
+.fu-tabs{display:flex;gap:5px;flex-wrap:wrap}
+.fu-tab{padding:7px 11px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:rgba(255,255,255,.035);color:#94a3b8;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s;white-space:nowrap}
+.fu-tab:hover,.fu-tab.active{background:rgba(47,93,138,.2);color:#d5e2ee;border-color:rgba(95,133,162,.34)}
+.fu-tab.f0.active{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.3);color:#f87171}
+.fu-tab.f5.active{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:#34d399}
+.fu-tab.f6.active{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.3);color:#fbbf24}
+.badge{font-size:11px;font-weight:700;color:#64748b;padding:6px 12px;border-radius:20px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12)}
+.badge b{color:#f1f5f9}
+.ctrl-right{margin-left:auto}
+
+/* DELIVERY LIST */
+.dt-list{display:flex;flex-direction:column;gap:10px}
+.dt-item{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:16px;padding:16px 20px;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:start;animation:cardIn .4s ease;transition:border-color .2s}
+.dt-item:hover{border-color:rgba(95,133,162,.3)}
+.dt-item.sold{border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.04)}
+.dt-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
+.dt-av{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#fff;flex-shrink:0}
+.dt-client{font-size:14px;font-weight:800;color:#f1f5f9;letter-spacing:-.2px}
+.dt-meta{font-size:11px;color:#64748b;margin-top:2px}
+.dt-info{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+.dt-field{display:flex;flex-direction:column;gap:2px}
+.dt-field-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#475569}
+.dt-field-val{font-size:12px;font-weight:700;color:#cbd5e1}
+.dt-field-val.green{color:#10b981}
+.dt-field-val.amber{color:#f59e0b}
+/* follow-up dots */
+.fu-dots{display:flex;align-items:center;gap:6px}
+.fu-dot{width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;cursor:pointer;border:1px solid;transition:all .2s;flex-shrink:0}
+.fu-dot.done{background:rgba(16,185,129,.15);border-color:rgba(16,185,129,.3);color:#34d399}
+.fu-dot.pending{background:rgba(148,163,184,.08);border-color:rgba(148,163,184,.15);color:#64748b}
+.fu-dot.sold{background:rgba(245,158,11,.15);border-color:rgba(245,158,11,.3);color:#fbbf24}
+.fu-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#475569;margin-bottom:5px}
+/* right panel */
+.dt-right{display:flex;flex-direction:column;gap:8px;align-items:flex-end;min-width:140px}
+.dt-amt{font-size:18px;font-weight:900;color:#10b981;font-variant-numeric:tabular-nums}
+.dt-status-badge{display:inline-flex;padding:4px 10px;border-radius:50px;font-size:10px;font-weight:800}
+.dt-msg-btn{padding:6px 12px;border-radius:8px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.28);color:#a5b4fc;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s}
+.dt-msg-btn:hover{background:rgba(99,102,241,.2)}
+.dt-remark{font-size:11px;color:#64748b;font-style:italic;text-align:right;max-width:160px}
+
+/* MESSAGE MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.msg-modal{background:#090f1d;border:1px solid rgba(148,163,184,.18);border-radius:22px;padding:28px;width:100%;max-width:540px;box-shadow:0 40px 100px rgba(0,0,0,.65);animation:mIn .3s cubic-bezier(.4,0,.2,1)}
+.msg-title{font-size:18px;font-weight:900;color:#f1f5f9;letter-spacing:-.4px;margin-bottom:4px}
+.msg-sub{font-size:12px;color:#64748b;margin-bottom:18px}
+.msg-steps{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.msg-step{padding:6px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:rgba(255,255,255,.035);color:#94a3b8;font-size:11px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s}
+.msg-step.active,.msg-step:hover{background:rgba(99,102,241,.2);border-color:rgba(99,102,241,.35);color:#a5b4fc}
+.msg-hint{font-size:10px;color:#475569;margin-bottom:8px}
+.msg-textarea{width:100%;padding:12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.18);color:#f1f5f9;font-size:13px;font-weight:500;font-family:inherit;outline:none;resize:vertical;min-height:120px;transition:border-color .2s}
+.msg-textarea:focus{border-color:rgba(95,133,162,.5)}
+.msg-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+.msg-close{padding:8px 16px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(148,163,184,.18);color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.msg-close:hover{background:rgba(255,255,255,.1);color:#f1f5f9}
+.msg-copy{padding:8px 16px;border-radius:10px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.3);color:#34d399;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s}
+.msg-copy:hover{background:rgba(16,185,129,.25)}
+
+.footer{text-align:center;padding:18px;border-top:1px solid rgba(148,163,184,.12);color:#475569;font-size:11px;margin-top:24px;position:relative;z-index:5}
+
+/* toast */
+.toast{position:fixed;bottom:20px;right:20px;padding:11px 16px;border-radius:11px;background:rgba(13,20,42,.97);border:1px solid rgba(148,163,184,.18);font-size:12px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.4);display:flex;align-items:center;gap:7px;z-index:200;animation:cardIn .3s ease;color:#f1f5f9}
+</style>
 </head>
 <body>
 <div class="g1"></div><div class="g2"></div>
+<div id="root"></div>
 
-<!-- HEADER -->
-<header class="hdr">
-  <div class="hl">
-    <div class="logo">📦</div>
-    <div>
-      <div class="htitle">Delivery Follow-Up Tracker</div>
-      <div class="hsub">GEO Rankers Department · Client Follow-up Management</div>
-    </div>
-  </div>
+<script type="text/babel">
+const GRADIENTS = [
+  'linear-gradient(135deg,#2f5d8a,#5f85a2)',
+  'linear-gradient(135deg,#0f766e,#10b981)',
+  'linear-gradient(135deg,#7c3aed,#a78bfa)',
+  'linear-gradient(135deg,#b45309,#f59e0b)',
+  'linear-gradient(135deg,#be123c,#f43f5e)',
+  'linear-gradient(135deg,#1d4ed8,#60a5fa)',
+];
+const gradFor = (s) => GRADIENTS[s.charCodeAt(0) % GRADIENTS.length];
+const initials = (s) => s.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 
-  <!-- THEME SWITCHER -->
-  <div class="theme-switcher">
-    <button class="theme-btn" id="theme-btn" onclick="toggleThemeMenu()">
-      <span id="theme-label">🌙</span>
-    </button>
-    <div class="theme-menu" id="theme-menu">
-      <button class="theme-item it-light" onclick="setTheme('light')">☀️ Light</button>
-      <button class="theme-item it-dark" onclick="setTheme('dark')">🌙 Dark</button>
-      <button class="theme-item it-system" onclick="setTheme('system')">💻 System</button>
-    </div>
-  </div>
-  <div class="hr">
-    <div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:50px;background:rgba(15,118,110,.1);border:1px solid rgba(15,118,110,.28);font-size:11px;font-weight:700;color:#89d8cf;">
-      <div class="live-dot"></div><span id="srcLabel">Loading...</span>
-    </div>
-    <button class="hbtn" onclick="refreshAll(true)" id="rfBtn"><span id="rfIcon">↻</span> Refresh</button>
-    <button class="hbtn purple" onclick="exportToCSV()" title="Download current list as CSV">📥 Export CSV</button>
-    <a class="hbtn green" href="/" target="_self">← Dashboard</a>
-  </div>
-</header>
+const FOLLOW_UP_TEMPLATES = [
+  "Hi {client}, I'm following up on your {service} order (#{order}). Just checking in — have you had a chance to review the delivered work? We'd love your feedback! 😊",
+  "Hello {client}! This is follow-up #2 for order #{order} ({service}). If you have any questions or need adjustments, feel free to reach out. We're here to help! ✅",
+  "Hi {client}, checking in again on your {service} (Order #{order}). Just a friendly nudge — any feedback or approval would be greatly appreciated! 🙏",
+  "Hello {client}! Follow-up #4 for #{order} ({service}). We noticed we haven't heard back — please let us know if everything is satisfactory or if you need any revision. 📩",
+  "Hi {client}, this is our final follow-up for order #{order} ({service}). Please review and share your feedback at your earliest convenience. Thank you for working with us! 🌟",
+];
 
-<!-- MAIN -->
-<main class="main">
+const SAMPLE_DATA = [
+  { id:'ORD-4821', client:'Dhaka Restaurant & Catering', service:'Local SEO Package', member:'Jahidul Islam', team:'Geo Rankers', amt:120, date:'Apr 10', followups:[true,true,false,false,false], remark:'Client is slow to respond', sold:false },
+  { id:'ORD-4790', client:'RajShahi Travels Agency', service:'GMB Optimization × 2', member:'Rafiq Ahmed', team:'Geo Rankers', amt:90, date:'Apr 8', followups:[true,true,true,true,true], remark:'Converted! Client ordered again 🎉', sold:true },
+  { id:'ORD-4755', client:'Chittagong Mart Online', service:'National SEO — Tier 2', member:'Sara Rahman', team:'Rank Riser', amt:250, date:'Apr 5', followups:[true,false,false,false,false], remark:'', sold:false },
+  { id:'ORD-4820', client:'Sylhet Coffee House', service:'Citation Building × 50', member:'Nadia Khan', team:'Rank Riser', amt:75, date:'Apr 12', followups:[true,true,true,false,false], remark:'Satisfied, asked for quote', sold:false },
+  { id:'ORD-4800', client:'Khulna Tech Solutions', service:'Press Release × 3', member:'Omar Sheikh', team:'Search Apex', amt:180, date:'Apr 7', followups:[false,false,false,false,false], remark:'', sold:false },
+  { id:'ORD-4810', client:'Barishal Fashion Hub', service:'E-commerce SEO Setup', member:'Priya Das', team:'Search Apex', amt:320, date:'Apr 9', followups:[true,true,true,true,false], remark:'Requested revision first', sold:false },
+  { id:'ORD-4815', client:'Mymensingh Auto Parts', service:'SMM Package — 1 Month', member:'Tanvir Hossain', team:'SMM', amt:200, date:'Apr 11', followups:[true,true,false,false,false], remark:'Happy with results', sold:false },
+];
 
-<!-- KPI BAR -->
-<div class="kpi-bar" id="kpiBar">
-  <div class="kpi-box" style="--kc:#a5b4fc"><div class="kpi-num" id="kTotal">—</div><div class="kpi-lbl">Total Projects</div></div>
-  <div class="kpi-box" style="--kc:#ef4444"><div class="kpi-num" id="kNoFu" style="color:#ef4444">—</div><div class="kpi-lbl">Not Started</div></div>
-  <div class="kpi-box" style="--kc:#60a5fa"><div class="kpi-num" id="kInProg" style="color:#60a5fa">—</div><div class="kpi-lbl">Following Up</div></div>
-  <div class="kpi-box" style="--kc:#10b981"><div class="kpi-num" id="kDone5" style="color:#10b981">—</div><div class="kpi-lbl">Completed (5)</div></div>
-  <div class="kpi-box" style="--kc:#f59e0b"><div class="kpi-num" id="kSold" style="color:#f59e0b">—</div><div class="kpi-lbl">Sold / Success 💰</div></div>
-  <div class="kpi-box" style="--kc:#6366f1"><div class="kpi-num" id="kWithRmk" style="color:#6366f1">—</div><div class="kpi-lbl">With Remarks</div></div>
-</div>
+const App = () => {
+  const [data, setData] = React.useState(SAMPLE_DATA);
+  const [search, setSearch] = React.useState('');
+  const [fuFilter, setFuFilter] = React.useState('');
+  const [memberFilter, setMemberFilter] = React.useState('');
+  const [modal, setModal] = React.useState(null); // { item, step }
+  const [toast, setToast] = React.useState('');
 
-<!-- CONTROLS -->
-<div class="controls">
-  <div class="srch-wrap">
-    <span class="srch-icon">🔍</span>
-    <input class="srch" id="srch" placeholder="Search client / order / member..." oninput="applyFilters()"/>
-  </div>
-  <select class="sel" id="memberSel" onchange="applyFilters()"><option value="">All Members</option></select>
-  <select class="sel" id="teamSel" onchange="applyFilters()"><option value="">All Teams</option></select>
-  <select class="sel" id="monthSel" onchange="applyFilters()"><option value="">All Months</option></select>
-  <div class="fu-tabs" id="fuTabs">
-    <button class="fu-tab active" data-fu="" onclick="setFuTab(this)">All</button>
-    <button class="fu-tab f0" data-fu="0" onclick="setFuTab(this)">No Follow-up</button>
-    <button class="fu-tab" data-fu="1" onclick="setFuTab(this)">1 Done</button>
-    <button class="fu-tab" data-fu="2" onclick="setFuTab(this)">2 Done</button>
-    <button class="fu-tab" data-fu="3" onclick="setFuTab(this)">3 Done</button>
-    <button class="fu-tab" data-fu="4" onclick="setFuTab(this)">4 Done</button>
-    <button class="fu-tab f5" data-fu="5" onclick="setFuTab(this)">5 Follow-ups</button>
-    <button class="fu-tab f6" data-fu="6" onclick="setFuTab(this)" style="color:#f59e0b">Sold 💰</button>
-  </div>
-  <div class="ctrl-right">
-    <span class="badge" id="badge">Showing <b>—</b></span>
-  </div>
-</div>
+  const showToast = (msg) => { setToast(msg); setTimeout(()=>setToast(''), 3000); };
 
-<!-- LIST -->
-<div class="dt-list" id="dtList"><div class="empty-state"><h3>📦</h3><p>Loading delivered projects...</p></div></div>
+  const toggleFu = (id, idx) => {
+    setData(prev => prev.map(d => d.id===id ? { ...d, followups: d.followups.map((v,i)=>i===idx?!v:v) } : d));
+  };
 
-</main>
+  const fuCount = (fu) => fu.filter(Boolean).length;
 
-<!-- MESSAGE MODAL -->
-<div class="msg-overlay" id="msgOverlay" onclick="if(event.target===this)closeMsgModal()">
-  <div class="msg-modal">
-    <div class="msg-title" id="msgTitle">Follow-up Message</div>
-    <div class="msg-sub" id="msgSub">Select which follow-up number to send</div>
-    <div class="msg-steps" id="msgSteps"></div>
-    <div style="font-size:10px; color:var(--muted); margin-bottom:5px;">Use <b>{order}</b>, <b>{client}</b>, or <b>{service}</b> for automatic filling.</div>
-    <textarea class="msg-textarea" id="msgText"></textarea>
-    <div class="msg-actions">
-      <button class="msg-close" onclick="closeMsgModal()">Cancel</button>
-      <button class="msg-close" style="background:rgba(99,102,241,.12); border-color:rgba(99,102,241,.3); color:#a5b4fc;" onclick="updateTemplate()" title="Save current text as the default for this step">💾 Update Template</button>
-      <button class="msg-copy" onclick="copyMsgText()">📋 Copy & Mark Done</button>
-    </div>
-  </div>
-</div>
+  const filtered = data.filter(d => {
+    const q = search.toLowerCase();
+    const matchSearch = !search || d.client.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.member.toLowerCase().includes(q);
+    const matchMember = !memberFilter || d.member === memberFilter;
+    const matchFu = fuFilter === '' ? true : fuFilter === '6' ? d.sold : fuCount(d.followups) === parseInt(fuFilter);
+    return matchSearch && matchMember && matchFu;
+  });
 
-<div class="toast-box" id="toastBox"></div>
-<footer class="footer">SEO Performance Hub · Delivery Tracker · GEO Rankers Dept · <span id="fDate"></span></footer>
+  const members = [...new Set(SAMPLE_DATA.map(d=>d.member))];
+  const total = data.length;
+  const noFu = data.filter(d=>fuCount(d.followups)===0).length;
+  const inProg = data.filter(d=>fuCount(d.followups)>0&&fuCount(d.followups)<5).length;
+  const done5 = data.filter(d=>fuCount(d.followups)===5).length;
+  const sold = data.filter(d=>d.sold).length;
+  const withRmk = data.filter(d=>d.remark).length;
 
-<!-- External Scripts -->
-<script src="/static/js/config.js"></script>
-<script src="/static/js/utils.js"></script>
-<script src="/static/js/api.js"></script>
-<script src="/static/js/followups.js"></script>
-<script src="/static/js/tracker.js"></script>
+  const modalTemplate = modal ? FOLLOW_UP_TEMPLATES[modal.step].replace('{client}',modal.item.client).replace('{service}',modal.item.service).replace('{order}',modal.item.id) : '';
+
+  return (
+    <>
+      {/* Header */}
+      <header className="hdr">
+        <div className="hl">
+          <div className="logo">📦</div>
+          <div>
+            <div className="htitle">Delivery Follow-Up Tracker</div>
+            <div className="hsub">GEO Rankers Department · Client Follow-up Management</div>
+          </div>
+        </div>
+        <div className="hr">
+          <div className="live-pill"><div className="ldot"></div><span>Live Data</span></div>
+          <button className="hbtn">↻ Refresh</button>
+          <button className="hbtn purple">📥 Export CSV</button>
+          <a className="hbtn green" href="index.html">← Dashboard</a>
+        </div>
+      </header>
+
+      <div className="main">
+        {/* KPI bar */}
+        <div className="kpi-bar">
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#a5b4fc'}}>{total}</div><div className="kpi-lbl">Total Projects</div></div>
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#ef4444'}}>{noFu}</div><div className="kpi-lbl">Not Started</div></div>
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#60a5fa'}}>{inProg}</div><div className="kpi-lbl">Following Up</div></div>
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#10b981'}}>{done5}</div><div className="kpi-lbl">Completed (5)</div></div>
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#f59e0b'}}>{sold} 💰</div><div className="kpi-lbl">Sold / Success</div></div>
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#6366f1'}}>{withRmk}</div><div className="kpi-lbl">With Remarks</div></div>
+        </div>
+
+        {/* Controls */}
+        <div className="controls">
+          <div className="srch-wrap">
+            <span className="srch-icon">🔍</span>
+            <input className="srch" placeholder="Search client / order / member..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          </div>
+          <select className="sel" value={memberFilter} onChange={e=>setMemberFilter(e.target.value)}>
+            <option value="">All Members</option>
+            {members.map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+          <div className="fu-tabs">
+            {[['','All'],['0','No Follow-up'],['1','1 Done'],['2','2 Done'],['3','3 Done'],['4','4 Done'],['5','5 ✓'],['6','Sold 💰']].map(([v,lbl])=>(
+              <button key={v} className={`fu-tab${v==='0'?' f0':v==='5'?' f5':v==='6'?' f6':''}${fuFilter===v?' active':''}`} onClick={()=>setFuFilter(v)}>{lbl}</button>
+            ))}
+          </div>
+          <div className="ctrl-right">
+            <span className="badge">Showing <b>{filtered.length}</b> of {total}</span>
+          </div>
+        </div>
+
+        {/* List */}
+        <div className="dt-list">
+          {filtered.map(item => {
+            const fc = fuCount(item.followups);
+            return (
+              <div key={item.id} className={`dt-item${item.sold?' sold':''}`} data-screen-label="Delivery Item">
+                <div>
+                  <div className="dt-top">
+                    <div className="dt-av" style={{background:gradFor(item.client)}}>{initials(item.client)}</div>
+                    <div>
+                      <div className="dt-client">{item.client}</div>
+                      <div className="dt-meta">{item.id} · {item.service} · {item.date}</div>
+                    </div>
+                  </div>
+                  <div className="dt-info">
+                    <div className="dt-field"><div className="dt-field-lbl">Member</div><div className="dt-field-val">{item.member}</div></div>
+                    <div className="dt-field"><div className="dt-field-lbl">Team</div><div className="dt-field-val">{item.team}</div></div>
+                    <div className="dt-field"><div className="dt-field-lbl">Amount</div><div className="dt-field-val green">${item.amt}</div></div>
+                    {item.remark && <div className="dt-field"><div className="dt-field-lbl">Remark</div><div className="dt-field-val" style={{color:'#94a3b8',fontStyle:'italic',maxWidth:220}}>{item.remark}</div></div>}
+                  </div>
+                  <div className="fu-lbl">Follow-up Progress ({fc}/5)</div>
+                  <div className="fu-dots">
+                    {item.followups.map((done,i)=>(
+                      <button key={i} className={`fu-dot${item.sold?' sold':done?' done':' pending'}`} onClick={()=>toggleFu(item.id,i)} title={`Follow-up ${i+1}`}>
+                        {item.sold?'💰':done?'✓':i+1}
+                      </button>
+                    ))}
+                    <button className="dt-msg-btn" onClick={()=>setModal({item,step:Math.min(fc,4)})}>
+                      📋 Message
+                    </button>
+                  </div>
+                </div>
+                <div className="dt-right">
+                  <div className="dt-amt">${item.amt}</div>
+                  {item.sold
+                    ? <span className="dt-status-badge" style={{background:'rgba(245,158,11,.12)',border:'1px solid rgba(245,158,11,.3)',color:'#fbbf24'}}>💰 Sold</span>
+                    : fc===5
+                      ? <span className="dt-status-badge" style={{background:'rgba(16,185,129,.12)',border:'1px solid rgba(16,185,129,.3)',color:'#34d399'}}>✅ Complete</span>
+                      : fc===0
+                        ? <span className="dt-status-badge" style={{background:'rgba(239,68,68,.1)',border:'1px solid rgba(239,68,68,.25)',color:'#f87171'}}>⏳ Not Started</span>
+                        : <span className="dt-status-badge" style={{background:'rgba(99,102,241,.12)',border:'1px solid rgba(99,102,241,.28)',color:'#a5b4fc'}}>🔄 {fc}/5 Done</span>
+                  }
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length===0 && (
+            <div style={{textAlign:'center',padding:'48px 0',color:'#475569'}}>
+              <div style={{fontSize:32,marginBottom:10}}>📦</div>
+              <div style={{fontWeight:700}}>No projects match your filters</div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <footer className="footer">SEO Performance Hub · Delivery Tracker · GEO Rankers Dept · April 2026</footer>
+
+      {/* Message modal */}
+      <div className={`overlay${modal?' open':''}`} onClick={e=>e.target.classList.contains('overlay')&&setModal(null)}>
+        {modal && (
+          <div className="msg-modal">
+            <div className="msg-title">📋 Follow-up Message</div>
+            <div className="msg-sub">{modal.item.client} · {modal.item.id}</div>
+            <div className="msg-steps">
+              {[0,1,2,3,4].map(i=>(
+                <button key={i} className={`msg-step${modal.step===i?' active':''}`} onClick={()=>setModal({...modal,step:i})}>
+                  Follow-up {i+1}
+                </button>
+              ))}
+            </div>
+            <div className="msg-hint">Variables: <b style={{color:'#94a3b8'}}>{'{client}'}</b>, <b style={{color:'#94a3b8'}}>{'{order}'}</b>, <b style={{color:'#94a3b8'}}>{'{service}'}</b> auto-filled.</div>
+            <textarea className="msg-textarea" defaultValue={modalTemplate} key={modal.step+''+modal.item.id}/>
+            <div className="msg-actions">
+              <button className="msg-close" onClick={()=>setModal(null)}>Cancel</button>
+              <button className="msg-close" style={{background:'rgba(99,102,241,.12)',borderColor:'rgba(99,102,241,.3)',color:'#a5b4fc'}}>💾 Save Template</button>
+              <button className="msg-copy" onClick={()=>{toggleFu(modal.item.id,modal.step);setModal(null);showToast('✅ Message copied & follow-up marked done!')}}>📋 Copy & Mark Done</button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {toast && <div className="toast">{toast}</div>}
+    </>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
 </body>
 </html>

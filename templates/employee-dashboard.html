@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Employee Portal — GEO Rankers</title>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/static/css/colors_and_type.css"/>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
@@ -155,16 +154,23 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 <div class="g1"></div><div class="g2"></div>
 <div id="root"></div>
 
-
-
-
 <script type="text/babel">
-{% raw %}
-
 const DEMO_USERS = {
-  '17236': { name: 'Alamin', role: 'SMM Member', team: 'SMM', initials: 'A', grad: 'linear-gradient(135deg,#2563eb,#7c3aed)' },
-  '17136': { name: 'Ibrahim', role: 'SMM Member', team: 'SMM', initials: 'I', grad: 'linear-gradient(135deg,#ec4899,#8b5cf6)' },
+  EMP001: { name: 'Jahidul Islam', role: 'Sr. SEO Specialist', team: 'Geo Rankers', initials: 'JI', grad: 'linear-gradient(135deg,#2563eb,#7c3aed)', deliveredAmt: 1240, wipAmt: 380, delivered: 16, wip: 4, cancelled: 1, target: 1100 },
+  EMP002: { name: 'Rania Ahmed', role: 'Content Strategist', team: 'Rank Riser', initials: 'RA', grad: 'linear-gradient(135deg,#ec4899,#8b5cf6)', deliveredAmt: 970, wipAmt: 480, delivered: 12, wip: 5, cancelled: 2, target: 1100 },
 };
+
+const PROJECTS = [
+  { title: 'Local SEO — Dhaka Restaurant', type: 'Local SEO', amt: 120, status: 'Delivered', date: 'Apr 18' },
+  { title: 'GMB Optimization × 3 Locations', type: 'GMB', amt: 90, status: 'Delivered', date: 'Apr 15' },
+  { title: 'National SEO — E-commerce', type: 'National SEO', amt: 250, status: 'WIP', date: 'Apr 22' },
+  { title: 'Citation Building Package', type: 'Citations', amt: 75, status: 'Delivered', date: 'Apr 10' },
+  { title: 'Press Release Distribution', type: 'PR', amt: 80, status: 'Revision', date: 'Apr 20' },
+  { title: 'Competitor Analysis Report', type: 'Research', amt: 60, status: 'Cancelled', date: 'Apr 8' },
+];
+
+const ATT_DATA = [1,1,1,1,1,0,0, 1,1,1,0,1,0,0, 1,1,1,1,1,0,0, 1,'t','f','f','f','f','f'];
+const DAYS = ['S','M','T','W','T','F','S'];
 
 const statusBadge = (s) => {
   const map = {
@@ -177,739 +183,24 @@ const statusBadge = (s) => {
   return <span className="sbadge" style={{background:c.bg,border:`1px solid ${c.border}`,color:c.color}}>{c.icon} {s}</span>;
 };
 
-
-const AdminPanel = () => {
-    const [members, setMembers] = React.useState([]);
-    const [attendance, setAttendance] = React.useState([]);
-    const [view, setView] = React.useState('members');
-    const [editingMember, setEditingMember] = React.useState(null);
-    const [editingAtt, setEditingAtt] = React.useState(null);
-    const [attDate, setAttDate] = React.useState(new Date().toLocaleDateString('en-CA'));
-    const [calendarCfg, setCalendarCfg] = React.useState({});
-    const [leaveRequests, setLeaveRequests] = React.useState([]);
-    const [auditLogs, setAuditLogs] = React.useState([]);
-    const [corrections, setCorrections] = React.useState([]);
-    const [dailyReports, setDailyReports] = React.useState([]);
-    const [memberSearch, setMemberSearch] = React.useState('');
-    const [teamFilter, setTeamFilter] = React.useState('All');
-    const [roleFilter, setRoleFilter] = React.useState('All');
-    const [leaveStatus, setLeaveStatus] = React.useState('');
-    const [correctionStatus, setCorrectionStatus] = React.useState('');
-    const [reportDate, setReportDate] = React.useState(new Date().toLocaleDateString('en-CA'));
-    const [announcement, setAnnouncement] = React.useState({target:'all', title:'Announcement', message:''});
-    const [msg, setMsg] = React.useState('');
-    const year = String(new Date().getFullYear());
-    const month = String(new Date().getMonth() + 1);
-
-    const fetchMembers = async () => {
-        try {
-            const res = await fetch('/api/admin/members');
-            setMembers(await res.json());
-        } catch(e) { console.error(e); }
-    };
-
-    const fetchAttendance = async () => {
-        try {
-            const res = await fetch(`/api/admin/attendance?date=${attDate}`);
-            setAttendance(await res.json());
-        } catch(e) { console.error(e); }
-    };
-
-    const fetchCalendar = async () => {
-        try {
-            const res = await fetch('/api/admin/calendar-config');
-            setCalendarCfg(await res.json());
-        } catch(e) { console.error(e); }
-    };
-
-    const fetchLeaveRequests = async () => {
-        try {
-            const res = await fetch(`/api/admin/leave-requests${leaveStatus ? `?status=${leaveStatus}` : ''}`);
-            setLeaveRequests(await res.json());
-        } catch(e) { console.error(e); }
-    };
-
-    const fetchAuditLogs = async () => {
-        try {
-            const res = await fetch('/api/admin/audit-logs');
-            setAuditLogs(await res.json());
-        } catch(e) { console.error(e); }
-    };
-
-    const fetchCorrections = async () => {
-        try {
-            const res = await fetch(`/api/admin/attendance-corrections${correctionStatus ? `?status=${correctionStatus}` : ''}`);
-            setCorrections(await res.json());
-        } catch(e) { console.error(e); }
-    };
-
-    const fetchDailyReports = async () => {
-        try {
-            const res = await fetch(`/api/admin/daily-reports${reportDate ? `?date=${reportDate}` : ''}`);
-            setDailyReports(await res.json());
-        } catch(e) { console.error(e); }
-    };
-
-    React.useEffect(() => {
-        if(view === 'members') fetchMembers();
-        if(view === 'attendance') fetchAttendance();
-        if(view === 'settings') fetchCalendar();
-        if(view === 'leave') fetchLeaveRequests();
-        if(view === 'audit') fetchAuditLogs();
-        if(view === 'corrections') fetchCorrections();
-        if(view === 'reports') fetchDailyReports();
-    }, [view, attDate, leaveStatus, correctionStatus, reportDate]);
-
-    const handleUpdateMember = async (m) => {
-        setMsg('Saving...');
-        try {
-            const payload = {...m, target: Number(m.target || 0) || 1100, isAdmin: !!m.isAdmin};
-            if(!payload.password) delete payload.password;
-            delete payload._isNew;
-            const res = await fetch(m._isNew ? '/api/admin/members/add' : '/api/admin/members/update', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify(payload)
-            });
-            if(res.ok) { setMsg('Saved!'); setEditingMember(null); fetchMembers(); }
-            else setMsg('Error saving.');
-        } catch(e) { setMsg('Error saving.'); }
-    };
-
-    const handleDeleteMember = async (m) => {
-        if(!confirm(`Delete ${m.name || m.id}?`)) return;
-        setMsg('Deleting...');
-        try {
-            const res = await fetch('/api/admin/members/delete', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({id:m.id})
-            });
-            if(res.ok) { setMsg('Deleted!'); setEditingMember(null); fetchMembers(); }
-            else setMsg('Delete failed.');
-        } catch(e) { setMsg('Delete failed.'); }
-    };
-
-    const handleUpdateAtt = async (a) => {
-        setMsg('Saving...');
-        try {
-            const res = await fetch('/api/admin/attendance/update', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify(a)
-            });
-            if(res.ok) { setMsg('Saved!'); setEditingAtt(null); fetchAttendance(); }
-            else setMsg('Error saving.');
-        } catch(e) { setMsg('Error saving.'); }
-    };
-
-    const handleSaveCalendar = async () => {
-        setMsg('Saving calendar...');
-        try {
-            const res = await fetch('/api/admin/calendar-config', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify(calendarCfg)
-            });
-            if(res.ok) { setMsg('Calendar saved!'); fetchCalendar(); }
-            else setMsg('Calendar save failed.');
-        } catch(e) { setMsg('Calendar save failed.'); }
-    };
-
-    const handleSendAnnouncement = async () => {
-        if(!announcement.message.trim()) { setMsg('Announcement message required.'); return; }
-        setMsg('Sending announcement...');
-        try {
-            const res = await fetch('/api/admin/announcements', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify(announcement)
-            });
-            if(res.ok) { setMsg('Announcement sent!'); setAnnouncement({...announcement, message:''}); }
-            else setMsg('Announcement failed.');
-        } catch(e) { setMsg('Announcement failed.'); }
-    };
-
-    const updateLeaveStatus = async (req, status) => {
-        setMsg(`${status} leave request...`);
-        try {
-            const res = await fetch('/api/admin/leave-requests/update', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({key:req.key, status})
-            });
-            if(res.ok) { setMsg(`Leave ${status.toLowerCase()}!`); fetchLeaveRequests(); }
-            else setMsg('Leave update failed.');
-        } catch(e) { setMsg('Leave update failed.'); }
-    };
-
-    const updateCorrectionStatus = async (req, status) => {
-        setMsg(`${status} correction...`);
-        try {
-            const res = await fetch('/api/admin/attendance-corrections/update', {
-                method:'POST', headers:{'Content-Type':'application/json'},
-                body: JSON.stringify({key:req.key, status})
-            });
-            if(res.ok) { setMsg(`Correction ${status.toLowerCase()}!`); fetchCorrections(); }
-            else setMsg('Correction update failed.');
-        } catch(e) { setMsg('Correction update failed.'); }
-    };
-
-    const setMonthWorkingDays = (value) => {
-        setCalendarCfg({
-            ...calendarCfg,
-            [year]: {
-                ...(calendarCfg[year] || {}),
-                [month]: Number(value || 0)
-            }
-        });
-    };
-
-    const resetPassword = (m) => {
-        setEditingMember({...m, password:'pass123'});
-    };
-
-    const teams = [...new Set(members.map(m => m.team).filter(Boolean))].sort();
-    const roles = ['Member', 'Team Leader', 'Manager', 'Admin'];
-    const roleOptions = [...new Set([...roles, ...members.map(m => m.role).filter(Boolean)])];
-    const filteredMembers = [...members].filter(m => {
-        const q = memberSearch.toLowerCase();
-        const matchesSearch = !q || [m.id, m.name, m.fullName, m.email, m.phone].some(v => String(v || '').toLowerCase().includes(q));
-        const matchesTeam = teamFilter === 'All' || m.team === teamFilter;
-        const matchesRole = roleFilter === 'All' || m.role === roleFilter;
-        return matchesSearch && matchesTeam && matchesRole;
-    }).sort((a,b)=>String(a.name || '').localeCompare(String(b.name || '')));
-    const adminCount = members.filter(m => m.isAdmin || String(m.role || '').includes('Leader') || String(m.role || '').includes('Manager')).length;
-    const presentCount = attendance.filter(a => ['Present', 'Late'].includes(a.status)).length;
-    const lateCount = attendance.filter(a => a.status === 'Late').length;
-
-    const fieldStyle = {width:'100%', padding:8, borderRadius:6, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'};
-    const tabStyle = {padding:'7px 12px', fontSize:11};
-    const statusColor = (s) => s === 'Late' ? '#ef4444' : s === 'Absent' ? '#f87171' : '#10b981';
-
-    return (
-        <div className="emp-card" style={{gridColumn:'1/-1'}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:16, flexWrap:'wrap', marginBottom:20}}>
-                <div className="emp-card-title" style={{margin:0}}>🛡️ Admin Control Panel</div>
-                <div style={{display:'flex', gap:8, flexWrap:'wrap'}}>
-                    <button className={`nav-btn ${view==='members'?'active':''}`} onClick={()=>setView('members')} style={tabStyle}>👥 Members</button>
-                    <button className={`nav-btn ${view==='attendance'?'active':''}`} onClick={()=>setView('attendance')} style={tabStyle}>📅 Attendance</button>
-                    <button className={`nav-btn ${view==='leave'?'active':''}`} onClick={()=>setView('leave')} style={tabStyle}>🌴 Leave</button>
-                    <button className={`nav-btn ${view==='corrections'?'active':''}`} onClick={()=>setView('corrections')} style={tabStyle}>🕒 Corrections</button>
-                    <button className={`nav-btn ${view==='reports'?'active':''}`} onClick={()=>setView('reports')} style={tabStyle}>📝 Reports</button>
-                    <button className={`nav-btn ${view==='announce'?'active':''}`} onClick={()=>setView('announce')} style={tabStyle}>🔔 Notice</button>
-                    <button className={`nav-btn ${view==='settings'?'active':''}`} onClick={()=>setView('settings')} style={tabStyle}>⚙️ Settings</button>
-                    <button className={`nav-btn ${view==='audit'?'active':''}`} onClick={()=>setView('audit')} style={tabStyle}>🧾 Audit</button>
-                </div>
-            </div>
-            
-            {msg && <div style={{padding:10, background:'rgba(16,185,129,.1)', color:'#10b981', borderRadius:8, marginBottom:16, fontSize:12, fontWeight:700}}>{msg}</div>}
-
-            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(150px,1fr))', gap:12, marginBottom:18}}>
-                <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:12}}><div style={{fontSize:10,color:'#64748b',fontWeight:800}}>Members</div><div style={{fontSize:22,fontWeight:900}}>{members.length}</div></div>
-                <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:12}}><div style={{fontSize:10,color:'#64748b',fontWeight:800}}>Admins/Leads</div><div style={{fontSize:22,fontWeight:900,color:'#a5b4fc'}}>{adminCount}</div></div>
-                <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:12}}><div style={{fontSize:10,color:'#64748b',fontWeight:800}}>Present</div><div style={{fontSize:22,fontWeight:900,color:'#10b981'}}>{presentCount}</div></div>
-                <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:12}}><div style={{fontSize:10,color:'#64748b',fontWeight:800}}>Late</div><div style={{fontSize:22,fontWeight:900,color:'#ef4444'}}>{lateCount}</div></div>
-            </div>
-
-            {view === 'members' && (
-                <div>
-                    <div style={{display:'grid', gridTemplateColumns:'minmax(180px,1fr) 170px 170px auto', gap:10, marginBottom:12, alignItems:'center'}}>
-                        <input value={memberSearch} onChange={e=>setMemberSearch(e.target.value)} placeholder="Search name, ID, email, phone" style={fieldStyle}/>
-                        <select value={teamFilter} onChange={e=>setTeamFilter(e.target.value)} style={fieldStyle}><option>All</option>{teams.map(t=><option key={t}>{t}</option>)}</select>
-                        <select value={roleFilter} onChange={e=>setRoleFilter(e.target.value)} style={fieldStyle}><option>All</option>{roleOptions.map(r=><option key={r}>{r}</option>)}</select>
-                        <button onClick={()=>setEditingMember({_isNew:true, id:'', name:'', role:'Member', team:teams[0] || '', target:1100, password:'pass123', isAdmin:false})} style={{background:'#10b981', color:'#fff', border:'none', padding:'8px 12px', borderRadius:6, cursor:'pointer', fontWeight:800, fontSize:12}}>Add Member</button>
-                    </div>
-                    <div style={{overflowX:'auto'}}>
-                    <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
-                        <thead>
-                            <tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}>
-                                <th style={{padding:10}}>ID</th>
-                                <th style={{padding:10}}>Name</th>
-                                <th style={{padding:10}}>Team</th>
-                                <th style={{padding:10}}>Role</th>
-                                <th style={{padding:10}}>Target</th>
-                                <th style={{padding:10}}>Admin</th>
-                                <th style={{padding:10}}>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredMembers.map(m => (
-                                <tr key={m.id} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}>
-                                    <td style={{padding:10}}>{m.id}</td>
-                                    <td style={{padding:10}}><b>{m.name}</b><div style={{color:'#64748b', fontSize:10}}>{m.email || m.phone || ''}</div></td>
-                                    <td style={{padding:10}}>{m.team}</td>
-                                    <td style={{padding:10}}>{m.role}</td>
-                                    <td style={{padding:10}}>${m.target || 1100}</td>
-                                    <td style={{padding:10}}>{m.isAdmin ? 'Yes' : '-'}</td>
-                                    <td style={{padding:10}}>
-                                        <div style={{display:'flex', gap:6}}>
-                                            <button onClick={()=>setEditingMember({...m})} style={{background:'rgba(255,255,255,.1)', border:'none', color:'#f1f5f9', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Edit</button>
-                                            <button onClick={()=>resetPassword(m)} style={{background:'rgba(59,130,246,.14)', border:'none', color:'#93c5fd', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Reset</button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {filteredMembers.length === 0 && <tr><td colSpan="7" style={{padding:20, textAlign:'center', color:'#64748b'}}>No members matched.</td></tr>}
-                        </tbody>
-                    </table>
-                    </div>
-                </div>
-            )}
-
-            {view === 'corrections' && (
-                <div>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:12, flexWrap:'wrap'}}>
-                        <div style={{fontSize:12, color:'#94a3b8', fontWeight:700}}>Review attendance correction requests</div>
-                        <select value={correctionStatus} onChange={e=>setCorrectionStatus(e.target.value)} style={{...fieldStyle, width:170}}><option value="">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
-                    </div>
-                    <div style={{overflowX:'auto'}}>
-                        <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
-                            <thead><tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}><th style={{padding:10}}>Employee</th><th style={{padding:10}}>Date</th><th style={{padding:10}}>In/Out</th><th style={{padding:10}}>Reason</th><th style={{padding:10}}>Status</th><th style={{padding:10}}>Action</th></tr></thead>
-                            <tbody>
-                                {corrections.map(r => (
-                                    <tr key={r.key} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}>
-                                        <td style={{padding:10}}><b>{r.name || r.emp_id}</b><div style={{color:'#64748b', fontSize:10}}>{r.emp_id}</div></td>
-                                        <td style={{padding:10}}>{r.date}</td>
-                                        <td style={{padding:10}}>{r.in || '-'} / {r.out || '-'}</td>
-                                        <td style={{padding:10, maxWidth:260}}>{r.reason || '-'}</td>
-                                        <td style={{padding:10, color:statusColor(r.status)}}>{r.status}</td>
-                                        <td style={{padding:10}}><div style={{display:'flex', gap:6}}><button onClick={()=>updateCorrectionStatus(r,'Approved')} style={{background:'#10b981', color:'#fff', border:'none', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Approve</button><button onClick={()=>updateCorrectionStatus(r,'Rejected')} style={{background:'#ef4444', color:'#fff', border:'none', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Reject</button></div></td>
-                                    </tr>
-                                ))}
-                                {corrections.length === 0 && <tr><td colSpan="6" style={{padding:20, textAlign:'center', color:'#64748b'}}>No correction requests found.</td></tr>}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            {view === 'reports' && (
-                <div>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:12, flexWrap:'wrap'}}>
-                        <div style={{fontSize:12, color:'#94a3b8', fontWeight:700}}>Daily work reports</div>
-                        <input type="date" value={reportDate} onChange={e=>setReportDate(e.target.value)} style={{...fieldStyle, width:170}}/>
-                    </div>
-                    <div style={{display:'grid', gap:10}}>
-                        {dailyReports.map(r => (
-                            <div key={r.key} style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:10, padding:14}}>
-                                <div style={{display:'flex', justifyContent:'space-between', gap:12, marginBottom:8}}><b>{r.name || r.emp_id}</b><span style={{fontSize:11, color:'#94a3b8'}}>{r.date} · {r.hours || 0}h</span></div>
-                                <div style={{fontSize:12, color:'#cbd5e1', lineHeight:1.6}}>{r.summary || '-'}</div>
-                                {r.blockers && <div style={{fontSize:11, color:'#f59e0b', marginTop:8}}>Blockers: {r.blockers}</div>}
-                            </div>
-                        ))}
-                        {dailyReports.length === 0 && <div style={{padding:20, textAlign:'center', color:'#64748b'}}>No reports found for this date.</div>}
-                    </div>
-                </div>
-            )}
-
-            {view === 'leave' && (
-                <div>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:12, flexWrap:'wrap'}}>
-                        <div style={{fontSize:12, color:'#94a3b8', fontWeight:700}}>Review employee leave requests</div>
-                        <select value={leaveStatus} onChange={e=>setLeaveStatus(e.target.value)} style={{...fieldStyle, width:170}}><option value="">All</option><option>Pending</option><option>Approved</option><option>Rejected</option></select>
-                    </div>
-                    <div style={{overflowX:'auto'}}>
-                        <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
-                            <thead><tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}><th style={{padding:10}}>Employee</th><th style={{padding:10}}>Type</th><th style={{padding:10}}>Dates</th><th style={{padding:10}}>Reason</th><th style={{padding:10}}>Status</th><th style={{padding:10}}>Action</th></tr></thead>
-                            <tbody>
-                                {leaveRequests.map(r => (
-                                    <tr key={r.key} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}>
-                                        <td style={{padding:10}}><b>{r.name || r.emp_id}</b><div style={{color:'#64748b', fontSize:10}}>{r.emp_id}</div></td>
-                                        <td style={{padding:10}}>{r.type}</td>
-                                        <td style={{padding:10}}>{r.from} → {r.to}</td>
-                                        <td style={{padding:10, maxWidth:260}}>{r.reason || '-'}</td>
-                                        <td style={{padding:10, color:statusColor(r.status)}}>{r.status}</td>
-                                        <td style={{padding:10}}><div style={{display:'flex', gap:6}}><button onClick={()=>updateLeaveStatus(r,'Approved')} style={{background:'#10b981', color:'#fff', border:'none', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Approve</button><button onClick={()=>updateLeaveStatus(r,'Rejected')} style={{background:'#ef4444', color:'#fff', border:'none', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Reject</button></div></td>
-                                    </tr>
-                                ))}
-                                {leaveRequests.length === 0 && <tr><td colSpan="6" style={{padding:20, textAlign:'center', color:'#64748b'}}>No leave requests found.</td></tr>}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            )}
-
-            {view === 'announce' && (
-                <div style={{display:'grid', gridTemplateColumns:'minmax(260px,520px) 1fr', gap:14}}>
-                    <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:16}}>
-                        <div className="emp-card-title" style={{fontSize:14}}>Send Announcement</div>
-                        <div style={{display:'grid', gap:10}}>
-                            <input value={announcement.title} onChange={e=>setAnnouncement({...announcement, title:e.target.value})} placeholder="Title" style={fieldStyle}/>
-                            <select value={announcement.target} onChange={e=>setAnnouncement({...announcement, target:e.target.value})} style={fieldStyle}><option value="all">All employees</option>{teams.map(t=><option key={t} value={t}>Team: {t}</option>)}{members.map(m=><option key={m.id} value={m.id}>{m.name} ({m.id})</option>)}</select>
-                            <textarea value={announcement.message} onChange={e=>setAnnouncement({...announcement, message:e.target.value})} placeholder="Write notice..." rows="5" style={{...fieldStyle, resize:'vertical'}}></textarea>
-                            <button onClick={handleSendAnnouncement} style={{background:'#2563eb', color:'#fff', border:'none', padding:'9px 12px', borderRadius:6, cursor:'pointer', fontWeight:800}}>Send Notice</button>
-                        </div>
-                    </div>
-                    <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:16, fontSize:12, color:'#94a3b8', lineHeight:1.7}}>Notice bell-এ message দেখাবে. Target হিসেবে all, team, অথবা exact employee ID ব্যবহার করা যাবে। Team select করলে backend ওই team-এর সব member-কে notification পাঠাবে।</div>
-                </div>
-            )}
-
-            {view === 'attendance' && (
-                <div>
-                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:12, flexWrap:'wrap'}}>
-                        <div style={{fontSize:12, color:'#94a3b8', fontWeight:700}}>Date wise attendance control</div>
-                        <input type="date" value={attDate} onChange={e=>setAttDate(e.target.value)} style={{...fieldStyle, width:170}}/>
-                    </div>
-                    <div style={{overflowX:'auto'}}>
-                    <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
-                        <thead>
-                            <tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}>
-                                <th style={{padding:10}}>Emp ID</th>
-                                <th style={{padding:10}}>Date</th>
-                                <th style={{padding:10}}>In Time</th>
-                                <th style={{padding:10}}>Out Time</th>
-                                <th style={{padding:10}}>Status</th>
-                                <th style={{padding:10}}>Duration</th>
-                                <th style={{padding:10}}>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {attendance.map(a => (
-                                <tr key={a.emp_id+a.date} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}>
-                                    <td style={{padding:10}}>{a.emp_id}</td>
-                                    <td style={{padding:10}}>{a.date}</td>
-                                    <td style={{padding:10, color:'#10b981', fontWeight:800}}>{a.in || '-'}</td>
-                                    <td style={{padding:10, color:'#f59e0b', fontWeight:800}}>{a.out || '-'}</td>
-                                    <td style={{padding:10}}>
-                                        <span style={{padding:'2px 8px', borderRadius:10, fontSize:10, background:'rgba(255,255,255,.06)', color:statusColor(a.status)}}>{a.status}</span>
-                                    </td>
-                                    <td style={{padding:10}}>{a.duration || '-'}</td>
-                                    <td style={{padding:10}}>
-                                        <button onClick={()=>setEditingAtt({...a})} style={{background:'rgba(255,255,255,.1)', border:'none', color:'#f1f5f9', padding:'4px 8px', borderRadius:6, cursor:'pointer', fontSize:11}}>Fix Time</button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {attendance.length === 0 && <tr><td colSpan="7" style={{padding:20, textAlign:'center', color:'#64748b'}}>No attendance records for today.</td></tr>}
-                        </tbody>
-                    </table>
-                    </div>
-                </div>
-            )}
-
-            {view === 'settings' && (
-                <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(260px,1fr))', gap:14}}>
-                    <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:16}}>
-                        <div className="emp-card-title" style={{fontSize:14}}>Working Days</div>
-                        <div style={{fontSize:11, color:'#64748b', marginBottom:12}}>Current month override for attendance and progress calculation.</div>
-                        <label style={{fontSize:11, color:'#94a3b8'}}>April 2026 working days</label>
-                        <input type="number" value={(calendarCfg[year] && calendarCfg[year][month]) || ''} onChange={e=>setMonthWorkingDays(e.target.value)} placeholder="e.g. 22" style={{...fieldStyle, marginTop:6}}/>
-                        <button onClick={handleSaveCalendar} style={{marginTop:12, background:'#2563eb', color:'#fff', border:'none', padding:'9px 12px', borderRadius:6, cursor:'pointer', fontWeight:800}}>Save Calendar</button>
-                    </div>
-                    <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.12)', borderRadius:10, padding:16}}>
-                        <div className="emp-card-title" style={{fontSize:14}}>Admin Access</div>
-                        <div style={{fontSize:11, color:'#64748b', lineHeight:1.7}}>Member edit modal থেকে role, admin access, target, contact info, and password reset করা যাবে. Team Leader and Manager role login করলেও Admin panel পাবে.</div>
-                    </div>
-                </div>
-            )}
-
-            {view === 'audit' && (
-                <div style={{overflowX:'auto'}}>
-                    <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
-                        <thead><tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}><th style={{padding:10}}>Time</th><th style={{padding:10}}>Action</th><th style={{padding:10}}>Detail</th><th style={{padding:10}}>Actor</th></tr></thead>
-                        <tbody>
-                            {auditLogs.map((l,i) => <tr key={i} style={{borderBottom:'1px solid rgba(148,163,184,.1)'}}><td style={{padding:10}}>{new Date((l.timestamp || 0) * 1000).toLocaleString()}</td><td style={{padding:10, color:'#a5b4fc', fontWeight:800}}>{l.action}</td><td style={{padding:10}}>{l.detail}</td><td style={{padding:10}}>{l.actor || 'admin'}</td></tr>)}
-                            {auditLogs.length === 0 && <tr><td colSpan="4" style={{padding:20, textAlign:'center', color:'#64748b'}}>No audit logs yet.</td></tr>}
-                        </tbody>
-                    </table>
-                </div>
-            )}
-
-            {/* Edit Member Modal */}
-            {editingMember && (
-                <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100}}>
-                    <div style={{background:'#0f172a', padding:24, borderRadius:16, width:'min(560px, 92vw)', maxHeight:'86vh', overflowY:'auto', border:'1px solid rgba(148,163,184,.2)'}}>
-                        <h3 style={{marginTop:0, marginBottom:16}}>{editingMember._isNew ? 'Add Member' : 'Edit Member'}</h3>
-                        <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(220px,1fr))', gap:10}}>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Employee ID</label><input value={editingMember.id || ''} disabled={!editingMember._isNew} onChange={e=>setEditingMember({...editingMember, id:e.target.value})} style={{...fieldStyle, opacity:editingMember._isNew?1:.65}}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Name</label><input value={editingMember.name || ''} onChange={e=>setEditingMember({...editingMember, name:e.target.value})} style={fieldStyle}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Full Name</label><input value={editingMember.fullName || ''} onChange={e=>setEditingMember({...editingMember, fullName:e.target.value})} style={fieldStyle}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Role</label><select value={editingMember.role || 'Member'} onChange={e=>setEditingMember({...editingMember, role:e.target.value})} style={fieldStyle}>{roles.map(r=><option key={r}>{r}</option>)}</select></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Team</label><input list="adminTeams" value={editingMember.team || ''} onChange={e=>setEditingMember({...editingMember, team:e.target.value})} style={fieldStyle}/><datalist id="adminTeams">{teams.map(t=><option key={t} value={t}/>)}</datalist></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Target ($)</label><input type="number" value={editingMember.target || ''} onChange={e=>setEditingMember({...editingMember, target:e.target.value})} style={fieldStyle}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Password</label><input value={editingMember.password || ''} placeholder="Leave blank to keep current" onChange={e=>setEditingMember({...editingMember, password:e.target.value})} style={fieldStyle}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Email</label><input value={editingMember.email || ''} onChange={e=>setEditingMember({...editingMember, email:e.target.value})} style={fieldStyle}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Phone</label><input value={editingMember.phone || ''} onChange={e=>setEditingMember({...editingMember, phone:e.target.value})} style={fieldStyle}/></div>
-                            <label style={{display:'flex', alignItems:'center', gap:8, fontSize:12, color:'#cbd5e1', fontWeight:800, marginTop:18}}>
-                                <input type="checkbox" checked={!!editingMember.isAdmin} onChange={e=>setEditingMember({...editingMember, isAdmin:e.target.checked})}/> Admin access
-                            </label>
-                        </div>
-                        <div style={{display:'flex', gap:8, marginTop:20}}>
-                            <button onClick={()=>handleUpdateMember(editingMember)} style={{flex:1, background:'#2563eb', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Save</button>
-                            {!editingMember._isNew && <button onClick={()=>handleDeleteMember(editingMember)} style={{flex:1, background:'#ef4444', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Delete</button>}
-                            <button onClick={()=>setEditingMember(null)} style={{flex:1, background:'rgba(255,255,255,.1)', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Edit Attendance Modal */}
-            {editingAtt && (
-                <div style={{position:'fixed', inset:0, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:100}}>
-                    <div style={{background:'#0f172a', padding:24, borderRadius:16, width:300, border:'1px solid rgba(148,163,184,.2)'}}>
-                        <h3 style={{marginTop:0, marginBottom:16}}>Override Time</h3>
-                        <div style={{display:'flex', flexDirection:'column', gap:10}}>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>In Time (e.g. 09:10 AM)</label><input value={editingAtt.in || ''} onChange={e=>setEditingAtt({...editingAtt, in:e.target.value})} style={fieldStyle}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Out Time (e.g. 06:00 PM)</label><input value={editingAtt.out || ''} onChange={e=>setEditingAtt({...editingAtt, out:e.target.value})} style={fieldStyle}/></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Status</label><select value={editingAtt.status || 'Present'} onChange={e=>setEditingAtt({...editingAtt, status:e.target.value})} style={fieldStyle}><option>Present</option><option>Late</option><option>Absent</option><option>Leave</option></select></div>
-                            <div><label style={{fontSize:11, color:'#94a3b8'}}>Duration (e.g. 8h 30m)</label><input value={editingAtt.duration || ''} onChange={e=>setEditingAtt({...editingAtt, duration:e.target.value})} style={fieldStyle}/></div>
-                        </div>
-                        <div style={{display:'flex', gap:8, marginTop:20}}>
-                            <button onClick={()=>handleUpdateAtt(editingAtt)} style={{flex:1, background:'#2563eb', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Save</button>
-                            <button onClick={()=>setEditingAtt(null)} style={{flex:1, background:'rgba(255,255,255,.1)', color:'#fff', border:'none', padding:'8px', borderRadius:6, cursor:'pointer'}}>Cancel</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-};
-
 const App = () => {
-  const [screen, setScreen] = React.useState('login'); 
+  const [screen, setScreen] = React.useState('login'); // login | dashboard
   const [user, setUser] = React.useState(null);
   const [empId, setEmpId] = React.useState('');
   const [pass, setPass] = React.useState('');
   const [err, setErr] = React.useState('');
   const [navItem, setNavItem] = React.useState('overview');
-  const [checkedIn, setCheckedIn] = React.useState(false);
-  const [checkInTime, setCheckInTime] = React.useState('');
-  const [attData, setAttData] = React.useState([]);
-  const [notifications, setNotifications] = React.useState([]);
-  const [showNotifs, setShowNotifs] = React.useState(false);
-  const [updMsg, setUpdMsg] = React.useState('');
-  const [projFilter, setProjFilter] = React.useState('All');
-  const [myLeaveRequests, setMyLeaveRequests] = React.useState([]);
-  const [leaveMsg, setLeaveMsg] = React.useState('');
-  const [leaveForm, setLeaveForm] = React.useState({type:'Annual', from:'', to:'', reason:''});
-  const [myCorrections, setMyCorrections] = React.useState([]);
-  const [correctionMsg, setCorrectionMsg] = React.useState('');
-  const [correctionForm, setCorrectionForm] = React.useState({date:new Date().toLocaleDateString('en-CA'), in:'', out:'', reason:''});
-  const [myReports, setMyReports] = React.useState([]);
-  const [reportMsg, setReportMsg] = React.useState('');
-  const [reportForm, setReportForm] = React.useState({date:new Date().toLocaleDateString('en-CA'), hours:'8', summary:'', blockers:''});
-  const [teamBoard, setTeamBoard] = React.useState({team:'', members:[]});
-  const [passwordForm, setPasswordForm] = React.useState({password:'', confirm:''});
+  const [checkedIn, setCheckedIn] = React.useState(true);
 
-  const doLogin = async (id) => {
+  const doLogin = (id) => {
     const uid = id || empId.trim().toUpperCase();
-    const pwd = pass || 'pass123';
-    setErr('');
-    try {
-        const res = await fetch('/api/login', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: uid, password: pwd })
-        });
-        const data = await res.json();
-        if(data.status === 'ok') {
-            const [attRes, notifRes] = await Promise.all([
-                fetch(`/api/attendance?id=${uid}`),
-                fetch(`/api/notifications?id=${uid}`)
-            ]);
-            const [attList, notifList] = await Promise.all([attRes.json(), notifRes.json()]);
-            
-            setAttData(attList);
-            setNotifications(notifList);
-
-            const todayStr = new Date().toLocaleDateString('en-CA');
-            const todayRec = attList.find(r => r.date === todayStr);
-            if (todayRec && todayRec.in && !todayRec.out) {
-                setCheckedIn(true);
-                setCheckInTime(todayRec.in);
-            } else {
-                setCheckedIn(false);
-            }
-            
-            const projects = data.user.projects || [];
-            setUser({
-                id: data.user.profile.id,
-                name: data.user.profile.name || 'Employee',
-                fullName: data.user.profile.fullName || data.user.profile.name,
-                role: data.user.profile.role,
-                team: data.user.profile.department,
-                email: data.user.profile.email || '',
-                phone: data.user.profile.phone || '',
-                initials: data.user.profile.avatar || 'U',
-                grad: data.user.profile.avatarColor || 'linear-gradient(135deg,#2563eb,#7c3aed)',
-                deliveredAmt: data.user.stats.deliveredAmt || 0,
-                wipAmt: data.user.stats.wipAmt || 0,
-                delivered: projects.filter(p => p.status === 'Delivered').length,
-                wip: projects.filter(p => p.status === 'WIP').length,
-                cancelled: projects.filter(p => ['Cancelled', 'Hold'].includes(p.status)).length,
-                target: data.user.profile.target || 1100,
-                projects: projects,
-                leave: data.user.stats.leaveBalance || {},
-                rating: (data.user.performance && data.user.performance[0]) ? data.user.performance[0].value : 4.8,
-                isAdmin: data.user.profile.isAdmin || false
-            });
-            setScreen('dashboard');
-        } else {
-            setErr('Invalid ID or password.');
-        }
-    } catch(e) {
-        setErr('Server error connecting to database.');
+    if (DEMO_USERS[uid] && (pass === 'pass123' || id)) {
+      setUser(DEMO_USERS[uid]);
+      setScreen('dashboard');
+      setErr('');
+    } else {
+      setErr('Invalid ID or password. Try EMP001 / pass123');
     }
-  };
-
-  const toggleCheckIn = async () => {
-    if(!user) return;
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit', hour12: true});
-    const action = checkedIn ? 'check-out' : 'check-in';
-    
-    try {
-        const res = await fetch('/api/attendance', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-                emp_id: user.id, 
-                date: now.toLocaleDateString('en-CA'), 
-                [action === 'check-in' ? 'in' : 'out']: timeStr,
-                status: 'Present' 
-            })
-        });
-        if(res.ok) {
-            setCheckedIn(!checkedIn);
-            if(action === 'check-in') setCheckInTime(timeStr);
-            const attRes = await fetch(`/api/attendance?id=${user.id}`);
-            const attList = await attRes.json();
-            setAttData(attList);
-        }
-    } catch(e) {
-        console.error("Checkin failed", e);
-    }
-  };
-
-  const handleUpdateProfile = async (e) => {
-    e.preventDefault();
-    setUpdMsg('Updating...');
-    try {
-        const res = await fetch('/api/user/update', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                id: user.id,
-                fullName: user.fullName,
-                email: user.email,
-                phone: user.phone
-            })
-        });
-        if(res.ok) setUpdMsg('Profile updated successfully!');
-        else setUpdMsg('Failed to update profile.');
-    } catch(e) { setUpdMsg('Error updating profile.'); }
-  };
-
-  const fetchMyLeaveRequests = async () => {
-    if(!user) return;
-    try {
-        const res = await fetch(`/api/leave-requests?id=${user.id}`);
-        setMyLeaveRequests(await res.json());
-    } catch(e) { console.error(e); }
-  };
-
-  const fetchMyCorrections = async () => {
-    if(!user) return;
-    try {
-        const res = await fetch(`/api/attendance-corrections?id=${user.id}`);
-        setMyCorrections(await res.json());
-    } catch(e) { console.error(e); }
-  };
-
-  const fetchMyReports = async () => {
-    if(!user) return;
-    try {
-        const res = await fetch(`/api/daily-reports?id=${user.id}`);
-        setMyReports(await res.json());
-    } catch(e) { console.error(e); }
-  };
-
-  const fetchTeamBoard = async () => {
-    if(!user) return;
-    try {
-        const res = await fetch(`/api/team-leaderboard?id=${user.id}`);
-        setTeamBoard(await res.json());
-    } catch(e) { console.error(e); }
-  };
-
-  React.useEffect(() => {
-    if(user && navItem === 'leave') fetchMyLeaveRequests();
-    if(user && navItem === 'attendance') fetchMyCorrections();
-    if(user && navItem === 'reports') fetchMyReports();
-    if(user && navItem === 'team') fetchTeamBoard();
-  }, [user, navItem]);
-
-  const submitLeaveRequest = async (e) => {
-    e.preventDefault();
-    setLeaveMsg('Submitting...');
-    try {
-        const res = await fetch('/api/leave-requests', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({...leaveForm, emp_id:user.id, name:user.name})
-        });
-        if(res.ok) {
-            setLeaveMsg('Leave request submitted!');
-            setLeaveForm({type:'Annual', from:'', to:'', reason:''});
-            fetchMyLeaveRequests();
-        } else setLeaveMsg('Leave request failed.');
-    } catch(e) { setLeaveMsg('Leave request failed.'); }
-  };
-
-  const submitCorrectionRequest = async (e) => {
-    e.preventDefault();
-    setCorrectionMsg('Submitting...');
-    try {
-        const res = await fetch('/api/attendance-corrections', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({...correctionForm, emp_id:user.id, name:user.name})
-        });
-        if(res.ok) {
-            setCorrectionMsg('Correction request submitted!');
-            setCorrectionForm({date:new Date().toLocaleDateString('en-CA'), in:'', out:'', reason:''});
-            fetchMyCorrections();
-        } else setCorrectionMsg('Correction request failed.');
-    } catch(e) { setCorrectionMsg('Correction request failed.'); }
-  };
-
-  const submitDailyReport = async (e) => {
-    e.preventDefault();
-    setReportMsg('Submitting...');
-    try {
-        const res = await fetch('/api/daily-reports', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({...reportForm, emp_id:user.id, name:user.name})
-        });
-        if(res.ok) {
-            setReportMsg('Daily report saved!');
-            setReportForm({...reportForm, summary:'', blockers:''});
-            fetchMyReports();
-        } else setReportMsg('Daily report failed.');
-    } catch(e) { setReportMsg('Daily report failed.'); }
-  };
-
-  const changePassword = async (e) => {
-    e.preventDefault();
-    if(!passwordForm.password || passwordForm.password !== passwordForm.confirm) {
-        setUpdMsg('Passwords do not match.');
-        return;
-    }
-    setUpdMsg('Updating password...');
-    try {
-        const res = await fetch('/api/user/update', {
-            method:'POST', headers:{'Content-Type':'application/json'},
-            body: JSON.stringify({id:user.id, password:passwordForm.password})
-        });
-        if(res.ok) { setUpdMsg('Password updated successfully!'); setPasswordForm({password:'', confirm:''}); }
-        else setUpdMsg('Password update failed.');
-    } catch(e) { setUpdMsg('Password update failed.'); }
-  };
-
-  const markRead = async () => {
-    setShowNotifs(!showNotifs);
-    if(!showNotifs && notifications.some(n => !n.read)) {
-        await fetch('/api/notifications/mark-read', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: user.id })
-        });
-        setNotifications(notifications.map(n => ({...n, read: true})));
-    }
-  };
-
-  const attStats = {
-    present: attData.filter(a => a.status === 'Present' || a.status === 'Late').length,
-    absent: attData.filter(a => a.status === 'Absent').length,
-    late: attData.filter(a => a.status === 'Late').length
   };
 
   const pct = user ? Math.min(100, Math.round((user.deliveredAmt / user.target) * 100)) : 0;
@@ -920,35 +211,8 @@ const App = () => {
     { id:'attendance', icon:'📅', label:'Attendance' },
     { id:'projects', icon:'📁', label:'My Projects' },
     { id:'performance', icon:'🏆', label:'Performance' },
-    { id:'reports', icon:'📝', label:'Daily Report' },
-    { id:'team', icon:'👥', label:'My Team' },
     { id:'leave', icon:'🌴', label:'Leave Balance' },
-    { id:'settings', icon:'⚙️', label:'Settings' },
-    ...(user?.isAdmin ? [{ id:'admin', icon:'🛡️', label:'Admin Control' }] : []),
   ];
-  
-  const DAYS = ['S','M','T','W','T','F','S'];
-  
-  const renderCalendar = () => {
-      const now = new Date();
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-      const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-      let boxes = [];
-      for(let i=0; i<monthStart.getDay(); i++) boxes.push('f');
-      for(let d=1; d<=daysInMonth; d++) {
-          const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-          const rec = attData.find(r => r.date === dateStr);
-          if (rec) {
-              if (rec.status === 'Absent') boxes.push(0);
-              else if (rec.status === 'Present' || rec.status === 'Late') boxes.push(1);
-          } else {
-              if (d === now.getDate()) boxes.push('t');
-              else if (d > now.getDate()) boxes.push('future');
-              else boxes.push(0); 
-          }
-      }
-      return boxes;
-  };
 
   if (screen === 'login') return (
     <div className="login-screen">
@@ -980,23 +244,23 @@ const App = () => {
           <div className="lf-group">
             <label className="lf-label">Employee ID</label>
             <div className="lf-input-wrap">
-              <span className="lf-icon">👤</span>
-              <input className="lf-input" placeholder="e.g. 17236" value={empId} onChange={e=>setEmpId(e.target.value)}/>
+              <span className="lf-icon">🪪</span>
+              <input className="lf-input" placeholder="e.g. EMP001" value={empId} onChange={e=>setEmpId(e.target.value)} style={{paddingLeft:36}}/>
             </div>
           </div>
           <div className="lf-group">
             <label className="lf-label">Password</label>
             <div className="lf-input-wrap">
               <span className="lf-icon">🔒</span>
-              <input className="lf-input" type="password" placeholder="••••••••" value={pass} onChange={e=>setPass(e.target.value)}/>
+              <input className="lf-input" type="password" placeholder="Enter your password" value={pass} onChange={e=>setPass(e.target.value)} style={{paddingLeft:36}} onKeyDown={e=>e.key==='Enter'&&doLogin()}/>
             </div>
           </div>
           {err && <div className="lf-err">{err}</div>}
-          <button className="lf-submit" onClick={() => doLogin()}>Sign In to Portal</button>
-          <div className="lc-divider">Quick Login</div>
+          <button className="lf-submit" onClick={()=>doLogin()}>Sign In to Portal</button>
+          <div className="lc-divider"><span>Quick demo access</span></div>
           <div className="lc-demos">
             {Object.entries(DEMO_USERS).map(([id, u]) => (
-              <button className="demo-card" key={id} onClick={() => doLogin(id)}>
+              <button key={id} className="demo-card" onClick={()=>doLogin(id)}>
                 <span className="demo-av" style={{background:u.grad}}>{u.initials}</span>
                 <div><div className="demo-name">{u.name}</div><div className="demo-role">{u.role}</div></div>
                 <span className="demo-id">{id}</span>
@@ -1009,10 +273,9 @@ const App = () => {
     </div>
   );
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
   return (
     <div className="emp-app">
+      {/* Sidebar */}
       <aside className="emp-sidebar">
         <div className="sb-top">
           <div className="sb-brand">
@@ -1033,348 +296,65 @@ const App = () => {
         </nav>
         <div className="sb-user">
           <div className="sb-av" style={{background:user.grad}}>{user.initials}</div>
-          <div style={{overflow:'hidden'}}>
-            <div className="sb-uname" style={{whiteSpace:'nowrap',textOverflow:'ellipsis'}}>{user.name}</div>
-            <div className="sb-urole">{user.team} Member</div>
-          </div>
+          <div><div className="sb-uname">{user.name}</div><div className="sb-urole">{user.role}</div></div>
           <button className="sb-logout" onClick={()=>{setScreen('login');setUser(null);setEmpId('');setPass('')}}>↩</button>
         </div>
       </aside>
 
-      <div className="emp-main">
+      {/* Main */}
+      <div className="emp-main" data-screen-label="Employee Dashboard">
         <div className="emp-topbar">
           <div>
             <div className="emp-greeting">Good morning, <span>{user.name.split(' ')[0]}</span> 👋</div>
-            <div className="emp-date">{new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' })} · {user.team}</div>
+            <div className="emp-date">Sunday, April 27, 2026 · {user.team}</div>
           </div>
-          <div style={{display:'flex',alignItems:'center',gap:14}}>
-            <div style={{position:'relative'}}>
-                <button className="att-btn-in" style={{background:'rgba(255,255,255,.05)',border:'1px solid rgba(148,163,184,.1)',borderRadius:10,width:40,height:40,fontSize:16}} onClick={markRead}>
-                    🔔 {unreadCount > 0 && <span style={{position:'absolute',top:-4,right:-4,background:'#ef4444',color:'#fff',fontSize:10,padding:'2px 5px',borderRadius:20}}>{unreadCount}</span>}
-                </button>
-                {showNotifs && (
-                    <div style={{position:'absolute',top:50,right:0,width:300,background:'rgba(14,24,38,.98)',border:'1px solid rgba(148,163,184,.2)',borderRadius:16,boxShadow:'0 20px 40px rgba(0,0,0,.4)',zIndex:100,padding:12}}>
-                        <div style={{fontSize:12,fontWeight:800,marginBottom:12,paddingBottom:8,borderBottom:'1px solid rgba(148,163,184,.1)'}}>Notifications</div>
-                        <div style={{maxHeight:300,overflowY:'auto'}}>
-                            {notifications.length === 0 ? <p style={{fontSize:11,color:'#64748b',textAlign:'center'}}>No notifications</p> : 
-                             notifications.map((n,i) => (
-                                <div key={i} style={{padding:'8px 0',borderBottom:i<notifications.length-1?'1px solid rgba(148,163,184,.05)':''}}>
-                                    <div style={{fontSize:11,fontWeight:800,color:n.read?'#94a3b8':'#f1f5f9'}}>{n.title}</div>
-                                    <div style={{fontSize:10,color:'#64748b',lineHeight:1.4}}>{n.text || n.message}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
+          <div style={{display:'flex',alignItems:'center',gap:8}}>
             <div style={{display:'flex',alignItems:'center',gap:6,padding:'5px 11px',borderRadius:50,background:'rgba(15,118,110,.12)',border:'1px solid rgba(15,118,110,.32)',fontSize:11,fontWeight:700,color:'#89d8cf'}}>
               <div style={{width:6,height:6,borderRadius:'50%',background:'#7ed2c7',boxShadow:'0 0 8px rgba(126,210,199,.7)',animation:'pulse 2s infinite'}}></div>Live
             </div>
           </div>
         </div>
 
-        { navItem === 'overview' && (
-          <div className="page-content">
-            {/* WELCOME BANNER */}
-            <div style={{
-              background:'linear-gradient(135deg,rgba(37,99,235,.12),rgba(124,58,237,.07),rgba(16,185,129,.05))',
-              border:'1px solid rgba(37,99,235,.2)', borderRadius:18,
-              padding:'24px 28px', marginBottom:20,
-              display:'flex', alignItems:'center', justifyContent:'space-between', gap:20
-            }}>
-              <div>
-                <div style={{fontSize:26, fontWeight:900, color:'#f1f5f9', marginBottom:8}}>
-                  {(() => {
-                    const h = new Date().getHours();
-                    return (h<12?'Good morning':h<17?'Good afternoon':'Good evening') + ', ' + (user.name||'Employee') + '! 👋';
-                  })()}
-                </div>
-                <div style={{display:'flex', alignItems:'center', gap:10, fontSize:12, color:'#94a3b8', flexWrap:'wrap'}}>
-                  <span>{new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}</span>
-                  <span style={{padding:'3px 10px', borderRadius:20, background:'rgba(37,99,235,.15)', border:'1px solid rgba(37,99,235,.28)', color:'#93c5fd', fontSize:10, fontWeight:800}}>{user.role}</span>
-                </div>
-              </div>
-              <div style={{display:'flex', alignItems:'center', gap:12, flexShrink:0}}>
-                {checkedIn
-                  ? <button onClick={toggleCheckIn} style={{padding:'12px 22px', borderRadius:12, background:'linear-gradient(135deg,#f59e0b,#d97706)', color:'#fff', border:'none', fontSize:13, fontWeight:800, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:8, boxShadow:'0 6px 18px rgba(245,158,11,.3)'}}>⏹ Check Out</button>
-                  : <button onClick={toggleCheckIn} style={{padding:'12px 22px', borderRadius:12, background:'linear-gradient(135deg,#10b981,#059669)', color:'#fff', border:'none', fontSize:13, fontWeight:800, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:8, boxShadow:'0 6px 18px rgba(16,185,129,.3)'}}>▶ Check In</button>
-                }
-                <div style={{width:52, height:52, borderRadius:14, background:user.grad||'linear-gradient(135deg,#2563eb,#7c3aed)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:900, color:'#fff', boxShadow:'0 8px 24px rgba(0,0,0,.3)'}}>{user.initials}</div>
-              </div>
-            </div>
+        {/* KPI strip */}
+        <div className="emp-grid">
+          <div className="emp-kpi"><div className="emp-kpi-icon">✅</div><div className="emp-kpi-val" style={{color:'#10b981'}}>${user.deliveredAmt.toLocaleString()}</div><div className="emp-kpi-lbl">Delivered</div></div>
+          <div className="emp-kpi"><div className="emp-kpi-icon">⏳</div><div className="emp-kpi-val" style={{color:'#f59e0b'}}>${user.wipAmt.toLocaleString()}</div><div className="emp-kpi-lbl">WIP</div></div>
+          <div className="emp-kpi"><div className="emp-kpi-icon">🎯</div><div className="emp-kpi-val" style={{color:pct>=100?'#10b981':pct>=70?'#f59e0b':'#ef4444'}}>{pct}%</div><div className="emp-kpi-lbl">Target Hit</div></div>
+          <div className="emp-kpi"><div className="emp-kpi-icon">📋</div><div className="emp-kpi-val" style={{color:'#cbd5e1'}}>{user.delivered}</div><div className="emp-kpi-lbl">Orders Done</div></div>
+        </div>
 
-            {/* KPI ROW */}
-            <div style={{display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:14, marginBottom:20}}>
-              {[
-                {icon:'📅', color:'#3b82f6', bg:'rgba(59,130,246,.12)', val: attData.length || 0, label:'WORKING DAYS', sub:'This month', trend:null},
-                {icon:'✅', color:'#10b981', bg:'rgba(16,185,129,.12)', val: attData.filter(a=>a.status==='Present'||a.status==='Late').length, label:'PRESENT DAYS', sub:`${attData.length?Math.round(attData.filter(a=>a.status!=='Absent').length/attData.length*100):0}% rate`, trend:'↑ 5%', trendUp:true},
-                {icon:'❌', color:'#ef4444', bg:'rgba(239,68,68,.12)', val: attData.filter(a=>a.status==='Absent').length, label:'ABSENT DAYS', sub:'Days missed', trend:'↓ 1%', trendUp:false},
-                {icon:'🕒', color:'#f59e0b', bg:'rgba(245,158,11,.12)', val: attData.filter(a=>a.status==='Late').length, label:'LATE ARRIVALS', sub:'Late check-ins', trend:'— 0%', trendSame:true},
-                {icon:'🌴', color:'#a78bfa', bg:'rgba(167,139,250,.12)', val: user.leave&&user.leave.annual?user.leave.annual.remaining:13, label:'LEAVE BALANCE', sub:'Annual days left', trend:null},
-              ].map(k => (
-                <div key={k.label} style={{background:'rgba(14,23,40,.95)', border:'1px solid rgba(255,255,255,.06)', borderRadius:14, padding:'18px 16px', position:'relative', overflow:'hidden', transition:'transform .2s, box-shadow .2s'}}
-                  onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-3px)';e.currentTarget.style.boxShadow='0 16px 40px rgba(0,0,0,.3)'}}
-                  onMouseLeave={e=>{e.currentTarget.style.transform='';e.currentTarget.style.boxShadow=''}}>
-                  <div style={{position:'absolute', top:0, left:0, right:0, height:3, background:k.color, borderRadius:'14px 14px 0 0'}}></div>
-                  <div style={{display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:12}}>
-                    <div style={{width:38, height:38, borderRadius:10, background:k.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18}}>{k.icon}</div>
-                    {k.trend && <span style={{padding:'2px 7px', borderRadius:20, fontSize:10, fontWeight:800, background:k.trendUp?'rgba(16,185,129,.12)':k.trendSame?'rgba(148,163,184,.1)':'rgba(239,68,68,.12)', color:k.trendUp?'#10b981':k.trendSame?'#94a3b8':'#ef4444', border:`1px solid ${k.trendUp?'rgba(16,185,129,.25)':k.trendSame?'rgba(148,163,184,.2)':'rgba(239,68,68,.25)'}`}}>{k.trend}</span>}
-                  </div>
-                  <div style={{fontSize:34, fontWeight:900, color:'#f1f5f9', letterSpacing:-1, marginBottom:4, lineHeight:1}}>{k.val}</div>
-                  <div style={{fontSize:10, fontWeight:800, color:'#f1f5f9', textTransform:'uppercase', letterSpacing:.6, marginBottom:3}}>{k.label}</div>
-                  <div style={{fontSize:11, color:'#64748b'}}>{k.sub}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* MAIN GRID: Attendance Table + Calendar */}
-            <div style={{display:'grid', gridTemplateColumns:'1.6fr 1fr', gap:16}}>
-              {/* Recent Attendance Table */}
-              <div style={{background:'rgba(14,23,40,.95)', border:'1px solid rgba(255,255,255,.06)', borderRadius:14, padding:20}}>
-                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16}}>
-                  <div style={{fontSize:13, fontWeight:800, color:'#f1f5f9'}}>📋 Recent Attendance</div>
-                  <button onClick={()=>setNavItem('attendance')} style={{fontSize:11, color:'#3b82f6', background:'none', border:'none', cursor:'pointer', fontWeight:700, fontFamily:'inherit'}}>View All →</button>
-                </div>
-                <table style={{width:'100%', borderCollapse:'collapse'}}>
-                  <thead>
-                    <tr>
-                      {['DATE','CHECK IN','CHECK OUT','HOURS','STATUS'].map(h=>(
-                        <th key={h} style={{textAlign:'left', padding:'0 12px 10px', fontSize:9, fontWeight:800, color:'#64748b', textTransform:'uppercase', letterSpacing:.8}}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {attData.slice(0,7).map(a=>{
-                      const d = new Date(a.date+'T00:00:00');
-                      const isLate = a.status==='Late'; const isAbsent = a.status==='Absent';
-                      const badgeBg = isAbsent?'rgba(239,68,68,.15)':isLate?'rgba(245,158,11,.15)':'rgba(16,185,129,.15)';
-                      const badgeColor = isAbsent?'#ef4444':isLate?'#f59e0b':'#10b981';
-                      const badgeBorder = isAbsent?'rgba(239,68,68,.3)':isLate?'rgba(245,158,11,.3)':'rgba(16,185,129,.3)';
-                      return (
-                        <tr key={a.date} style={{borderTop:'1px solid rgba(255,255,255,.04)'}}>
-                          <td style={{padding:'12px'}}>
-                            <div style={{fontWeight:800, color:'#f1f5f9', fontSize:13}}>{d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
-                            <div style={{fontSize:10, color:'#64748b'}}>{d.toLocaleDateString('en-US',{weekday:'short'})}</div>
-                          </td>
-                          <td style={{padding:'12px', fontVariantNumeric:'tabular-nums', color:isLate?'#f59e0b':'#f1f5f9', fontWeight:700, fontSize:13}}>{a.in||'—'}</td>
-                          <td style={{padding:'12px', fontVariantNumeric:'tabular-nums', color:'#f1f5f9', fontWeight:700, fontSize:13}}>{a.out||'—'}</td>
-                          <td style={{padding:'12px', color:'#94a3b8', fontVariantNumeric:'tabular-nums', fontSize:12}}>{a.duration||'—'}</td>
-                          <td style={{padding:'12px'}}>
-                            <span style={{padding:'3px 10px', borderRadius:20, fontSize:10, fontWeight:800, background:badgeBg, color:badgeColor, border:`1px solid ${badgeBorder}`}}>{a.status||'Present'}</span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {attData.length===0 && <tr><td colSpan="5" style={{textAlign:'center', padding:'32px 0', color:'#64748b', fontSize:12}}>No attendance records yet.</td></tr>}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Calendar */}
-              <div style={{background:'rgba(14,23,40,.95)', border:'1px solid rgba(255,255,255,.06)', borderRadius:14, padding:24}}>
-                <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20}}>
-                  <button style={{width:28, height:28, borderRadius:8, background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.06)', color:'#94a3b8', cursor:'pointer', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center'}}>‹</button>
-                  <div style={{fontSize:13, fontWeight:800, color:'#f1f5f9'}}>{new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'})}</div>
-                  <button style={{width:28, height:28, borderRadius:8, background:'rgba(255,255,255,.04)', border:'1px solid rgba(255,255,255,.06)', color:'#94a3b8', cursor:'pointer', fontSize:16, display:'flex', alignItems:'center', justifyContent:'center'}}>›</button>
-                </div>
-                <div style={{display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:2, marginBottom:4}}>
-                  {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=><div key={d} style={{textAlign:'center', fontSize:9, fontWeight:800, color:'#475569', padding:'3px 0', textTransform:'uppercase', letterSpacing:.5}}>{d}</div>)}
-                </div>
-                <div style={{display:'grid', gridTemplateColumns:'repeat(7,1fr)', gap:3}}>
-                  {(() => {
-                    const now = new Date(); const yr = now.getFullYear(); const mo = now.getMonth();
-                    const firstDay = new Date(yr,mo,1).getDay(); const daysInMonth = new Date(yr,mo+1,0).getDate(); const today = now.getDate();
-                    const attMap = {};
-                    attData.forEach(a=>{const d=new Date(a.date+'T00:00:00'); if(d.getMonth()===mo&&d.getFullYear()===yr) attMap[d.getDate()]=a.status;});
-                    const cells = [];
-                    for(let i=0;i<firstDay;i++) cells.push(<div key={'p'+i} style={{aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, color:'#334155', borderRadius:6}}>{new Date(yr,mo,-firstDay+i+1).getDate()}</div>);
-                    for(let d=1;d<=daysInMonth;d++){
-                      const isToday=d===today; const st=attMap[d];
-                      const bg=st==='Present'?'rgba(16,185,129,.2)':st==='Late'?'rgba(245,158,11,.2)':st==='Absent'?'rgba(239,68,68,.2)':isToday?'rgba(37,99,235,.25)':'transparent';
-                      const col=st==='Present'?'#10b981':st==='Late'?'#f59e0b':st==='Absent'?'#ef4444':isToday?'#93c5fd':'#64748b';
-                      const dow=new Date(yr,mo,d).getDay(); const isWkd=dow===0||dow===6;
-                      cells.push(<div key={d} style={{aspectRatio:'1', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:isToday?900:600, color:isWkd&&!st?'#374151':col, background:bg, borderRadius:6, outline:isToday?'1px solid rgba(59,130,246,.5)':'none'}}>{d}</div>);
-                    }
-                    return cells;
-                  })()}
-                </div>
-                <div style={{display:'flex', gap:12, marginTop:16, paddingTop:14, borderTop:'1px solid rgba(255,255,255,.05)', flexWrap:'wrap'}}>
-                  {[['#10b981','Present'],['#f59e0b','Late'],['#ef4444','Absent']].map(([c,l])=>(
-                    <div key={l} style={{display:'flex', alignItems:'center', gap:5, fontSize:10, color:'#94a3b8'}}>
-                      <div style={{width:8, height:8, borderRadius:2, background:c+'66'}}></div>{l}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        
-
-        { navItem === 'attendance' && (
+        {/* Attendance + Performance */}
+        <div className="emp-row">
+          {/* Attendance */}
           <div className="emp-card">
-            <div className="emp-card-title">📅 Attendance — {new Date().toLocaleDateString('en-US', {month:'long', year:'numeric'})}</div>
+            <div className="emp-card-title">📅 Attendance — April 2026</div>
             <div className="att-checkin">
               <div className="att-status">
                 <div className="att-dot"></div>
-                <span className="att-lbl">{checkedIn ? `Checked In — ${checkInTime}` : 'Not Checked In'}</span>
+                <span className="att-lbl">{checkedIn ? 'Checked In — 9:02 AM' : 'Not Checked In'}</span>
               </div>
-              <button className={`att-btn ${checkedIn?'att-btn-out':'att-btn-in'}`} onClick={()=>toggleCheckIn()}>
+              <button className={`att-btn ${checkedIn?'att-btn-out':'att-btn-in'}`} onClick={()=>setCheckedIn(!checkedIn)}>
                 {checkedIn ? '⬛ Check Out' : '✅ Check In'}
               </button>
             </div>
             <div className="att-calendar">
               {DAYS.map(d=><div key={d} className="att-day header" style={{fontSize:9,fontWeight:800,color:'#475569',textAlign:'center'}}>{d}</div>)}
-              {renderCalendar().map((v,i)=>(
+              {ATT_DATA.map((v,i)=>(
                 <div key={i} className={`att-day${v===1?' present':v===0?' absent':v==='t'?' today':' future'}`} style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  {v==='f'?'':(i+1<=31?i+1:'')}
+                  {v==='f'?'':(i+1<=28?i+1:'')}
                 </div>
               ))}
             </div>
-            <div style={{display:'grid', gridTemplateColumns:'minmax(260px,420px) 1fr', gap:18, marginTop:22}}>
-              <form onSubmit={submitCorrectionRequest} style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16, display:'grid', gap:10}}>
-                <div className="emp-card-title" style={{fontSize:14}}>Request Correction</div>
-                <input type="date" value={correctionForm.date} required onChange={e=>setCorrectionForm({...correctionForm, date:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
-                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
-                  <input placeholder="In time e.g. 09:10 AM" value={correctionForm.in} onChange={e=>setCorrectionForm({...correctionForm, in:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
-                  <input placeholder="Out time e.g. 06:00 PM" value={correctionForm.out} onChange={e=>setCorrectionForm({...correctionForm, out:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
-                </div>
-                <textarea required value={correctionForm.reason} onChange={e=>setCorrectionForm({...correctionForm, reason:e.target.value})} placeholder="Why correction is needed" rows="3" style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff', resize:'vertical'}}></textarea>
-                {correctionMsg && <div style={{fontSize:11, fontWeight:800, color:correctionMsg.includes('submitted')?'#10b981':'#ef4444'}}>{correctionMsg}</div>}
-                <button className="lf-submit" style={{marginTop:0}}>Submit Correction</button>
-              </form>
-              <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16}}>
-                <div className="emp-card-title" style={{fontSize:14}}>Correction History</div>
-                <div style={{display:'grid', gap:8}}>
-                  {myCorrections.map(r => (
-                    <div key={r.key} style={{display:'grid', gridTemplateColumns:'1fr auto', gap:10, padding:'10px 0', borderBottom:'1px solid rgba(148,163,184,.08)'}}>
-                      <div><div style={{fontSize:12, fontWeight:800}}>{r.date} · {r.in || '-'} / {r.out || '-'}</div><div style={{fontSize:10, color:'#64748b'}}>{r.reason || 'No reason'}</div></div>
-                      <div style={{fontSize:11, fontWeight:900, color:r.status==='Approved'?'#10b981':r.status==='Rejected'?'#ef4444':'#f59e0b'}}>{r.status}</div>
-                    </div>
-                  ))}
-                  {myCorrections.length === 0 && <div style={{fontSize:12, color:'#64748b', textAlign:'center', padding:18}}>No correction requests yet.</div>}
-                </div>
-              </div>
+            <div style={{display:'flex',gap:12,marginTop:14,fontSize:11,fontWeight:700,color:'#64748b'}}>
+              <span style={{color:'#34d399'}}>✅ 18 Present</span>
+              <span style={{color:'#f87171'}}>❌ 4 Absent</span>
+              <span style={{color:'#7ea8c4'}}>📅 4 Left</span>
             </div>
           </div>
-        )}
-
-        { navItem === 'projects' && (
-          <div className="page-content">
-            {/* Header */}
-            <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12}}>
-              <div>
-                <div style={{fontSize:22, fontWeight:900, color:'#f1f5f9', letterSpacing:-.5}}>📁 Project Management</div>
-                <div style={{fontSize:12, color:'#64748b', marginTop:3}}>{user.projects?.length||0} total orders assigned to you</div>
-              </div>
-              <div style={{display:'flex', gap:8}}>
-                {['All','Delivered','WIP','Revision','Cancelled'].map(f=>(
-                  <button key={f} onClick={()=>setProjFilter&&setProjFilter(f)}
-                    style={{padding:'7px 14px', borderRadius:20, border:'1px solid rgba(255,255,255,.08)', background:projFilter===f?'rgba(37,99,235,.2)':'rgba(255,255,255,.03)', color:projFilter===f?'#93c5fd':'#94a3b8', fontSize:11, fontWeight:700, cursor:'pointer', fontFamily:'inherit', transition:'all .2s'}}
-                  >{f}<span style={{marginLeft:5, padding:'1px 6px', borderRadius:10, background:'rgba(255,255,255,.08)', fontSize:10}}>{f==='All'?(user.projects?.length||0):user.projects?.filter(p=>p.status===f).length||0}</span></button>
-                ))}
-              </div>
-            </div>
-
-            {/* Stats */}
-            <div style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20}}>
-              {[
-                {label:'My Earnings', val:`$${(user.deliveredAmt||0).toLocaleString()}`, icon:'💰', color:'#10b981', bg:'rgba(16,185,129,.1)'},
-                {label:'WIP Share', val:`$${(user.wipAmt||0).toLocaleString()}`, icon:'⏳', color:'#f59e0b', bg:'rgba(245,158,11,.1)'},
-                {label:'Completed', val: user.projects?.filter(p=>p.status==='Delivered').length||0, icon:'✅', color:'#3b82f6', bg:'rgba(59,130,246,.1)'},
-                {label:'Active', val: user.projects?.filter(p=>p.status==='WIP').length||0, icon:'🔄', color:'#a78bfa', bg:'rgba(167,139,250,.1)'},
-              ].map(s=>(
-                <div key={s.label} style={{background:'rgba(14,23,40,.95)', border:'1px solid rgba(255,255,255,.06)', borderRadius:12, padding:'16px 18px', display:'flex', alignItems:'center', gap:14}}>
-                  <div style={{width:42, height:42, borderRadius:12, background:s.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0}}>{s.icon}</div>
-                  <div>
-                    <div style={{fontSize:22, fontWeight:900, color:s.color, lineHeight:1}}>{s.val}</div>
-                    <div style={{fontSize:10, fontWeight:700, color:'#64748b', textTransform:'uppercase', letterSpacing:.5, marginTop:3}}>{s.label}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Project Table Header */}
-            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr 1.2fr 1fr 100px 120px', gap:16, padding:'10px 20px', background:'rgba(255,255,255,.02)', borderRadius:'12px 12px 0 0', border:'1px solid rgba(255,255,255,.06)', borderBottom:'none'}}>
-                {['ORDER NUMBER','PROFILE NAME','CLIENT NAME','INSTRUCTION','AMOUNT','STATUS'].map(h=>(
-                    <div key={h} style={{fontSize:9, fontWeight:800, color:'#64748b', letterSpacing:.8}}>{h}</div>
-                ))}
-            </div>
-
-            {/* Project List */}
-            <div style={{display:'flex', flexDirection:'column', gap:1, background:'rgba(255,255,255,.06)', border:'1px solid rgba(255,255,255,.06)', borderRadius:'0 0 14px 14px', overflow:'hidden'}}>
-              {(user.projects||[])
-                .filter(p => !projFilter || projFilter==='All' || p.status===projFilter)
-                .map((p,i) => {
-                  const isDelivered = p.status==='Delivered';
-                  const isWIP = p.status==='WIP';
-                  const isRevision = p.status==='Revision';
-                  const isCancelled = p.status==='Cancelled'||p.status==='Hold';
-                  const statusColor = isDelivered?'#10b981':isWIP?'#f59e0b':isRevision?'#3b82f6':isCancelled?'#ef4444':'#94a3b8';
-                  const statusBg = isDelivered?'rgba(16,185,129,.12)':isWIP?'rgba(245,158,11,.12)':isRevision?'rgba(59,130,246,.12)':isCancelled?'rgba(239,68,68,.12)':'rgba(148,163,184,.1)';
-                  const statusBorder = isDelivered?'rgba(16,185,129,.3)':isWIP?'rgba(245,158,11,.3)':isRevision?'rgba(59,130,246,.3)':isCancelled?'rgba(239,68,68,.3)':'rgba(148,163,184,.2)';
-                  const share = p.share || 0;
-                  
-                  return (
-                    <div key={p.order||i} style={{background:'rgba(14,23,40,.98)', padding:'16px 20px', display:'grid', gridTemplateColumns:'1fr 1fr 1.2fr 1fr 100px 120px', gap:16, alignItems:'center', transition:'all .2s'}}
-                      onMouseEnter={e=>{e.currentTarget.style.background='rgba(20,30,55,.98)'}}
-                      onMouseLeave={e=>{e.currentTarget.style.background='rgba(14,23,40,.98)'}}>
-                      
-                      {/* Order Number */}
-                      <div style={{fontSize:12, fontWeight:800, color:'#f1f5f9', fontFamily:'monospace'}}>
-                        {p.link ? <a href={p.link} target="_blank" rel="noopener noreferrer" style={{color:'#3b82f6', textDecoration:'none'}}>{p.order||'—'}</a> : (p.order||'—')}
-                      </div>
-                      
-                      {/* Profile Name */}
-                      <div style={{fontSize:12, color:'#cbd5e1', display:'flex', alignItems:'center', gap:6}}>
-                        <div style={{width:20, height:20, borderRadius:6, background:'rgba(99,102,241,.1)', color:'#a5b4fc', display:'flex', alignItems:'center', justifyContent:'center', fontSize:10}}>👤</div>
-                        {p.profile || 'Personal'}
-                      </div>
-                      
-                      {/* Client Name */}
-                      <div style={{fontSize:12, fontWeight:700, color:'#f1f5f9'}}>{p.client || 'Direct Client'}</div>
-                      
-                      {/* Instruction Sheet */}
-                      <div>
-                        {p.instruction ? (
-                          <a href={p.instruction} target="_blank" rel="noopener noreferrer" style={{fontSize:11, color:'#10b981', textDecoration:'none', display:'flex', alignItems:'center', gap:4, fontWeight:700}}>
-                            📄 View Sheet ↗
-                          </a>
-                        ) : (
-                          <span style={{fontSize:11, color:'#475569'}}>No Sheet</span>
-                        )}
-                      </div>
-
-                      {/* Amount */}
-                      <div style={{fontSize:14, fontWeight:900, color: isDelivered?'#10b981':isWIP?'#f59e0b':'#94a3b8', fontVariantNumeric:'tabular-nums'}}>
-                        ${(share||0).toLocaleString()}
-                      </div>
-
-                      {/* Status */}
-                      <div>
-                        <span style={{padding:'4px 10px', borderRadius:20, fontSize:10, fontWeight:800, background:statusBg, color:statusColor, border:`1px solid ${statusBorder}`, display:'inline-flex', alignItems:'center', gap:4}}>
-                          <span style={{width:5, height:5, borderRadius:'50%', background:statusColor}}></span>
-                          {p.status}
-                        </span>
-                      </div>
-                    </div>
-                  );
-              })}
-              {(!user.projects || user.projects.length===0) && (
-                <div style={{textAlign:'center', padding:'60px 0', color:'#64748b', background:'rgba(14,23,40,.98)'}}>
-                  <div style={{fontSize:40, marginBottom:12}}>📭</div>
-                  <div style={{fontSize:15, fontWeight:700, color:'#94a3b8', marginBottom:6}}>No Projects Found</div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        { navItem === 'performance' && (
+          {/* Performance ring */}
           <div className="emp-card">
-            <div className="emp-card-title">🏆 Performance Overview</div>
-            <div className="perf-ring-wrap" style={{marginBottom:24}}>
+            <div className="emp-card-title">🏆 Performance</div>
+            <div className="perf-ring-wrap">
               <div className="perf-ring">
                 <svg width="120" height="120" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,.06)" strokeWidth="8" fill="none"/>
@@ -1387,149 +367,29 @@ const App = () => {
                   <div className="perf-lbl">Target</div>
                 </div>
               </div>
-            </div>
-            <div className="perf-stats">
-              <div className="perf-stat"><div className="perf-stat-val" style={{color:'#10b981'}}>{user.delivered}</div><div className="perf-stat-lbl">Delivered</div></div>
-              <div className="perf-stat"><div className="perf-stat-val" style={{color:'#f59e0b'}}>{user.wip}</div><div className="perf-stat-lbl">WIP</div></div>
-              <div className="perf-stat"><div className="perf-stat-val" style={{color:'#ef4444'}}>{user.cancelled}</div><div className="perf-stat-lbl">Cancelled</div></div>
-              <div className="perf-stat"><div className="perf-stat-val" style={{color:'#a5b4fc'}}>⭐ {user.rating}</div><div className="perf-stat-lbl">Rating</div></div>
-            </div>
-          </div>
-        )}
-
-        { navItem === 'reports' && (
-          <div className="emp-card">
-            <div className="emp-card-title">📝 Daily Work Report</div>
-            <div style={{display:'grid', gridTemplateColumns:'minmax(280px,460px) 1fr', gap:18}}>
-              <form onSubmit={submitDailyReport} style={{display:'grid', gap:12}}>
-                <div style={{display:'grid', gridTemplateColumns:'1fr 110px', gap:10}}>
-                  <input type="date" value={reportForm.date} onChange={e=>setReportForm({...reportForm, date:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
-                  <input type="number" min="0" step="0.5" value={reportForm.hours} onChange={e=>setReportForm({...reportForm, hours:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
-                </div>
-                <textarea required value={reportForm.summary} onChange={e=>setReportForm({...reportForm, summary:e.target.value})} placeholder="What did you complete today?" rows="6" style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff', resize:'vertical'}}></textarea>
-                <textarea value={reportForm.blockers} onChange={e=>setReportForm({...reportForm, blockers:e.target.value})} placeholder="Any blockers or notes?" rows="3" style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff', resize:'vertical'}}></textarea>
-                {reportMsg && <div style={{fontSize:11, fontWeight:800, color:reportMsg.includes('saved')?'#10b981':'#ef4444'}}>{reportMsg}</div>}
-                <button className="lf-submit" style={{marginTop:0}}>Save Report</button>
-              </form>
-              <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16}}>
-                <div className="emp-card-title" style={{fontSize:14}}>Recent Reports</div>
-                <div style={{display:'grid', gap:10}}>
-                  {myReports.map(r => (
-                    <div key={r.key} style={{padding:'10px 0', borderBottom:'1px solid rgba(148,163,184,.08)'}}>
-                      <div style={{display:'flex', justifyContent:'space-between', gap:10}}><b style={{fontSize:12}}>{r.date}</b><span style={{fontSize:11, color:'#94a3b8'}}>{r.hours || 0}h</span></div>
-                      <div style={{fontSize:11, color:'#cbd5e1', marginTop:5, lineHeight:1.5}}>{r.summary}</div>
-                      {r.blockers && <div style={{fontSize:10, color:'#f59e0b', marginTop:5}}>Blockers: {r.blockers}</div>}
-                    </div>
-                  ))}
-                  {myReports.length === 0 && <div style={{fontSize:12, color:'#64748b', textAlign:'center', padding:18}}>No reports yet.</div>}
-                </div>
+              <div className="perf-stats">
+                <div className="perf-stat"><div className="perf-stat-val" style={{color:'#10b981'}}>{user.delivered}</div><div className="perf-stat-lbl">Delivered</div></div>
+                <div className="perf-stat"><div className="perf-stat-val" style={{color:'#f59e0b'}}>{user.wip}</div><div className="perf-stat-lbl">WIP</div></div>
+                <div className="perf-stat"><div className="perf-stat-val" style={{color:'#ef4444'}}>{user.cancelled}</div><div className="perf-stat-lbl">Cancelled</div></div>
+                <div className="perf-stat"><div className="perf-stat-val" style={{color:'#a5b4fc'}}>⭐ 4.7</div><div className="perf-stat-lbl">Rating</div></div>
               </div>
             </div>
           </div>
-        )}
+        </div>
 
-        { navItem === 'team' && (
-          <div className="emp-card">
-            <div className="emp-card-title">👥 {teamBoard.team || user.team} Team Leaderboard</div>
-            <div style={{overflowX:'auto'}}>
-              <table style={{width:'100%', borderCollapse:'collapse', fontSize:12, textAlign:'left'}}>
-                <thead><tr style={{borderBottom:'1px solid rgba(148,163,184,.2)', color:'#94a3b8'}}><th style={{padding:10}}>Rank</th><th style={{padding:10}}>Member</th><th style={{padding:10}}>Delivered</th><th style={{padding:10}}>Target</th><th style={{padding:10}}>Progress</th></tr></thead>
-                <tbody>
-                  {(teamBoard.members || []).map((m,i) => (
-                    <tr key={m.id} style={{borderBottom:'1px solid rgba(148,163,184,.1)', background:m.id===user.id?'rgba(59,130,246,.08)':'transparent'}}>
-                      <td style={{padding:10, fontWeight:900, color:i<3?'#f59e0b':'#94a3b8'}}>#{i+1}</td>
-                      <td style={{padding:10}}><b>{m.name}</b><div style={{fontSize:10, color:'#64748b'}}>{m.role}</div></td>
-                      <td style={{padding:10, color:'#10b981', fontWeight:900}}>${(m.deliveredAmt || 0).toLocaleString()}</td>
-                      <td style={{padding:10}}>${(m.target || 0).toLocaleString()}</td>
-                      <td style={{padding:10}}><div style={{display:'flex', alignItems:'center', gap:8}}><div style={{height:6, width:120, background:'rgba(255,255,255,.08)', borderRadius:20, overflow:'hidden'}}><div style={{height:'100%', width:`${Math.min(100,m.progress || 0)}%`, background:'#10b981'}}></div></div><b>{m.progress || 0}%</b></div></td>
-                    </tr>
-                  ))}
-                  {(!teamBoard.members || teamBoard.members.length === 0) && <tr><td colSpan="5" style={{padding:20, textAlign:'center', color:'#64748b'}}>No team data found.</td></tr>}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        { navItem === 'leave' && (
-          <div className="emp-card">
-            <div className="emp-card-title">🌴 My Leave Balance</div>
-            <div style={{display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(200px, 1fr))', gap:14}}>
-              {Object.entries(user.leave || {}).map(([key, l]) => (
-                <div key={key} style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:14}}>
-                  <div style={{fontSize:10, fontWeight:800, color:'#64748b', textTransform:'uppercase', marginBottom:6}}>{l.label || key}</div>
-                  <div style={{display:'flex', alignItems:'baseline', gap:6}}>
-                    <div style={{fontSize:24, fontWeight:900, color:l.color || '#f1f5f9'}}>{l.remaining}</div>
-                    <div style={{fontSize:11, color:'#64748b'}}>days left</div>
-                  </div>
-                  <div style={{height:4, background:'rgba(148,163,184,.1)', borderRadius:10, marginTop:10, overflow:'hidden'}}>
-                    <div style={{height:'100%', width:`${(l.remaining/l.total)*100}%`, background:l.color || '#3b82f6'}}></div>
-                  </div>
-                  <div style={{fontSize:9, color:'#475569', marginTop:8, fontWeight:700}}>{l.used} used / {l.total} total</div>
-                </div>
-              ))}
-            </div>
-            <div style={{display:'grid', gridTemplateColumns:'minmax(260px,420px) 1fr', gap:18, marginTop:22}}>
-              <form onSubmit={submitLeaveRequest} style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16, display:'grid', gap:10}}>
-                <div className="emp-card-title" style={{fontSize:14}}>Apply Leave</div>
-                <select value={leaveForm.type} onChange={e=>setLeaveForm({...leaveForm, type:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}><option>Annual</option><option>Sick</option><option>Casual</option><option>Emergency</option></select>
-                <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10}}>
-                  <input type="date" value={leaveForm.from} required onChange={e=>setLeaveForm({...leaveForm, from:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
-                  <input type="date" value={leaveForm.to} required onChange={e=>setLeaveForm({...leaveForm, to:e.target.value})} style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff'}}/>
-                </div>
-                <textarea value={leaveForm.reason} onChange={e=>setLeaveForm({...leaveForm, reason:e.target.value})} placeholder="Reason" rows="3" style={{padding:10, borderRadius:8, background:'rgba(0,0,0,.2)', border:'1px solid rgba(255,255,255,.1)', color:'#fff', resize:'vertical'}}></textarea>
-                {leaveMsg && <div style={{fontSize:11, fontWeight:800, color:leaveMsg.includes('submitted')?'#10b981':'#ef4444'}}>{leaveMsg}</div>}
-                <button className="lf-submit" style={{marginTop:0}}>Submit Request</button>
-              </form>
-              <div style={{background:'rgba(255,255,255,.03)', border:'1px solid rgba(148,163,184,.1)', borderRadius:12, padding:16}}>
-                <div className="emp-card-title" style={{fontSize:14}}>My Requests</div>
-                <div style={{display:'grid', gap:8}}>
-                  {myLeaveRequests.map(r => (
-                    <div key={r.key} style={{display:'grid', gridTemplateColumns:'1fr auto', gap:10, padding:'10px 0', borderBottom:'1px solid rgba(148,163,184,.08)'}}>
-                      <div><div style={{fontSize:12, fontWeight:800}}>{r.type} · {r.from} → {r.to}</div><div style={{fontSize:10, color:'#64748b'}}>{r.reason || 'No reason'}</div></div>
-                      <div style={{fontSize:11, fontWeight:900, color:r.status==='Approved'?'#10b981':r.status==='Rejected'?'#ef4444':'#f59e0b'}}>{r.status}</div>
-                    </div>
-                  ))}
-                  {myLeaveRequests.length === 0 && <div style={{fontSize:12, color:'#64748b', textAlign:'center', padding:18}}>No leave requests yet.</div>}
-                </div>
+        {/* Projects */}
+        <div className="emp-card">
+          <div className="emp-card-title">📁 My Projects — April 2026</div>
+          {PROJECTS.map((p,i)=>(
+            <div key={i} className="proj-item">
+              <div><div className="proj-name">{p.title}</div><div className="proj-sub">{p.type} · {p.date}</div></div>
+              <div className="proj-right">
+                <span className="proj-amt">${p.amt}</span>
+                {statusBadge(p.status)}
               </div>
             </div>
-          </div>
-        )}
-
-        { navItem === 'settings' && (
-            <div className="emp-card">
-                <div className="emp-card-title">⚙️ Account Settings</div>
-                <form onSubmit={handleUpdateProfile} style={{display:'flex', flexDirection:'column', gap:16, maxWidth:400}}>
-                    <div className="lf-group">
-                        <label className="lf-label">Full Name</label>
-                        <input className="lf-input" style={{paddingLeft:12}} value={user.fullName} onChange={e=>setUser({...user, fullName:e.target.value})}/>
-                    </div>
-                    <div className="lf-group">
-                        <label className="lf-label">Email Address</label>
-                        <input className="lf-input" style={{paddingLeft:12}} value={user.email} onChange={e=>setUser({...user, email:e.target.value})}/>
-                    </div>
-                    <div className="lf-group">
-                        <label className="lf-label">Phone Number</label>
-                        <input className="lf-input" style={{paddingLeft:12}} value={user.phone} onChange={e=>setUser({...user, phone:e.target.value})}/>
-                    </div>
-                    {updMsg && <div style={{fontSize:11, fontWeight:800, color:updMsg.includes('success')?'#10b981':'#ef4444'}}>{updMsg}</div>}
-                    <button type="submit" className="lf-submit" style={{marginTop:0}}>Update Profile</button>
-                </form>
-                <div style={{marginTop:32, paddingTop:24, borderTop:'1px solid rgba(148,163,184,.1)'}}>
-                    <div className="emp-card-title" style={{fontSize:14}}>Security</div>
-                    <form onSubmit={changePassword} style={{display:'grid', gap:10, maxWidth:400}}>
-                        <input className="lf-input" type="password" style={{paddingLeft:12}} placeholder="New password" value={passwordForm.password} onChange={e=>setPasswordForm({...passwordForm, password:e.target.value})}/>
-                        <input className="lf-input" type="password" style={{paddingLeft:12}} placeholder="Confirm password" value={passwordForm.confirm} onChange={e=>setPasswordForm({...passwordForm, confirm:e.target.value})}/>
-                        <button type="submit" className="lf-submit" style={{marginTop:0}}>Change Password</button>
-                    </form>
-                    <p style={{fontSize:11, color:'#64748b', marginTop:12}}>Department or role changes still require admin approval.</p>
-                </div>
-            </div>
-        )}
-
-        
-        { navItem === 'admin' && <AdminPanel /> }
+          ))}
+        </div>
 
         <div className="footer">SEO Performance Hub · Employee Portal · April 2026</div>
       </div>
@@ -1538,9 +398,6 @@ const App = () => {
 };
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
-{% endraw %}
 </script>
-
-
 </body>
 </html>

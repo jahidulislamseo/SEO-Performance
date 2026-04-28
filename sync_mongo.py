@@ -1,4 +1,4 @@
-import json, urllib.request, re, time, os
+import json, urllib.request, re, time, os, logging
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pymongo import UpdateOne
@@ -8,15 +8,19 @@ from shared_utils import (
     get_db, parse_gviz_date, safe_float, fetch_sheet_data_gviz
 )
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 # ─── MAIN SYNC ────────────────────────────────────────
 def sync():
-    print(f"Starting Sync: {time.ctime()}")
+    logger.info("Starting Sync Process...")
     db = get_db()
     
-    # 1. Sync Members
-    print("Fetching Members...")
-    member_rows = fetch_sheet_data_gviz("All Member Data")
-    if member_rows:
+    try:
+        logger.info("Fetching Members...")
+        member_rows = fetch_sheet_data_gviz("All Member Data")
+        if not member_rows: raise ValueError("Could not fetch member data")
+
         members_collection = db["members"]
         member_ops = []
         for i, r in enumerate(member_rows):
@@ -45,14 +49,16 @@ def sync():
                 )
         if member_ops:
             result = members_collection.bulk_write(member_ops)
-            print(f"Synced {result.upserted_count + result.modified_count} members.")
+            logger.info(f"Synced {result.upserted_count + result.modified_count} members.")
+    except Exception as e:
+        logger.error(f"Member Sync Error: {e}")
 
-    # 2. Sync Projects (Kam Data)
-    print("Fetching Projects...")
-    project_rows = fetch_sheet_data_gviz("Kam Data")
-    if project_rows:
+    try:
+        logger.info("Fetching Projects...")
+        project_rows = fetch_sheet_data_gviz("Kam Data")
+        if not project_rows: raise ValueError("Could not fetch project data")
+
         projects_collection = db["projects"]
-        projects_collection.delete_many({})  # Clean state to avoid duplicates
         data_rows = project_rows[1:] # Skip header
         
         batch = []
@@ -92,18 +98,19 @@ def sync():
             batch.append(UpdateOne({"_id": doc_id}, {"$set": doc}, upsert=True))
             
         if batch:
+            # Instead of delete_many, we can rely on UPSERT with _id to avoid downtime
             result = projects_collection.bulk_write(batch)
-            print(f"Projects Sync: {result.upserted_count} new, {result.modified_count} updated. (Skipped {skipped_count} non-SEO/SMM rows)")
-        else:
-            print("No valid projects found to sync.")
+            logger.info(f"Projects Sync: {result.upserted_count} new, {result.modified_count} updated.")
+    except Exception as e:
+        logger.error(f"Project Sync Error: {e}")
 
-    print(f"Sync Complete: {time.ctime()}")
+    logger.info("Sync Phase Complete.")
     
-    # Trigger Recalculate Summary Tables
     try:
+        logger.info("Triggering Recalculation Engine...")
         agent_engine.calculate_summaries()
     except Exception as e:
-        print(f"Summary Recalc Error: {e}")
+        logger.error(f"Summary Recalc Error: {e}")
 
 if __name__ == "__main__":
     sync()

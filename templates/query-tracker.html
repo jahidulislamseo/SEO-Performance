@@ -1,309 +1,354 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Query & Lead Tracker</title>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="/static/css/base.css" />
-<link rel="stylesheet" href="/static/css/tracker.css" />
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 <style>
-  .query-card {
-    background: var(--card);
-    border: 1px solid var(--gb);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 12px;
-    transition: all 0.2s;
-  }
-  .query-card:hover {
-    border-color: var(--accent);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  }
-  .q-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-  .q-client { font-size: 16px; font-weight: 700; color: var(--text); }
-  .q-meta { font-size: 12px; color: var(--muted); }
-  .q-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 12px; }
-  .q-item {  }
-  .q-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 2px; }
-  .q-val { font-size: 13px; font-weight: 600; color: var(--text); }
-  .q-val a { color: var(--accent); text-decoration: none; }
-  .q-val a:hover { text-decoration: underline; }
-  .q-remarks { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--gb); }
-  .q-remark-box { 
-    width: 100%; 
-    background: rgba(0,0,0,0.1); 
-    border: 1px solid var(--gb); 
-    border-radius: 6px; 
-    padding: 8px; 
-    color: var(--text); 
-    font-size: 13px; 
-    margin-top: 4px;
-    min-height: 40px;
-    resize: vertical;
-  }
-  .q-save-btn {
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 6px;
-  }
-  .q-save-btn:hover { opacity: 0.9; }
-  .status-badge {
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-  }
-  .st-new { background: rgba(59,130,246,0.15); color: #60a5fa; }
-  .st-pending { background: rgba(245,158,11,0.15); color: #f59e0b; }
-  .st-closed { background: rgba(16,185,129,0.15); color: #10b981; }
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Manrope',sans-serif;background:#09111f;color:#f1f5f9;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(95,133,162,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(95,133,162,.03) 1px,transparent 1px);background-size:50px 50px;pointer-events:none;z-index:0}
+.g1{position:fixed;top:-200px;left:-100px;width:600px;height:600px;background:radial-gradient(circle,rgba(99,102,241,.14) 0%,transparent 70%);pointer-events:none;z-index:0}
+.g2{position:fixed;bottom:-150px;right:-80px;width:500px;height:500px;background:radial-gradient(circle,rgba(61,111,155,.10) 0%,transparent 70%);pointer-events:none;z-index:0}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.5)}}
+@keyframes cardIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes mIn{from{opacity:0;transform:scale(.95) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+
+/* HEADER */
+.hdr{position:sticky;top:0;z-index:50;height:64px;padding:0 28px;display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(9,17,31,.9);backdrop-filter:blur(24px);border-bottom:1px solid rgba(148,163,184,.18)}
+.hl{display:flex;align-items:center;gap:12px}
+.logo{width:38px;height:38px;border-radius:10px;background:linear-gradient(135deg,#6366f1,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:17px;box-shadow:0 10px 24px rgba(99,102,241,.3)}
+.htitle{font-size:16px;font-weight:900;letter-spacing:-.4px;background:linear-gradient(135deg,#f8fafc,#c7d3df,#6f879c);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hsub{font-size:10px;color:#64748b;font-weight:600}
+.hr{display:flex;align-items:center;gap:7px}
+.hbtn{padding:6px 11px;border-radius:9px;background:rgba(61,111,155,.12);border:1px solid rgba(95,133,162,.28);color:#c4d4e2;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:4px;transition:all .2s;text-decoration:none}
+.hbtn:hover{background:rgba(61,111,155,.2)}
+.hbtn.green{background:rgba(15,118,110,.12);border-color:rgba(15,118,110,.28);color:#7ed2c7}
+.hbtn.indigo{background:rgba(99,102,241,.12);border-color:rgba(99,102,241,.28);color:#a5b4fc}
+
+/* MAIN */
+.main{position:relative;z-index:5;padding:22px 28px;max-width:1300px;margin:0 auto}
+
+/* KPI ROW */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.kpi-box{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:14px;padding:14px 16px;animation:cardIn .4s ease}
+.kpi-num{font-size:26px;font-weight:900;letter-spacing:-1px;font-variant-numeric:tabular-nums}
+.kpi-lbl{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.2px;color:#64748b;margin-top:3px}
+
+/* CONTROLS */
+.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:20px}
+.srch-wrap{position:relative;display:flex;align-items:center}
+.srch-icon{position:absolute;left:10px;font-size:12px}
+.srch{padding:8px 12px 8px 28px;border-radius:10px;background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);color:#f1f5f9;font-size:12px;font-weight:600;font-family:inherit;outline:none;width:220px;transition:all .2s}
+.srch:focus{border-color:rgba(99,102,241,.5)}
+.sel{padding:8px 12px;border-radius:10px;background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);color:#f1f5f9;font-size:11px;font-weight:700;font-family:inherit;outline:none;cursor:pointer}
+.month-nav{display:flex;align-items:center;gap:8px}
+.month-btn{width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid rgba(148,163,184,.18);color:#f1f5f9;font-size:14px;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;justify-content:center}
+.month-btn:hover{background:rgba(99,102,241,.15);border-color:rgba(99,102,241,.3)}
+.month-label{font-size:13px;font-weight:800;color:#f1f5f9;min-width:80px;text-align:center}
+.status-tabs{display:flex;gap:5px}
+.stab{padding:7px 12px;border-radius:999px;border:1px solid rgba(148,163,184,.18);background:rgba(255,255,255,.035);color:#94a3b8;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s}
+.stab:hover,.stab.active{background:rgba(47,93,138,.2);color:#d5e2ee;border-color:rgba(95,133,162,.34)}
+.stab.st-new.active{background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.3);color:#60a5fa}
+.stab.st-pending.active{background:rgba(245,158,11,.12);border-color:rgba(245,158,11,.3);color:#f59e0b}
+.stab.st-closed.active{background:rgba(16,185,129,.12);border-color:rgba(16,185,129,.3);color:#34d399}
+.ctrl-right{margin-left:auto}
+.badge{font-size:11px;font-weight:700;color:#64748b;padding:6px 12px;border-radius:20px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.12)}
+.badge b{color:#f1f5f9}
+
+/* ADD BUTTON */
+.add-btn{padding:8px 14px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:6px}
+.add-btn:hover{opacity:.9;transform:translateY(-1px)}
+
+/* QUERY LIST */
+.query-list{display:flex;flex-direction:column;gap:12px}
+
+/* QUERY CARD */
+.qc{background:rgba(14,24,38,.97);border:1px solid rgba(148,163,184,.18);border-radius:16px;padding:18px 20px;animation:cardIn .4s ease;transition:border-color .2s}
+.qc:hover{border-color:rgba(99,102,241,.3)}
+.qc.new-q{border-left:3px solid #60a5fa}
+.qc.pending-q{border-left:3px solid #f59e0b}
+.qc.closed-q{border-left:3px solid #10b981}
+.q-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px}
+.q-client-wrap{display:flex;align-items:center;gap:10px}
+.q-av{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;color:#fff;flex-shrink:0}
+.q-client{font-size:15px;font-weight:800;color:#f1f5f9;letter-spacing:-.2px}
+.q-date{font-size:10px;color:#64748b;margin-top:2px;font-weight:600}
+.q-right{display:flex;align-items:center;gap:8px}
+.status-badge{padding:4px 10px;border-radius:50px;font-size:10px;font-weight:800;display:inline-flex;align-items:center;gap:4px}
+.st-new-b{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3)}
+.st-pending-b{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.28)}
+.st-closed-b{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.28)}
+.q-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:12px}
+.q-item{}
+.q-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#475569;font-weight:800;margin-bottom:3px}
+.q-val{font-size:12px;font-weight:700;color:#cbd5e1}
+.q-val.hi{color:#10b981}
+.q-val a{color:#6366f1;text-decoration:none}
+.q-val a:hover{text-decoration:underline}
+.q-remarks{margin-top:12px;padding-top:12px;border-top:1px dashed rgba(148,163,184,.12)}
+.q-remarks-label{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:#475569;margin-bottom:6px}
+.q-remark-text{font-size:12px;color:#94a3b8;font-style:italic;line-height:1.6}
+.q-actions{display:flex;gap:6px;margin-top:12px;padding-top:10px;border-top:1px solid rgba(148,163,184,.08)}
+.q-action-btn{padding:5px 10px;border-radius:8px;font-size:10px;font-weight:800;cursor:pointer;font-family:inherit;border:1px solid;transition:all .2s}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(12px);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex}
+.modal{background:#090f1d;border:1px solid rgba(148,163,184,.18);border-radius:22px;padding:28px;width:100%;max-width:560px;box-shadow:0 40px 100px rgba(0,0,0,.65);animation:mIn .3s cubic-bezier(.4,0,.2,1)}
+.modal-title{font-size:18px;font-weight:900;color:#f1f5f9;letter-spacing:-.4px;margin-bottom:18px}
+.form-group{margin-bottom:14px}
+.form-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.8px;color:#cbd5e1;margin-bottom:5px;display:block}
+.form-input{width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid rgba(148,163,184,.18);color:#f1f5f9;font-size:13px;font-weight:600;font-family:inherit;outline:none;transition:border-color .2s}
+.form-input:focus{border-color:rgba(99,102,241,.5)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+.btn-cancel{padding:9px 16px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(148,163,184,.18);color:#94a3b8;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-cancel:hover{background:rgba(255,255,255,.1)}
+.btn-save{padding:9px 18px;border-radius:10px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:inherit;transition:all .2s}
+.btn-save:hover{opacity:.9}
+
+.footer{text-align:center;padding:18px;border-top:1px solid rgba(148,163,184,.12);color:#475569;font-size:11px;margin-top:24px;position:relative;z-index:5}
 </style>
-<script src="/static/js/themes.js"></script>
 </head>
 <body>
 <div class="g1"></div><div class="g2"></div>
+<div id="root"></div>
 
-<header class="hdr">
-  <div class="hl">
-    <div class="logo">🚀</div>
-    <div>
-      <div class="htitle">Query & Lead Tracker</div>
-      <div class="hsub">GEO Rankers · Sales Assistant</div>
-    </div>
-  </div>
+<script type="text/babel">
+const GRADS = [
+  'linear-gradient(135deg,#4f46e5,#7c3aed)',
+  'linear-gradient(135deg,#0f766e,#10b981)',
+  'linear-gradient(135deg,#b45309,#f59e0b)',
+  'linear-gradient(135deg,#be123c,#f43f5e)',
+  'linear-gradient(135deg,#1d4ed8,#60a5fa)',
+  'linear-gradient(135deg,#2f5d8a,#5f85a2)',
+];
+const gradFor = s => GRADS[s.charCodeAt(0) % GRADS.length];
+const initials = s => s.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 
-  <div class="theme-switcher">
-    <button class="theme-btn" id="theme-btn" onclick="toggleThemeMenu()">
-      <span id="theme-label">🌙</span>
-    </button>
-    <div class="theme-menu" id="theme-menu">
-      <button class="theme-item it-light" onclick="setTheme('light')">☀️ Light</button>
-      <button class="theme-item it-dark" onclick="setTheme('dark')">🌙 Dark</button>
-      <button class="theme-item it-system" onclick="setTheme('system')">💻 System</button>
-    </div>
-  </div>
-  <div class="hr">
-    <button class="hbtn" onclick="fetchQueries(true)" id="rfBtn"><span id="rfIcon">↻</span> Refresh</button>
-    <a class="hbtn green" href="/" target="_self">← Dashboard</a>
-  </div>
-</header>
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
+const SAMPLE_QUERIES = [
+  { id:1, client:'Dhaka Restaurant Group', contact:'+880 171 234 5678', source:'Facebook Messenger', service:'Local SEO Package', budget:'$150–200', member:'Jahidul Islam', date:'Apr 24', status:'new', remark:'Very interested, asked for proposal' },
+  { id:2, client:'RajShahi IT Solutions', contact:'rajshahi.it@gmail.com', source:'WhatsApp', service:'National SEO — 3 Months', budget:'$400–600', member:'Rafiq Ahmed', date:'Apr 23', status:'pending', remark:'Sent proposal, waiting for approval' },
+  { id:3, client:'Chittagong Fashion House', contact:'+880 181 987 6543', source:'Website Contact Form', service:'SMM Package — Instagram', budget:'$120', member:'Tanvir Hossain', date:'Apr 22', status:'closed', remark:'Closed — converted to order ORD-4900 ✅' },
+  { id:4, client:'Sylhet Travels Agency', contact:'sylhet.travels@gmail.com', source:'Referral', service:'GMB Optimization × 5', budget:'$250', member:'Sara Rahman', date:'Apr 22', status:'new', remark:'' },
+  { id:5, client:'Khulna Electronics Hub', contact:'+880 192 345 6789', source:'Facebook Group', service:'E-commerce SEO Setup', budget:'$300–500', member:'Omar Sheikh', date:'Apr 21', status:'pending', remark:'Client wants to negotiate price' },
+  { id:6, client:'Barishal Medical Center', contact:'barisal.med@gmail.com', source:'LinkedIn', service:'Local SEO + GMB', budget:'$180', member:'Nadia Khan', date:'Apr 20', status:'new', remark:'First contact, needs follow-up call' },
+  { id:7, client:'Mymensingh Agro Ltd', contact:'+880 155 678 9012', source:'Cold Outreach', service:'National SEO Campaign', budget:'$800', member:'Priya Das', date:'Apr 19', status:'closed', remark:'Lost — went with competitor ❌' },
+];
 
-<main class="main">
-  <div class="controls" style="margin-bottom: 20px;">
-    <div class="srch-wrap">
-      <span class="srch-icon">🔍</span>
-      <input class="srch" id="srch" placeholder="Search client, member or service..." oninput="filterQueries()"/>
-    </div>
-    <select class="sel" id="memberFilter" onchange="filterQueries()">
-      <option value="">All Members</option>
-    </select>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <button onclick="changeMonth(-1)" style="background:var(--glass);border:1px solid var(--gb);color:var(--text);padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">‹</button>
-      <span id="monthDisplay" style="font-size:13px;font-weight:800;color:var(--text);min-width:80px;text-align:center;">—</span>
-      <button onclick="changeMonth(1)" style="background:var(--glass);border:1px solid var(--gb);color:var(--text);padding:6px 12px;border-radius:8px;cursor:pointer;font-weight:700;">›</button>
-    </div>
-    <div class="ctrl-right">
-      <span class="badge" id="countBadge">Loading...</span>
-    </div>
-  </div>
+const BLANK_FORM = { client:'', contact:'', source:'', service:'', budget:'', member:'', remark:'' };
 
-  <div id="queryList">
-    <div class="empty-state"><h3>🔍</h3><p>Fetching query data...</p></div>
-  </div>
-</main>
+const App = () => {
+  const [queries, setQueries] = React.useState(SAMPLE_QUERIES);
+  const [search, setSearch] = React.useState('');
+  const [memberFilter, setMemberFilter] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState('all');
+  const [monthIdx, setMonthIdx] = React.useState(3); // April
+  const [showModal, setShowModal] = React.useState(false);
+  const [form, setForm] = React.useState(BLANK_FORM);
+  const [editId, setEditId] = React.useState(null);
 
-<div class="toast-box" id="toastBox"></div>
-<footer class="footer">SEO Performance Hub · Query Tracker · <span id="fDate"></span></footer>
+  const members = [...new Set(SAMPLE_QUERIES.map(q=>q.member))];
 
-<script>
-  let allQueries = [];
-  
-  // Get month from URL param or default to current month
-  const urlParams = new URLSearchParams(window.location.search);
-  let currentMonth = urlParams.get('month') || new Date().toISOString().slice(0, 7);
+  const filtered = queries.filter(q => {
+    const qs = search.toLowerCase();
+    const matchSearch = !search || q.client.toLowerCase().includes(qs) || q.member.toLowerCase().includes(qs) || q.service.toLowerCase().includes(qs);
+    const matchMember = !memberFilter || q.member === memberFilter;
+    const matchStatus = statusFilter === 'all' || q.status === statusFilter;
+    return matchSearch && matchMember && matchStatus;
+  });
 
-  // Fetch logic with optional force refresh parameter
-  async function fetchQueries(forceRefresh = false) {
-    const btn = document.getElementById('rfBtn');
-    if(btn) { btn.disabled = true; document.getElementById('rfIcon').classList.add('spin'); }
-    
-    try {
-      const url = `/api/query-tracker?month=${currentMonth}${forceRefresh ? '&refresh=true' : ''}`;
-      const res = await fetch(url);
-      const json = await res.json();
-      if(json.error) throw new Error(json.error);
-      allQueries = json;
-      
-      // Update month display
-      document.getElementById('monthDisplay').textContent = currentMonth;
-      
-      // Populate member filter
-      const members = [...new Set(allQueries.map(q => q.member))].filter(Boolean).sort();
-      const sel = document.getElementById('memberFilter');
-      sel.innerHTML = '<option value="">All Members</option>';
-      members.forEach(m => {
-        const opt = document.createElement('option');
-        opt.value = m; opt.textContent = m;
-        sel.appendChild(opt);
-      });
-      
-      renderQueries(allQueries);
-      if(forceRefresh) showToast("Refreshed with Live Sheet Data ✅");
-    } catch (err) {
+  const counts = { all: queries.length, new: queries.filter(q=>q.status==='new').length, pending: queries.filter(q=>q.status==='pending').length, closed: queries.filter(q=>q.status==='closed').length };
 
-      console.error('fetchQueries error:', err);
-      document.getElementById('queryList').innerHTML = `<div class="empty-state"><h3>❌</h3><p>Error: ${err.message}</p></div>`;
-    } finally {
-      if(btn) { btn.disabled = false; document.getElementById('rfIcon').classList.remove('spin'); }
+  const setStatus = (id, status) => setQueries(prev=>prev.map(q=>q.id===id?{...q,status}:q));
+
+  const openAdd = () => { setForm(BLANK_FORM); setEditId(null); setShowModal(true); };
+  const openEdit = (q) => { setForm({client:q.client,contact:q.contact,source:q.source,service:q.service,budget:q.budget,member:q.member,remark:q.remark}); setEditId(q.id); setShowModal(true); };
+
+  const saveForm = () => {
+    if (!form.client.trim()) return;
+    if (editId) {
+      setQueries(prev=>prev.map(q=>q.id===editId?{...q,...form}:q));
+    } else {
+      setQueries(prev=>[{id:Date.now(),date:'Apr 27',status:'new',...form},...prev]);
     }
-  }
+    setShowModal(false);
+  };
 
-  function changeMonth(offset) {
-    const [y, m] = currentMonth.split('-').map(Number);
-    const d = new Date(y, m - 1 + offset, 1);
-    currentMonth = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-    fetchQueries();
-  }
+  const statusConfig = {
+    new:     { label:'🆕 New',     cls:'st-new-b',     border:'rgba(59,130,246,.3)',  bg:'rgba(59,130,246,.12)'  },
+    pending: { label:'⏳ Pending', cls:'st-pending-b', border:'rgba(245,158,11,.3)',  bg:'rgba(245,158,11,.12)'  },
+    closed:  { label:'✅ Closed',  cls:'st-closed-b',  border:'rgba(16,185,129,.3)', bg:'rgba(16,185,129,.12)' },
+  };
 
-  function renderQueries(data) {
-    const list = document.getElementById('queryList');
-    const badge = document.getElementById('countBadge');
-    
-    if(!data || data.length === 0) {
-      list.innerHTML = '<div class="empty-state"><h3>📭</h3><p>No queries found matching filters.</p></div>';
-      badge.textContent = 'Showing 0';
-      return;
-    }
-    
-    badge.innerHTML = `Showing <b>${data.length}</b>`;
-    
-    list.innerHTML = data.map((q, idx) => `
-      <div class="query-card">
-        <div class="q-header">
+  return (
+    <>
+      <header className="hdr">
+        <div className="hl">
+          <div className="logo">🚀</div>
           <div>
-            <div class="q-client">${q.client || 'Unnamed Client'}</div>
-            <div class="q-meta">${q.date} · ${q.member}</div>
+            <div className="htitle">Query & Lead Tracker</div>
+            <div className="hsub">GEO Rankers · Sales Assistant</div>
           </div>
-          <span class="status-badge ${getStatClass(q.status)}">${q.status || 'NEW'}</span>
         </div>
-        
-        <div class="q-grid">
-          <div class="q-item">
-            <div class="q-label">Service</div>
-            <div class="q-val">${q.service}</div>
-          </div>
-          <div class="q-item">
-            <div class="q-label">Profile</div>
-            <div class="q-val">${q.profile}</div>
-          </div>
-          <div class="q-item">
-            <div class="q-label">Source</div>
-            <div class="q-val">${q.source}</div>
-          </div>
-          <div class="q-item">
-            <div class="q-label">Inbox</div>
-            <div class="q-val">${q.inboxUrl ? `<a href="${q.inboxUrl}" target="_blank">View Inbox 🔗</a>` : 'N/A'}</div>
-          </div>
-          
-          <div class="q-item">
-            <div class="q-label">Follow-up 1</div>
-            <div class="q-val">${q.fu1 || '-'}</div>
-          </div>
-          <div class="q-item">
-            <div class="q-label">Follow-up 2</div>
-            <div class="q-val">${q.fu2 || '-'}</div>
-          </div>
-          <div class="q-item">
-            <div class="q-label">Follow-up 3</div>
-            <div class="q-val">${q.fu3 || '-'}</div>
-          </div>
-          <div class="q-item">
-            <div class="q-label">Conv. Status</div>
-            <div class="q-val">${q.convStatus || '-'}</div>
-          </div>
+        <div className="hr">
+          <button className="hbtn">↻ Refresh</button>
+          <a className="hbtn green" href="index.html">← Dashboard</a>
+          <button className="add-btn" onClick={openAdd}>+ Add Query</button>
+        </div>
+      </header>
 
-          <div class="q-item">
-            <div class="q-label">Conversation URL</div>
-            <div class="q-val">${q.convUrl ? `<a href="${q.convUrl}" target="_blank" style="color:var(--accent); font-weight:700;">View Chat 💬</a>` : 'N/A'}</div>
+      <div className="main">
+        {/* KPI row */}
+        <div className="kpi-row">
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#a5b4fc'}}>{counts.all}</div><div className="kpi-lbl">Total Queries</div></div>
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#60a5fa'}}>{counts.new}</div><div className="kpi-lbl">🆕 New</div></div>
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#f59e0b'}}>{counts.pending}</div><div className="kpi-lbl">⏳ Pending</div></div>
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#10b981'}}>{counts.closed}</div><div className="kpi-lbl">✅ Closed</div></div>
+          <div className="kpi-box"><div className="kpi-num" style={{color:'#34d399'}}>{queries.filter(q=>q.status==='closed'&&q.remark.includes('✅')).length}</div><div className="kpi-lbl">💰 Converted</div></div>
+        </div>
+
+        {/* Controls */}
+        <div className="controls">
+          <div className="srch-wrap">
+            <span className="srch-icon">🔍</span>
+            <input className="srch" placeholder="Search client, member or service..." value={search} onChange={e=>setSearch(e.target.value)}/>
           </div>
-          <div class="q-item">
-            <div class="q-label">Brief URL</div>
-            <div class="q-val">${q.briefUrl ? `<a href="${q.briefUrl}" target="_blank" style="color:var(--accent); font-weight:700;">View Brief 📄</a>` : 'N/A'}</div>
+          <select className="sel" value={memberFilter} onChange={e=>setMemberFilter(e.target.value)}>
+            <option value="">All Members</option>
+            {members.map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+          <div className="month-nav">
+            <button className="month-btn" onClick={()=>setMonthIdx(i=>Math.max(0,i-1))}>‹</button>
+            <div className="month-label">{MONTHS[monthIdx]}</div>
+            <button className="month-btn" onClick={()=>setMonthIdx(i=>Math.min(11,i+1))}>›</button>
+          </div>
+          <div className="status-tabs">
+            {[['all','All'],['new','🆕 New'],['pending','⏳ Pending'],['closed','✅ Closed']].map(([v,lbl])=>(
+              <button key={v} className={`stab st-${v}${statusFilter===v?' active':''}`} onClick={()=>setStatusFilter(v)}>{lbl}</button>
+            ))}
+          </div>
+          <div className="ctrl-right">
+            <span className="badge">Showing <b>{filtered.length}</b> of {queries.length}</span>
           </div>
         </div>
 
-        <div class="q-remarks">
-          <div class="q-label">Local Remark (Internal)</div>
-          <textarea class="q-remark-box" id="rem-${idx}" placeholder="Add private notes here...">${q.localRemark || ''}</textarea>
-          <button class="q-save-btn" onclick="saveRemark('${q.rowKey}', ${idx})">Save Remark</button>
-          
-          ${q.sheetRemarks ? `
-            <div style="margin-top:10px; font-size:11px; color:var(--muted); font-style:italic;">
-              <b>Sheet Remark:</b> ${q.sheetRemarks}
+        {/* Query list */}
+        <div className="query-list">
+          {filtered.map(q => {
+            const sc = statusConfig[q.status];
+            return (
+              <div key={q.id} className={`qc ${q.status}-q`} data-screen-label="Query Card">
+                <div className="q-header">
+                  <div className="q-client-wrap">
+                    <div className="q-av" style={{background:gradFor(q.client)}}>{initials(q.client)}</div>
+                    <div>
+                      <div className="q-client">{q.client}</div>
+                      <div className="q-date">Received {q.date} · by {q.member}</div>
+                    </div>
+                  </div>
+                  <div className="q-right">
+                    <span className={`status-badge ${sc.cls}`}>{sc.label}</span>
+                  </div>
+                </div>
+
+                <div className="q-grid">
+                  <div className="q-item"><div className="q-label">Service</div><div className="q-val">{q.service}</div></div>
+                  <div className="q-item"><div className="q-label">Budget</div><div className="q-val hi">{q.budget}</div></div>
+                  <div className="q-item"><div className="q-label">Source</div><div className="q-val">{q.source}</div></div>
+                  <div className="q-item"><div className="q-label">Contact</div><div className="q-val"><a href="#">{q.contact}</a></div></div>
+                </div>
+
+                {q.remark && (
+                  <div className="q-remarks">
+                    <div className="q-remarks-label">Remarks</div>
+                    <div className="q-remark-text">{q.remark}</div>
+                  </div>
+                )}
+
+                <div className="q-actions">
+                  {q.status !== 'new' && (
+                    <button className="q-action-btn" style={{background:'rgba(59,130,246,.1)',borderColor:'rgba(59,130,246,.25)',color:'#60a5fa'}} onClick={()=>setStatus(q.id,'new')}>🆕 Mark New</button>
+                  )}
+                  {q.status !== 'pending' && (
+                    <button className="q-action-btn" style={{background:'rgba(245,158,11,.1)',borderColor:'rgba(245,158,11,.25)',color:'#f59e0b'}} onClick={()=>setStatus(q.id,'pending')}>⏳ Mark Pending</button>
+                  )}
+                  {q.status !== 'closed' && (
+                    <button className="q-action-btn" style={{background:'rgba(16,185,129,.1)',borderColor:'rgba(16,185,129,.25)',color:'#34d399'}} onClick={()=>setStatus(q.id,'closed')}>✅ Mark Closed</button>
+                  )}
+                  <button className="q-action-btn" style={{background:'rgba(99,102,241,.1)',borderColor:'rgba(99,102,241,.25)',color:'#a5b4fc',marginLeft:'auto'}} onClick={()=>openEdit(q)}>✏️ Edit</button>
+                  <button className="q-action-btn" style={{background:'rgba(239,68,68,.08)',borderColor:'rgba(239,68,68,.2)',color:'#f87171'}} onClick={()=>setQueries(prev=>prev.filter(x=>x.id!==q.id))}>🗑️</button>
+                </div>
+              </div>
+            );
+          })}
+          {filtered.length === 0 && (
+            <div style={{textAlign:'center',padding:'48px 0',color:'#475569'}}>
+              <div style={{fontSize:32,marginBottom:10}}>🚀</div>
+              <div style={{fontWeight:700}}>No queries match your filters</div>
+              <button style={{marginTop:12,padding:'8px 16px',borderRadius:10,background:'linear-gradient(135deg,#4f46e5,#7c3aed)',border:'none',color:'#fff',fontWeight:800,cursor:'pointer',fontFamily:'inherit'}} onClick={openAdd}>+ Add First Query</button>
             </div>
-          ` : ''}
+          )}
         </div>
       </div>
-    `).join('');
-  }
 
-  function getStatClass(st) {
-    if(!st) return 'st-new';
-    st = st.toLowerCase();
-    if(st.includes('pending') || st.includes('wait')) return 'st-pending';
-    if(st.includes('done') || st.includes('closed') || st.includes('sold')) return 'st-closed';
-    return 'st-new';
-  }
+      <footer className="footer">SEO Performance Hub · Query & Lead Tracker · GEO Rankers · April 2026</footer>
 
-  function filterQueries() {
-    const term = document.getElementById('srch').value.toLowerCase();
-    const mem = document.getElementById('memberFilter').value;
-    
-    const filtered = allQueries.filter(q => {
-      const matchSearch = (q.client + q.member + q.service + q.profile).toLowerCase().includes(term);
-      const matchMem = !mem || q.member === mem;
-      return matchSearch && matchMem;
-    });
-    
-    renderQueries(filtered);
-  }
+      {/* Add/Edit Modal */}
+      <div className={`overlay${showModal?' open':''}`} onClick={e=>e.target.classList.contains('overlay')&&setShowModal(false)}>
+        <div className="modal">
+          <div className="modal-title">{editId ? '✏️ Edit Query' : '+ New Query'}</div>
+          <div className="form-grid">
+            <div className="form-group">
+              <label className="form-label">Client Name</label>
+              <input className="form-input" placeholder="e.g. Dhaka Restaurant" value={form.client} onChange={e=>setForm({...form,client:e.target.value})}/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Contact</label>
+              <input className="form-input" placeholder="+880... or email" value={form.contact} onChange={e=>setForm({...form,contact:e.target.value})}/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Source</label>
+              <input className="form-input" placeholder="e.g. Facebook Messenger" value={form.source} onChange={e=>setForm({...form,source:e.target.value})}/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Service</label>
+              <input className="form-input" placeholder="e.g. Local SEO Package" value={form.service} onChange={e=>setForm({...form,service:e.target.value})}/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Budget</label>
+              <input className="form-input" placeholder="e.g. $150–200" value={form.budget} onChange={e=>setForm({...form,budget:e.target.value})}/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Assigned Member</label>
+              <select className="form-input" value={form.member} onChange={e=>setForm({...form,member:e.target.value})}>
+                <option value="">Select member...</option>
+                {members.map(m=><option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Remarks</label>
+            <textarea className="form-input" rows={3} placeholder="Notes, follow-up status, client intent..." value={form.remark} onChange={e=>setForm({...form,remark:e.target.value})} style={{resize:'vertical'}}/>
+          </div>
+          <div className="modal-actions">
+            <button className="btn-cancel" onClick={()=>setShowModal(false)}>Cancel</button>
+            <button className="btn-save" onClick={saveForm}>{editId?'Save Changes':'Add Query'}</button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
-  async function saveRemark(key, idx) {
-    const val = document.getElementById(`rem-${idx}`).value;
-    try {
-      const res = await fetch('/api/query-remarks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, remark: val })
-      });
-      if(res.ok) {
-        showToast('Remark saved! ✅');
-        // Update local data
-        const q = allQueries.find(item => item.rowKey === key);
-        if(q) q.localRemark = val;
-      }
-    } catch (err) {
-      showToast('Error saving remark ❌');
-    }
-  }
-
-  function showToast(msg) {
-    const tb = document.getElementById('toastBox');
-    const t = document.createElement('div');
-    t.className = 'toast';
-    t.textContent = msg;
-    tb.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  }
-
-  document.getElementById('fDate').textContent = new Date().toLocaleDateString();
-  fetchQueries();
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>

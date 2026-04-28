@@ -3,6 +3,7 @@ import re
 import time
 import json
 import urllib.request
+import logging
 import pandas as pd
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
@@ -10,6 +11,10 @@ from shared_utils import (
     SHEET_ID, MONGO_URI, DB_NAME, DEPT_TARGET, MEM_TARGET, TEAM_TARGETS, MANAGEMENT, NAME_ALIASES, COL,
     get_db, parse_gviz_date, normalize_name, safe_float, fetch_sheet_data_gviz
 )
+
+# Configure Logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 # Use gspread if available for better reliability
 try:
@@ -37,121 +42,105 @@ def fetch_data_gspread(sheet_name):
 
 def get_raw_dataframe():
     """Fetches Kam Data and returns a cleaned Pandas DataFrame."""
-    print("Fetching raw data...")
-    # Try Gspread first
-    raw_rows = fetch_data_gspread("Kam Data")
-    if not raw_rows:
-        raw_rows = fetch_sheet_data_gviz("Kam Data")
-        if not raw_rows: return pd.DataFrame()
-        # Gviz rows already processed, just wrap in DF
+    try:
+        logger.info("Fetching raw data from Google Sheets...")
+        raw_rows = fetch_data_gspread("Kam Data") or fetch_sheet_data_gviz("Kam Data")
+        
+        if not raw_rows:
+            logger.error("No data retrieved from Google Sheets.")
+            return pd.DataFrame()
+
         df = pd.DataFrame(raw_rows)
-    else:
-        # Gspread returns actual string values
-        df = pd.DataFrame(raw_rows)
-        # Handle header if first row is names
-        if df.iloc[0, 0] == "ID": # Simple heuristic
-             df.columns = df.iloc[0]
-             df = df.drop(df.index[0])
-    
-    # Standardize columns based on our index map
-    # We create a mapping of index to our named columns
-    col_map = {v: k for k, v in COL.items()}
-    df = df.rename(columns=lambda x: col_map.get(x, x) if isinstance(x, int) else x)
-    
-    # If columns were strings from Gspread, we might need a manual rename based on position
-    if "assign" not in df.columns:
-        # Ensure we have enough columns
-        for name, idx in COL.items():
-            if idx < len(df.columns):
-                df.rename(columns={df.columns[idx]: name}, inplace=True)
-                
-    return df
+        if df.iloc[0, 0] == "ID": # Header logic
+            df.columns = df.iloc[0]
+            df = df.drop(df.index[0])
+        
+        # Standardize columns using COL mapping
+        col_map = {v: k for k, v in COL.items()}
+        df = df.rename(columns=lambda x: col_map.get(x, x) if isinstance(x, int) else x)
+
+        if "assign" not in df.columns:
+            for name, idx in COL.items():
+                if idx < len(df.columns):
+                    df.rename(columns={df.columns[idx]: name}, inplace=True)
+                    
+        return df
+    except Exception as e:
+        logger.exception(f"Critical error in get_raw_dataframe: {e}")
+        return pd.DataFrame()
 
 # ─── MAIN ENGINE ──────────────────────────────────────
 
 def calculate_summaries():
-    print(f"Pandas Logic Engine Started: {time.ctime()}")
-    
-    # 1. Initialize MongoDB
-    db = get_db()
-    
-    # 2. Get Data
-    df = get_raw_dataframe()
-    if df.empty:
-        print("Error: Could not fetch data.")
-        return
+    logger.info("Pandas Logic Engine Started.")
+    try:
+        db = get_db()
+        df = get_raw_dataframe()
+        if df.empty:
+            logger.warning("Empty DataFrame, skipping processing.")
+            return
 
-    # 3. LIFETIME BACKUP: Archiving all data to MongoDB before filtering
-    backup_to_db(df, db)
-
-    process_and_save(df, db)
+        backup_to_db(df, db)
+        process_and_save(df, db)
+        logger.info("Logic Execution Complete Successfully.")
+    except Exception as e:
+        logger.error(f"Calculation Engine Failed: {e}", exc_info=True)
 
 def backup_to_db(df, db):
     """Saves every unique project from the sheet into a permanent archive using Bulk Operations."""
     if df.empty: return
-    print(f"Archiving {len(df)} rows to permanent database...")
-    
-    from pymongo import UpdateOne
-    operations = []
-    
-    for _, row in df.iterrows():
-        p = row.to_dict()
-        order_num = str(p.get('order_num', '')).strip()
-        if not order_num or order_num == 'N/A' or order_num == 'None': continue
+    try:
+        logger.info(f"Archiving {len(df)} rows...")
+        from pymongo import UpdateOne
+        operations = []
         
-        # Ensure we have a valid month bucket (YYYY-MM)
-        project_date = p.get("date") or p.get("del_date") or ""
-        month_bucket = project_date[:7] if len(str(project_date)) >= 7 else "Unknown"
+        for _, row in df.iterrows():
+            p = row.to_dict()
+            order_num = str(p.get('order_num', '')).strip()
+            if not order_num or order_num.lower() in ['n/a', 'none', '']: continue
+            
+            project_date = str(p.get("date") or p.get("del_date") or "")
+            month_bucket = project_date[:7] if len(project_date) >= 7 else "Unknown"
 
-        doc = {
-            "order": order_num,
-            "client": p.get("client"),
-            "service": p.get("service"),
-            "status": p.get("status"),
-            "amtX": safe_float(p.get("amount_x")),
-            "date": project_date,
-            "month": month_bucket,
-            "deliveredDate": p.get("del_date"),
-            "assign": p.get("assign"),
-            "team": p.get("op_dept"),
-            "link": p.get("order_link"),
-            "instruction": p.get("instruction"),
-            "profile": p.get("profile"),
-            "last_seen": time.time()
-        }
+            doc = {
+                "order": order_num, "client": p.get("client"), "service": p.get("service"),
+                "status": p.get("status"), "amtX": safe_float(p.get("amount_x")),
+                "date": project_date, "month": month_bucket, "deliveredDate": p.get("del_date"),
+                "assign": p.get("assign"), "team": p.get("op_dept"), "link": p.get("order_link"),
+                "instruction": p.get("instruction"), "profile": p.get("profile"), "last_seen": time.time()
+            }
+            operations.append(UpdateOne({"order": order_num}, {"$set": doc}, upsert=True))
         
-        operations.append(
-            UpdateOne({"order": order_num}, {"$set": doc}, upsert=True)
-        )
-    
-    if operations:
-        try:
+        if operations:
             result = db["projects_archive"].bulk_write(operations, ordered=False)
-            print(f"Archive Update Complete: {result.upserted_count} new, {result.modified_count} updated.")
-        except Exception as e:
-            print(f"Bulk Write Error: {e}")
+            logger.info(f"Archive Update: {result.upserted_count} new, {result.modified_count} updated.")
+    except Exception as e:
+        logger.error(f"Bulk Write Error during archive: {e}")
 
 def process_and_save(df, db):
     # 1. Get Members
-    members_list = list(db["members"].find({}, {"_id": 0}))
-    if not members_list:
-        print("Error: No members found in DB.")
+    try:
+        members_list = list(db["members"].find({}, {"_id": 0}))
+        if not members_list: raise ValueError("No members found in DB.")
+    except Exception as e:
+        logger.error(f"Member fetch failed: {e}")
         return
-    
+
     member_lookup = {m["name"].strip().lower(): m["name"] for m in members_list}
-    # Add manual aliases from DB for matching accuracy
     aliases = NAME_ALIASES()
     for alias, official in aliases.items():
         member_lookup[alias.lower()] = official
 
-    # 2. Clean & Filter
-    # Ensure amount is float
     def clean_amt(val):
-        try: return float(str(val).replace("$","").replace(",","").strip())
-        except: return 0.0
+        if pd.isna(val) or val == '': return 0.0
+        try: 
+            return float(str(val).replace("$","").replace(",","").strip())
+        except ValueError:
+            logger.warning(f"Invalid amount format: {val}")
+            return 0.0
     
     if 'amount_x' in df.columns:
-        df['amount_x'] = df['amount_x'].apply(clean_amt)
+        df['amount_x'] = df['amount_x'].apply(clean_amt).fillna(0.0)
     
     # Filter for SEO/SMM
     if 'service' in df.columns:
@@ -159,31 +148,18 @@ def process_and_save(df, db):
 
     # ─── DATE FILTERING (Dynamic Month) ───
     cur_y = time.strftime("%Y")
-    cur_m = time.strftime("%m").lstrip('0') # Support both 04 and 4
     cur_m_padded = time.strftime("%m")
-    cur_month_name = time.strftime("%B")
+
+    # Helper to clean date strings and prioritize delivery date for delivered items
+    df['calc_date_str'] = df.apply(lambda r: str(r.get('del_date', '')) if str(r.get('status')).strip() == 'Delivered' else str(r.get('date', '')), axis=1)
+    df['calc_date'] = pd.to_datetime(df['calc_date_str'], errors='coerce')
     
-    def is_in_current_month(row):
-        status = str(row.get('status', '')).strip()
-        date_val = str(row.get('del_date', '')) if status == 'Delivered' else str(row.get('date', ''))
-        if not date_val: return False
-        
-        # Match YYYY-MM or YYYY-M
-        if date_val.startswith(f"{cur_y}-{cur_m_padded}") or date_val.startswith(f"{cur_y}-{cur_m}-"):
-            return True
-        # Match Month YYYY
-        if cur_month_name in date_val and cur_y in date_val:
-            return True
-        # Match MM/DD/YYYY or M/D/YYYY
-        if re.search(fr"^{cur_m_padded}/", date_val) and f"/{cur_y}" in date_val:
-            return True
-        if re.search(fr"^{cur_m}/", date_val) and f"/{cur_y}" in date_val:
-            return True
-            
-        return False
-            
-    df = df[df.apply(is_in_current_month, axis=1)]
-    print(f"Rows after month filter ({cur_month_name} {cur_y}): {len(df)}")
+    # Filter only for the current month
+    current_start = pd.Timestamp(f"{cur_y}-{cur_m_padded}-01")
+    next_month = current_start + pd.offsets.MonthBegin(1)
+    df = df[(df['calc_date'] >= current_start) & (df['calc_date'] < next_month)].copy()
+    
+    logger.info(f"Rows after current month filter: {len(df)}")
 
     # 3. Process Assignees and Splits
     expanded_rows = []
@@ -215,7 +191,7 @@ def process_and_save(df, db):
     edf = pd.DataFrame(expanded_rows)
     
     # 4. Global Stats
-    print("Calculating Global stats...")
+    logger.info("Calculating Global stats...")
     total_delivered_amt = df[df['status'] == 'Delivered']['amount_x'].sum() if not df.empty else 0
     total_wip_amt = df[df['status'].isin(['WIP', 'Revision'])]['amount_x'].sum() if not df.empty else 0
     unique_projects = df[df['order_num'].str.strip() != "N/A"]['order_num'].nunique() if not df.empty else 0
@@ -229,7 +205,7 @@ def process_and_save(df, db):
     unmatchedRows = seoSmmRows - (df[df['order_num'].isin(edf['order_num'])]['order_num'].nunique() if not edf.empty else 0)
 
     # 5. Member Stats
-    print("Calculating Member stats...")
+    logger.info("Calculating Member stats...")
     member_summaries = []
     for m in members_list:
         name = m["name"]
@@ -280,7 +256,7 @@ def process_and_save(df, db):
         member_summaries.append(s)
 
     # 6. Team Stats
-    print("Calculating Team stats...")
+    logger.info("Calculating Team stats...")
     team_data = {}
     targets = TEAM_TARGETS()
     mgmt = MANAGEMENT()
@@ -308,7 +284,7 @@ def process_and_save(df, db):
         }
 
     # 7. Save to MongoDB
-    print("Saving to MongoDB...")
+    logger.info("Saving processed results to MongoDB...")
     db["member_summaries"].delete_many({})
     if member_summaries: db["member_summaries"].insert_many(member_summaries)
     
@@ -330,8 +306,6 @@ def process_and_save(df, db):
         "unmatchedRows": unmatchedRows,
         "last_updated": time.time()
     })
-    
-    print("Logic Execution Complete.")
 
 if __name__ == "__main__":
     calculate_summaries()
