@@ -1,0 +1,35 @@
+/* ── FINANCE HUB KPI SPECIFIC ── */
+.finance-kpi-root {
+  font-family: 'Manrope', sans-serif;
+  background-color: #060B14 !important;
+}
+
+.ss-table-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.2) transparent;
+}
+
+.ss-table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.ss-table-container::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 10px;
+}
+
+.ss-table th, .ss-table td {
+  border: 1px solid rgba(148, 163, 184, 0.05) !important;
+}
+
+.ss-table thead tr {
+  border-bottom: 2px solid rgba(148, 163, 184, 0.1) !important;
+}
+
+.ss-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.01) !important;
+}
+
+.ss-table td, .ss-table th {
+    padding: 16px !important;
+}

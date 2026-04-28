@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import MainDashboard from './pages/MainDashboard';
 import EmployeePortal from './pages/EmployeePortal';
 import DeliveryTracker from './pages/DeliveryTracker';
+import FinanceHub from './pages/FinanceHub';
 import QueryTracker from './pages/QueryTracker';
 
 // Import Global Styles
@@ -16,6 +17,7 @@ function App() {
         <Route path="/employee" element={<EmployeePortal />} />
         <Route path="/delivery-tracker" element={<DeliveryTracker />} />
         <Route path="/query-tracker" element={<QueryTracker />} />
+        <Route path="/finance" element={<FinanceHub />} />
       </Routes>
     </Router>
   );

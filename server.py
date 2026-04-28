@@ -2,16 +2,29 @@ import gzip, json, os, urllib.request, re, time, calendar
 from datetime import datetime, timezone, timedelta
 from flask import Flask, jsonify, send_file, request, render_template
 from flask_cors import CORS
+from bson import ObjectId
+
+class MongoJsonProvider(Flask.json_provider_class):
+    def dumps(self, obj, **kwargs):
+        def default(o):
+            if isinstance(o, ObjectId): return str(o)
+            if isinstance(o, (datetime,)): return o.isoformat()
+            raise TypeError(f"Object of type {type(o)} is not JSON serializable")
+        return json.dumps(obj, default=default, **kwargs)
+    def loads(self, s, **kwargs):
+        return json.loads(s, **kwargs)
 import agent_engine
 from shared_utils import (
     SHEET_ID, QUERY_SHEET_ID, MONGO_URI, DB_NAME, DEPT_TARGET, MEM_TARGET, TEAM_TARGETS, MANAGEMENT, COL,
     get_db, parse_gviz_date, normalize_assignee_token, get_members_from_db, fetch_sheet_data_gviz
 )
 
-app = Flask(__name__, 
-            template_folder='frontend/dist', 
+app = Flask(__name__,
+            template_folder='frontend/dist',
             static_folder='frontend/dist/assets',
             static_url_path='/assets')
+app.json_provider_class = MongoJsonProvider
+app.json = MongoJsonProvider(app)
 app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 86400
 CORS(app)
 
@@ -36,29 +49,7 @@ def cached_json(key, ttl, builder):
 
 @app.after_request
 def add_perf_headers(response):
-    path = request.path
-    if path.startswith("/static/"):
-        response.headers["Cache-Control"] = "public, max-age=86400"
-    elif path.startswith("/api/"):
-        response.headers.setdefault("Cache-Control", "private, max-age=10")
-    else:
-        response.headers.setdefault("Cache-Control", "no-cache")
-
-    accept_encoding = request.headers.get("Accept-Encoding", "")
-    compressible = (
-        "gzip" in accept_encoding
-        and response.status_code == 200
-        and not response.headers.get("Content-Encoding")
-        and response.mimetype in {"application/json", "text/html", "text/css", "application/javascript", "text/javascript"}
-        and not response.direct_passthrough
-    )
-    if compressible:
-        data = response.get_data()
-        if len(data) > 1024:
-            response.set_data(gzip.compress(data, compresslevel=5))
-            response.headers["Content-Encoding"] = "gzip"
-            response.headers["Vary"] = "Accept-Encoding"
-            response.headers["Content-Length"] = str(len(response.get_data()))
+    # GZIP disabled temporarily to debug hang
     return response
 
 @app.route("/")
@@ -88,14 +79,22 @@ def api_data():
             team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
             member_docs = list(db["member_summaries"].find({}, {"_id": 0}))
 
-            members_profiles = {m["id"]: m for m in db["members"].find({}, {"_id": 0}) if m.get("id")}
+            ADMIN_IDS = {"17149", "17137", "17248", "17238"}
+
+            def clean_id(raw):
+                s = str(raw) if raw is not None else ""
+                return s[:-2] if s.endswith(".0") else s
+
+            members_profiles = {clean_id(m["id"]): m for m in db["members"].find({}, {"_id": 0}) if m.get("id")}
             for m in member_docs:
-                prof = members_profiles.get(m.get("id"))
+                m["id"] = clean_id(m.get("id", ""))
+                prof = members_profiles.get(m["id"])
                 if prof:
                     if "target" in prof: m["target"] = prof["target"]
                     if "name" in prof: m["name"] = prof["name"]
                     if "role" in prof: m["role"] = prof["role"]
                     if "team" in prof: m["team"] = prof["team"]
+                m["isAdmin"] = m["id"] in ADMIN_IDS or "Manager" in m.get("role", "") or "Leader" in m.get("role", "")
 
             if team_sum_doc and "teams" in team_sum_doc:
                 for team_name, team_data in team_sum_doc["teams"].items():
@@ -145,9 +144,11 @@ def api_data_live():
         member_docs   = list(db["member_summaries"].find({}, {"_id": 0}))
         
         # Merge target/name/role from 'members' collection
-        members_profiles = {m["id"]: m for m in db["members"].find()}
+        def _cid(v): s=str(v) if v else ""; return s[:-2] if s.endswith(".0") else s
+        members_profiles = {_cid(m["id"]): m for m in db["members"].find() if m.get("id")}
         for m in member_docs:
-            prof = members_profiles.get(m.get("id"))
+            m["id"] = _cid(m.get("id", ""))
+            prof = members_profiles.get(m["id"])
             if prof:
                 if "target" in prof: m["target"] = prof["target"]
                 if "name" in prof: m["name"] = prof["name"]
@@ -333,6 +334,28 @@ def api_login():
                 return jsonify({"status": "ok", "user": res})
         return jsonify({"status": "error", "message": "Invalid credentials"}), 401
     except Exception as e: return jsonify({"error": str(e)}), 500
+
+@app.route("/api/attendance-stats")
+def attendance_stats():
+    """Return late/absent count + today's in-time for all members."""
+    try:
+        db = get_db()
+        today = datetime.now(timezone(timedelta(hours=6))).strftime('%Y-%m-%d')
+        docs = list(db["attendance"].find({}, {"_id": 0, "emp_id": 1, "status": 1, "date": 1, "in": 1}))
+        stats = {}
+        for d in docs:
+            raw = str(d.get("emp_id", ""))
+            eid = raw[:-2] if raw.endswith(".0") else raw
+            if eid not in stats:
+                stats[eid] = {"late": 0, "absent": 0, "today_in": None}
+            s = d.get("status", "")
+            if s == "Late":   stats[eid]["late"]   += 1
+            if s == "Absent": stats[eid]["absent"] += 1
+            if d.get("date") == today and d.get("in"):
+                stats[eid]["today_in"] = d["in"]
+        return jsonify(stats)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/attendance", methods=["GET"])
 def get_attendance():
@@ -631,6 +654,21 @@ def admin_send_announcement():
         db["notifications"].insert_many(docs)
     audit_log(db, "announcement_sent", f"Sent announcement to {target}")
     return jsonify({"ok": True})
+
+@app.route("/api/attendance-stats", methods=["GET"])
+def get_attendance_stats():
+    db = get_db()
+    from datetime import datetime
+    today = datetime.now().strftime("%Y-%m-%d")
+    records = list(db["attendance"].find({"date": today}))
+    stats = {}
+    for r in records:
+        stats[r["emp_id"]] = {
+            "status": r.get("status", "Present"),
+            "in": r.get("in"),
+            "out": r.get("out")
+        }
+    return jsonify(stats)
 
 @app.route("/api/admin/leave-requests", methods=["GET"])
 def admin_get_leave_requests():

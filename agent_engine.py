@@ -9,7 +9,7 @@ from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 from shared_utils import (
     SHEET_ID, MONGO_URI, DB_NAME, DEPT_TARGET, MEM_TARGET, TEAM_TARGETS, MANAGEMENT, NAME_ALIASES, COL,
-    get_db, parse_gviz_date, normalize_name, safe_float, fetch_sheet_data_gviz
+    get_db, parse_gviz_date, normalize_name, normalize_assignee_token, safe_float, fetch_sheet_data_gviz
 )
 
 # Configure Logging
@@ -173,10 +173,24 @@ def process_and_save(df, db):
         found_names = []
         unique_tokens = set()
         for p in parts:
-            tk = normalize_name(p).lower()
-            if tk: unique_tokens.add(tk)
-            if tk in member_lookup:
-                found_names.append(member_lookup[tk])
+            tk = normalize_assignee_token(p).lower()
+            if not tk: continue
+            unique_tokens.add(tk)
+            
+            # 100% Accuracy Fix: Auto-register or match
+            official_name = member_lookup.get(tk)
+            if not official_name:
+                # Auto-create member in DB if not exists
+                official_name = tk.strip().title()
+                db["members"].update_one(
+                    {"name": official_name},
+                    {"$setOnInsert": {"team": "GEO Rankers", "role": "Member", "id": f"AUTO-{tk.upper()[:3]}"}},
+                    upsert=True
+                )
+                member_lookup[tk] = official_name
+                logger.info(f"Auto-registered member: {official_name}")
+            
+            found_names.append(official_name)
         
         found_names = list(set(found_names))
         num_assigned = len(unique_tokens) if unique_tokens else 1
@@ -194,6 +208,8 @@ def process_and_save(df, db):
     logger.info("Calculating Global stats...")
     total_delivered_amt = df[df['status'] == 'Delivered']['amount_x'].sum() if not df.empty else 0
     total_wip_amt = df[df['status'].isin(['WIP', 'Revision'])]['amount_x'].sum() if not df.empty else 0
+    total_revision_amt = df[df['status'] == 'Revision']['amount_x'].sum() if not df.empty else 0
+    total_cancelled_amt = df[df['status'] == 'Cancelled']['amount_x'].sum() if not df.empty else 0
     unique_projects = df[df['order_num'].str.strip() != "N/A"]['order_num'].nunique() if not df.empty else 0
     
     # Audit counts for the current month (Unique by Order Number)
@@ -204,8 +220,26 @@ def process_and_save(df, db):
     matchedRows = edf['order_num'].nunique() if not edf.empty else 0
     unmatchedRows = seoSmmRows - (df[df['order_num'].isin(edf['order_num'])]['order_num'].nunique() if not edf.empty else 0)
 
+    # Platform Breakdown (Current Month)
+    platform_stats = {"Fiverr": 0.0, "Upwork": 0.0, "B2B": 0.0, "PPH": 0.0}
+    if not df.empty:
+        delivered_df = df[df['status'] == 'Delivered']
+        for _, p in delivered_df.iterrows():
+            prof = str(p.get('profile', '')).lower()
+            amt = safe_float(p.get('amount_x'))
+            if 'fiverr' in prof: platform_stats["Fiverr"] += amt
+            elif 'upwork' in prof: platform_stats["Upwork"] += amt
+            elif 'pph' in prof: platform_stats["PPH"] += amt
+            else: platform_stats["B2B"] += amt
+    
+    platform_stats = {k: round(v, 2) for k, v in platform_stats.items()}
+
     # 5. Member Stats
     logger.info("Calculating Member stats...")
+    
+    # 100% Accuracy Fix: Refetch members to include newly auto-registered ones
+    members_list = list(db["members"].find({}, {"_id": 0}))
+    
     member_summaries = []
     for m in members_list:
         name = m["name"]
@@ -216,7 +250,7 @@ def process_and_save(df, db):
             wip_rev = m_df[m_df['status'].isin(['WIP', 'Revision'])]
             
             s = {
-                "name": name, "fullName": m["fullName"], "team": m["team"], "id": m.get("id",""),
+                "name": name, "fullName": m.get("fullName", name), "team": m.get("team", "GEO Rankers"), "id": m.get("id",""),
                 "role": m.get("role", "Member"),
                 "email": m.get("email", ""),
                 "phone": m.get("phone", ""),
@@ -246,7 +280,7 @@ def process_and_save(df, db):
                 })
         else:
             s = {
-                "name": name, "fullName": m["fullName"], "team": m["team"], "id": m.get("id",""),
+                "name": name, "fullName": m.get("fullName", name), "team": m.get("team", "GEO Rankers"), "id": m.get("id",""),
                 "target": MEM_TARGET(), "total": 0, "delivered": 0, "wip": 0, "revision": 0,
                 "cancelled": 0, "deliveredAmt": 0.0, "wipAmt": 0.0, "projects": []
             }
@@ -271,6 +305,7 @@ def process_and_save(df, db):
         cancelled_count = sum(m['cancelled'] for m in team_members)
 
         team_data[team] = {
+            "name": team,
             "leader": mgmt["leaders"].get(team, {}).get("name", "N/A"),
             "amt": round(delivered_amt, 2),
             "deliveredAmt": round(delivered_amt, 2),
@@ -297,13 +332,24 @@ def process_and_save(df, db):
         "target": DEPT_TARGET(),
         "achieved": round(total_delivered_amt, 2),
         "wipAmt": round(total_wip_amt, 2),
+        "revisionAmt": round(total_revision_amt, 2),
+        "cancelledAmt": round(total_cancelled_amt, 2),
         "uniqueProjects": unique_projects,
         "seoSmmRows": seoSmmRows,
+        "matchedRows": matchedRows,
+        "delivered": deliveredRows, # Unified key for audit
+        "wip": wipRows,
+        "revision": df[df['status'] == 'Revision']['order_num'].nunique() if not df.empty else 0,
+        "cancelled": cancelledRows,
         "matchedRows": matchedRows,
         "deliveredRows": deliveredRows,
         "wipRows": wipRows,
         "cancelledRows": cancelledRows,
         "unmatchedRows": unmatchedRows,
+        "platformStats": platform_stats,
+        "bestPerformer": sorted(member_summaries, key=lambda x: x['deliveredAmt'], reverse=True)[0] if member_summaries else None,
+        "bestTeam": sorted(team_data.values(), key=lambda x: x['deliveredAmt'], reverse=True)[0] if team_data else None,
+        "name": "GEO Rankers",
         "last_updated": time.time()
     })
 

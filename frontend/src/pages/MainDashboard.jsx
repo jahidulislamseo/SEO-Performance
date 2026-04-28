@@ -7,9 +7,32 @@ import TeamCard from '../components/TeamCard';
 import MemberCard from '../components/MemberCard';
 import Leaderboard from '../components/Leaderboard';
 import MemberModal from '../components/MemberModal';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
 import '../assets/css/dashboard.css';
 
-const TEAMS = ['Geo Rankers', 'Rank Riser', 'Search Apex', 'SMM'];
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
+
+// Dynamic teams will be extracted from data
 
 function MainDashboard() {
   const [data, setData] = useState(null);
@@ -19,11 +42,15 @@ function MainDashboard() {
   const [teamFilter, setTeamFilter] = useState('All');
   const [searchQ, setSearchQ] = useState('');
   const [selectedMember, setSelectedMember] = useState(null);
+  const [finStats, setFinStats] = useState(null);
+  const [attStats, setAttStats] = useState({});
+  const [userName, setUserName] = useState('Admin');
+  const [notifs, setNotifs] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/data');
+        const response = await fetch('/api/data');
         if (!response.ok) throw new Error('Failed to fetch data');
         const result = await response.json();
         setData(result);
@@ -34,6 +61,30 @@ function MainDashboard() {
       }
     };
     fetchData();
+
+    fetch('/api/finance-stats')
+      .then(res => res.json())
+      .then(d => setFinStats(d))
+      .catch(err => console.error("FinStats fetch error:", err));
+
+    fetch('/api/attendance-stats')
+      .then(res => res.json())
+      .then(d => setAttStats(d || {}))
+      .catch(() => {});
+
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        const u = JSON.parse(storedUser);
+        if (u && u.name) setUserName(u.name.split(' ')[0]);
+      } catch (e) { console.error("Error parsing user from localStorage", e); }
+    }
+
+    fetch('/api/notifications?id=all')
+      .then(r => r.json())
+      .then(d => setNotifs(d || []))
+      .catch(() => {});
+
     // Poll every 30 seconds for live updates
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
@@ -46,6 +97,7 @@ function MainDashboard() {
   const { data: members = [], summary = {}, audit = {} } = data;
   const deptSummary = summary.dept || {};
   const teamSummaries = summary.teams || {};
+  const TEAMS = Object.keys(teamSummaries);
 
   const filteredMembers = members.filter(m => 
     (teamFilter === 'All' || m.team === teamFilter) &&
@@ -60,6 +112,29 @@ function MainDashboard() {
   const daysLeft = daysInMonth - now.getDate();
   const elapsedPct = Math.round((now.getDate() / daysInMonth) * 100);
 
+  const attSummary = Object.values(attStats).reduce((acc, curr) => {
+    if (curr.status === 'Late') acc.late += 1;
+    if (curr.status === 'Absent') acc.absent += 1;
+    if (curr.status === 'Present') acc.present += 1;
+    return acc;
+  }, { late: 0, absent: 0, present: 0 });
+
+  const handleExport = () => {
+    let csv = 'ID,Name,Team,Role,Delivered,WIP,Target\n';
+    members.forEach(m => {
+      csv += `${m.id},"${m.name}","${m.team}","${m.role || 'Member'}",${m.deliveredAmt || 0},${m.wipAmt || 0},${m.target || 1100}\n`;
+    });
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `Performance_Export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+
   return (
     <div className="dashboard-root">
       <div className="g1"></div>
@@ -69,11 +144,29 @@ function MainDashboard() {
         dept={deptSummary.name || "GEO Rankers"} 
         month={new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
         onRefresh={() => window.location.reload()}
+        onExport={handleExport}
       />
+
+      {/* Announcements Marquee */}
+      {notifs.length > 0 && (
+        <div className="announcement-bar" style={{ background: 'rgba(59,130,246,0.06)', borderBottom: '1px solid rgba(59,130,246,0.1)', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: '16px', overflow: 'hidden' }}>
+          <div style={{ background: '#3b82f6', color: '#fff', fontSize: '9px', fontWeight: 900, padding: '3px 8px', borderRadius: '4px', whiteSpace: 'nowrap', boxShadow: '0 0 10px rgba(59,130,246,0.3)' }}>ANNOUNCEMENT</div>
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <div className="marquee-content" style={{ display: 'flex', gap: '60px', animation: 'marquee 40s linear infinite', whiteSpace: 'nowrap' }}>
+              {[...notifs, ...notifs].map((n, i) => (
+                <div key={i} style={{ fontSize: '13px', color: '#93c5fd', fontWeight: 500 }}>
+                  <strong style={{ color: '#fff', marginRight: '6px' }}>{n.title || 'Update'}:</strong> {n.text}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
 
       <div className="welcome-strip" style={{ padding: '20px 32px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '-0.5px' }}>Welcome back, <span style={{ color: '#3b82f6' }}>Admin</span> 👋</h2>
+          <h2 style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '-0.5px' }}>Welcome back, <span style={{ color: '#3b82f6' }}>{userName}</span> 👋</h2>
           <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Here's what's happening in the {deptSummary.name || "GEO Rankers"} department today.</p>
         </div>
         <div style={{ textAlign: 'right' }}>
@@ -110,6 +203,21 @@ function MainDashboard() {
           </div>
         </div>
       </div>
+      {/* Attendance Summary Strip */}
+      <div className="att-summary-strip" style={{ margin: '0 32px 10px', display: 'flex', gap: '12px' }}>
+        <div style={{ flex: 1, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: '12px', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: '#10b981' }}>PRESENT TODAY</span>
+          <span style={{ fontSize: '16px', fontWeight: 900, color: '#10b981' }}>{attSummary.present}</span>
+        </div>
+        <div style={{ flex: 1, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: '12px', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: '#f59e0b' }}>LATE</span>
+          <span style={{ fontSize: '16px', fontWeight: 900, color: '#f59e0b' }}>{attSummary.late}</span>
+        </div>
+        <div style={{ flex: 1, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '11px', fontWeight: 800, color: '#ef4444' }}>ABSENT</span>
+          <span style={{ fontSize: '16px', fontWeight: 900, color: '#ef4444' }}>{attSummary.absent}</span>
+        </div>
+      </div>
 
       {/* Page Nav */}
       <div className="page-nav">
@@ -131,6 +239,7 @@ function MainDashboard() {
           ))}
           <Link to="/delivery-tracker" className="page-nav-btn" style={{ background: 'rgba(16,185,129,.12)', borderColor: 'rgba(16,185,129,.3)', color: '#7ed2c7' }}>📦 Delivery Tracker ↗</Link>
           <Link to="/query-tracker" className="page-nav-btn" style={{ background: 'rgba(99,102,241,.12)', borderColor: 'rgba(99,102,241,.3)', color: '#a5b4fc' }}>🚀 Query Tracker ↗</Link>
+          <Link to="/finance" className="page-nav-btn" style={{ background: 'rgba(245,158,11,.12)', borderColor: 'rgba(245,158,11,.3)', color: '#fbbf24' }}>💰 Finance Hub ↗</Link>
           <Link to="/employee" className="page-nav-btn" style={{ background: 'rgba(37,99,235,.12)', borderColor: 'rgba(37,99,235,.3)', color: '#93c5fd' }}>👤 Employee Portal ↗</Link>
         </div>
       </div>
@@ -140,13 +249,70 @@ function MainDashboard() {
         {activeSection === 'overview' && (
           <section className="dash-section">
             <DeptOverview 
-              total={35000} 
+              total={summary.dept?.target || 35000} 
               delivered={summary.totalAchieved || 0}
-              wip={deptSummary.wipAmt || 0}
-              cancelled={deptSummary.cancelledAmt || 0}
+              wip={summary.dept?.wipAmt || 0}
+              cancelled={summary.dept?.cancelledAmt || 0}
               members={members.length}
-              dept={deptSummary.name}
+              dept={summary.dept?.name || "GEO Rankers"}
+              platformStats={summary.dept?.platformStats || {}}
+              orderCount={summary.uniqueOrders || 0}
+              wipCount={summary.dept?.wipRows || 0}
+              cancelledCount={summary.dept?.cancelledRows || 0}
+              bestPerformer={summary.dept?.bestPerformer}
+              bestTeam={summary.dept?.bestTeam}
+              deliveredCount={summary.dept?.deliveredRows || 0}
+              projectCount={summary.dept?.seoSmmRows || 0}
+              projectAmt={summary.dept?.totalProjectAmt || summary.totalAchieved * 1.5} 
             />
+
+            {/* Revenue Trend Chart */}
+            {finStats && finStats.months && (
+              <div className="tc" style={{ marginTop: '24px', padding: '24px', height: '350px', position: 'relative' }}>
+                <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '20px' }}>📈 REVENUE TREND (LAST 12 MONTHS)</div>
+                <div style={{ height: '260px' }}>
+                  <Line 
+                    data={{
+                      labels: finStats.months,
+                      datasets: [{
+                        label: 'Revenue',
+                        data: finStats.months.map(m => finStats.data[m].total_sales),
+                        borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#fff'
+                      }]
+                    }}
+                    options={{
+                      responsive: true,
+                      maintainAspectRatio: false,
+                      plugins: { legend: { display: false }, tooltip: { padding: 12, backgroundColor: '#0f172a' } },
+                      scales: {
+                        x: { grid: { display: false }, ticks: { color: '#64748b', font: { size: 10 } } },
+                        y: { grid: { color: 'rgba(255,255,255,0.03)' }, ticks: { color: '#64748b', font: { size: 10 }, callback: v => '$' + v.toLocaleString() } }
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Platform Breakdown Strip */}
+            <div className="stitle" style={{ marginTop: '30px' }}>📊 Platform Breakdown</div>
+            <div className="platform-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '24px' }}>
+              {deptSummary.platforms && Object.entries(deptSummary.platforms).map(([p, val]) => (
+                <div key={p} className="tc" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(148,163,184,0.1)' }}>
+                  <div style={{ fontSize: '10px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>{p} Revenue</div>
+                  <div style={{ fontSize: '20px', fontWeight: 900, color: '#f1f5f9', marginTop: '6px' }}>${val.toLocaleString()}</div>
+                  <div className="tc-track" style={{ height: '4px', marginTop: '10px', background: 'rgba(255,255,255,0.05)' }}>
+                    <div className="tc-fill" style={{ width: `${Math.min(100, (val/(summary.totalAchieved||1))*100)}%`, background: p==='Fiverr'?'#10b981':p==='Upwork'?'#3b82f6':p==='PPH'?'#8b5cf6':'#f59e0b' }}></div>
+                  </div>
+                </div>
+              ))}
+            </div>
             
             <div className="kpi-strip">
               <KpiCard label="Total Delivered" value={`$${(summary.totalAchieved || 0).toLocaleString()}`} sub={`${summary.uniqueOrders || 0} orders`} color="#10b981" icon="✅" />
@@ -162,16 +328,72 @@ function MainDashboard() {
         {activeSection === 'performers' && (
           <section className="dash-section">
             <div className="stitle">🏆 Top Performers</div>
-            <div className="spotlight">
-              <div className="spot-grid">
+            <div className="spotlight" style={{ background: 'transparent', border: 'none', padding: 0 }}>
+              <div className="spot-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '20px' }}>
                 {topPerformers.map((m, i) => {
                   const medals = ['🥇', '🥈', '🥉', '🏅'];
+                  const colors = [
+                    { glow: 'rgba(245, 158, 11, 0.1)', border: 'rgba(245, 158, 11, 0.2)', accent: '#f59e0b' },
+                    { glow: 'rgba(148, 163, 184, 0.05)', border: 'rgba(148, 163, 184, 0.1)', accent: '#94a3b8' },
+                    { glow: 'rgba(194, 138, 44, 0.05)', border: 'rgba(194, 138, 44, 0.1)', accent: '#c28a2c' },
+                    { glow: 'rgba(148, 163, 184, 0.05)', border: 'rgba(148, 163, 184, 0.1)', accent: '#64748b' }
+                  ];
+                  const c = colors[i] || colors[3];
+                  const target = m.target || 1100;
+                  const pct = Math.round(((m.deliveredAmt || 0) / target) * 100);
+
                   return (
-                    <div key={m.id || i} className="spot-card" onClick={() => setSelectedMember(m)}>
-                      <div className="spot-rank">{medals[i]}</div>
-                      <div className="spot-name">{m.name}</div>
-                      <div className="spot-team">{m.team}</div>
-                      <div className="spot-amt">${(m.deliveredAmt || 0).toLocaleString()}</div>
+                    <div key={m.id || i} className="spot-card" onClick={() => setSelectedMember(m)} style={{
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      backdropFilter: 'blur(16px)',
+                      border: `1px solid ${c.border}`,
+                      borderRadius: '24px',
+                      padding: '24px',
+                      textAlign: 'left',
+                      boxShadow: `0 0 30px ${c.glow}`
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                        <div style={{ fontSize: '32px' }}>{medals[i]}</div>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <span style={{ fontSize: '14px' }}>🎉</span>
+                          <div style={{ padding: '4px 10px', background: 'rgba(255,255,255,0.03)', borderRadius: '99px', fontSize: '10px', fontWeight: 800, color: '#64748b' }}>#{i + 1}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '24px' }}>
+                        <div style={{ 
+                          width: '56px', height: '56px', background: `linear-gradient(135deg, ${c.accent}, #000)`, 
+                          borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                          fontSize: '22px', fontWeight: 900, boxShadow: `0 0 15px ${c.glow}`
+                        }}>
+                          {m.name?.charAt(0)}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '18px', fontWeight: 900, color: '#f1f5f9' }}>{m.name}</div>
+                          <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b' }}>
+                            {m.fullName} - <span style={{ color: '#10b981' }}>{m.team}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ fontSize: '32px', fontWeight: 900, color: '#f59e0b', marginBottom: '16px' }}>
+                        ${(m.deliveredAmt || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </div>
+
+                      <div style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', marginBottom: '16px', overflow: 'hidden' }}>
+                        <div style={{ height: '100%', width: `${Math.min(100, pct)}%`, background: 'linear-gradient(90deg, #10b981, #3b82f6)', borderRadius: '10px' }}></div>
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8' }}>
+                          {m.delivered || 0} delivered • {pct}% target
+                        </div>
+                        {pct >= 100 && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 900, color: '#10b981' }}>
+                            ✅ Target Hit!
+                          </div>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -225,11 +447,12 @@ function MainDashboard() {
             <div className="stitle">👥 Team Members</div>
             <div className="members-grid">
               {filteredMembers.map((m, i) => (
-                <MemberCard 
-                  key={m.id || i} 
-                  member={m} 
+                <MemberCard
+                  key={m.id || i}
+                  member={m}
                   rank={members.findIndex(x => x.id === m.id) + 1}
                   onClick={setSelectedMember}
+                  att={attStats[m.id] || null}
                 />
               ))}
             </div>

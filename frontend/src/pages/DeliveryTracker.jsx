@@ -35,20 +35,96 @@ const gradFor = (s) => {
 
 const initials = (s) => s.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
+const FU_KEY = 'dt_followups_v2';
+const loadFuState = () => { try { return JSON.parse(localStorage.getItem(FU_KEY) || '{}'); } catch { return {}; } };
+const saveFuState = (s) => localStorage.setItem(FU_KEY, JSON.stringify(s));
+
 function DeliveryTracker() {
-  const [data, setData] = useState(SAMPLE_DATA);
-  const [search, setSearch] = useState('');
-  const [fuFilter, setFuFilter] = useState('');
+  const [rawProjects, setRawProjects] = useState([]);
+  const [fuState, setFuState]         = useState(loadFuState); // { orderId: [bool×5, sold] }
+  const [loading, setLoading]         = useState(true);
+  const [search, setSearch]           = useState('');
+  const [fuFilter, setFuFilter]       = useState('');
   const [memberFilter, setMemberFilter] = useState('');
-  const [modal, setModal] = useState(null); // { item, step }
-  const [toast, setToast] = useState('');
+  const [modal, setModal]             = useState(null);
+  const [toast, setToast]             = useState('');
+
+  useEffect(() => {
+    // Fetch both project data and follow-up state from backend
+    Promise.all([
+      fetch('/api/data').then(r => r.json()),
+      fetch('/api/followups').then(r => r.json())
+    ])
+    .then(([d, fuData]) => {
+      // Convert follow-up list to lookup object
+      const lookup = {};
+      fuData.forEach(item => {
+        lookup[item.key] = item;
+      });
+      setFuState(lookup);
+
+      const members = d.data || [];
+      const all = [];
+      members.forEach(m => {
+        (m.projects || []).filter(p => p.status === 'Delivered').forEach(p => {
+          all.push({
+            id:     p.order || `${m.id}-${p.date}`,
+            client: p.client || '—',
+            service: p.service || '—',
+            member: m.name,
+            team:   m.team,
+            amt:    p.share || p.amtX || 0,
+            date:   p.deliveredDate || p.date || '—',
+            link:   p.link || null,
+          });
+        });
+      });
+      setRawProjects(all);
+      setLoading(false);
+    })
+    .catch(() => { 
+      setRawProjects(SAMPLE_DATA.map(d => ({ ...d, id: d.id }))); 
+      setLoading(false); 
+    });
+  }, []);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
-  const toggleFu = (id, idx) => {
-    setData(prev => prev.map(d => d.id === id ? { ...d, followups: d.followups.map((v, i) => i === idx ? !v : v) } : d));
+  const getFu   = (id) => fuState[id]?.fu   || [false,false,false,false,false];
+  const getSold = (id) => fuState[id]?.sold  || false;
+
+  const saveToBackend = (id, fu, sold) => {
+    fetch('/api/followups', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: id, fu, sold })
+    }).catch(err => console.error("Save error:", err));
   };
 
+  const toggleFu = (id, idx) => {
+    const currentFu = getFu(id);
+    const nextFu = currentFu.map((v, i) => i === idx ? !v : v);
+    const currentSold = getSold(id);
+    
+    setFuState(prev => ({ 
+      ...prev, 
+      [id]: { key: id, fu: nextFu, sold: currentSold } 
+    }));
+    saveToBackend(id, nextFu, currentSold);
+  };
+
+  const toggleSold = (id) => {
+    const nextFu = [true, true, true, true, true];
+    const nextSold = !getSold(id);
+    
+    setFuState(prev => ({ 
+      ...prev, 
+      [id]: { key: id, fu: nextFu, sold: nextSold } 
+    }));
+    saveToBackend(id, nextFu, nextSold);
+  };
+
+  const data = rawProjects.map(p => ({ ...p, followups: getFu(p.id), sold: getSold(p.id) }));
   const fuCount = (fu) => fu.filter(Boolean).length;
 
   const filtered = data.filter(d => {
@@ -59,12 +135,12 @@ function DeliveryTracker() {
     return matchSearch && matchMember && matchFu;
   });
 
-  const members = [...new Set(SAMPLE_DATA.map(d => d.member))];
-  const total = data.length;
-  const noFu = data.filter(d => fuCount(d.followups) === 0).length;
-  const inProg = data.filter(d => fuCount(d.followups) > 0 && fuCount(d.followups) < 5).length;
-  const done5 = data.filter(d => fuCount(d.followups) === 5).length;
-  const sold = data.filter(d => d.sold).length;
+  const members = [...new Set(rawProjects.map(d => d.member))].sort();
+  const total  = data.length;
+  const noFu   = data.filter(d => fuCount(d.followups) === 0 && !d.sold).length;
+  const inProg = data.filter(d => fuCount(d.followups) > 0 && fuCount(d.followups) < 5 && !d.sold).length;
+  const done5  = data.filter(d => fuCount(d.followups) === 5 && !d.sold).length;
+  const sold   = data.filter(d => d.sold).length;
 
   const modalTemplate = modal ? FOLLOW_UP_TEMPLATES[modal.step].replace('{client}', modal.item.client).replace('{service}', modal.item.service).replace('{order}', modal.item.id) : '';
 
@@ -166,6 +242,9 @@ function DeliveryTracker() {
                     ))}
                     <button className="dt-msg-btn" onClick={() => setModal({ item, step: Math.min(fc, 4) })}>
                       📋 Message
+                    </button>
+                    <button className="dt-msg-btn" style={{ borderColor: 'rgba(245,158,11,.3)', color: '#f59e0b' }} onClick={() => toggleSold(item.id)}>
+                      {item.sold ? '↩️ Unmark' : '💰 Sold'}
                     </button>
                   </div>
                 </div>

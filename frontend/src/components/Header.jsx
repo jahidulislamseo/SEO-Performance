@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-const Header = ({ dept = "GEO Rankers", month = "April 2026", onRefresh, onManagerView }) => {
+const Header = ({ dept = "GEO Rankers", month = "April 2026", onRefresh, onExport, onManagerView }) => {
   const [time, setTime] = useState('');
   const [theme, setThemeState] = useState('dark');
 
@@ -37,9 +37,14 @@ const Header = ({ dept = "GEO Rankers", month = "April 2026", onRefresh, onManag
         </div>
         
         <div className="header-actions" style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '12px', border: '1px solid rgba(148,163,184,0.1)' }}>
-          <button className="hbtn" style={{ border: 'none', background: 'transparent' }} onClick={onRefresh}>↻</button>
-          <button className="hbtn" style={{ border: 'none', background: 'transparent' }} onClick={toggleTheme}>{theme === 'dark' ? '☀️' : '🌙'}</button>
+          <button className="hbtn" style={{ border: 'none', background: 'transparent', fontSize: '14px' }} onClick={onRefresh} title="Refresh Sync">↻</button>
+          <button className="hbtn" style={{ border: 'none', background: 'transparent', fontSize: '14px' }} onClick={() => window.print()} title="Print Dashboard">🖨️</button>
+          <button className="hbtn" style={{ border: 'none', background: 'transparent', fontSize: '14px' }} onClick={toggleTheme} title="Toggle Theme">{theme === 'dark' ? '☀️' : '🌙'}</button>
         </div>
+
+        <button className="hbtn green" style={{ fontSize: '10px', padding: '6px 12px' }} onClick={onExport}>
+          ⬇️ EXPORT CSV
+        </button>
 
         <div className="clock-wrap" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '10px', padding: '6px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid rgba(148,163,184,0.1)' }}>
           <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 800, color: '#64748b' }}>Time</span>

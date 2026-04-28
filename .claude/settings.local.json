@@ -16,7 +16,20 @@
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/)",
       "Bash(Get-FileHash \"c:\\\\Users\\\\Jahidul Islam\\\\Downloads\\\\jahidul\\\\static\\\\js\\\\employee.js\")",
       "Bash(curl -s http://127.0.0.1:5000/employee)",
-      "Bash(curl -s http://127.0.0.1:5000/static/js/employee.js)"
+      "Bash(curl -s http://127.0.0.1:5000/static/js/employee.js)",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5000/api/data)",
+      "Bash(taskkill /F /IM python.exe)",
+      "PowerShell(Stop-Process -Name python -Force -ErrorAction SilentlyContinue)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); m=d['data'][0]; print\\(json.dumps\\({k:v for k,v in m.items\\(\\) if k!='projects'}, indent=2\\)\\)\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d['summary'], indent=2\\)\\)\")",
+      "Bash(curl -s \"http://localhost:5000/api/admin/attendance?date=2026-04-28\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d[:2], indent=2\\)\\)\")",
+      "Bash(curl -s http://localhost:5000/api/attendance-stats)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(dict\\(list\\(d.items\\(\\)\\)[:3]\\), indent=2\\)\\)\")",
+      "Bash(curl -s http://localhost:5000/api/delivered-projects)",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(f'Count: {len\\(d\\)}'\\); print\\(json.dumps\\(d[0], indent=2, default=str\\)\\)\")"
     ]
   }
 }

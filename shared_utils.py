@@ -68,9 +68,13 @@ COL = {
 }
 
 # ─── DATABASE ───────────────────────────────────────────────
+_mongo_client = None
+
 def get_db():
-    client = MongoClient(MONGO_URI, server_api=ServerApi('1'))
-    return client[DB_NAME]
+    global _mongo_client
+    if _mongo_client is None:
+        _mongo_client = MongoClient(MONGO_URI, server_api=ServerApi('1'), connectTimeoutMS=5000, serverSelectionTimeoutMS=5000)
+    return _mongo_client[DB_NAME]
 
 # ─── UTILS ──────────────────────────────────────────────────
 def parse_gviz_date(val):
