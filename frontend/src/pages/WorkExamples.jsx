@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import { Link } from 'react-router-dom';
 
@@ -164,7 +164,18 @@ function WorkExamples() {
                 <div style={{ display: 'flex', gap: '4px' }}>
                   {[1,2,3,4,5].map(s => <span key={s} style={{ color: '#f59e0b', fontSize: '12px' }}>★</span>)}
                 </div>
-                <button style={{ background: 'none', border: 'none', color: '#3b82f6', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>View Case Study →</button>
+                {ex.url ? (
+                  <a 
+                    href={ex.url} 
+                    target="_blank" 
+                    rel="noreferrer" 
+                    style={{ color: '#3b82f6', fontSize: '12px', fontWeight: 700, textDecoration: 'none', background: 'rgba(59,130,246,0.1)', padding: '6px 12px', borderRadius: '8px' }}
+                  >
+                    View Case Study →
+                  </a>
+                ) : (
+                  <button style={{ background: 'none', border: 'none', color: '#64748b', fontSize: '12px', fontWeight: 700, cursor: 'not-allowed' }}>No Report Linked</button>
+                )}
               </div>
             </div>
           ))}
