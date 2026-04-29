@@ -68,7 +68,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .lf-err{font-size:12px;font-weight:700;color:#ef4444;min-height:18px;margin-bottom:4px}
 
 /* ── EMPLOYEE APP ── */
-.emp-app{display:grid;grid-template-columns:240px 1fr;min-height:100vh;position:relative;z-index:5}
+.emp-app{display:flex;min-height:100vh;position:relative;z-index:5}
 .emp-sidebar{background:rgba(9,15,29,.98);border-right:1px solid rgba(148,163,184,.12);padding:20px 0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow-y:auto}
 .sb-top{padding:0 18px 20px;border-bottom:1px solid rgba(148,163,184,.1)}
 .sb-brand{display:flex;align-items:center;gap:10px;margin-bottom:4px}
@@ -169,7 +169,7 @@ const PROJECTS = [
   { title: 'Competitor Analysis Report', type: 'Research', amt: 60, status: 'Cancelled', date: 'Apr 8' },
 ];
 
-const ATT_DATA = [1,1,1,1,1,0,0, 1,1,1,0,1,0,0, 1,1,1,1,1,0,0, 1,'t','f','f','f','f','f'];
+const ATT_DATA = [1,1,1,1,1,0,0, 1,1,1,1,1,0,0, 1,1,1,0,1,0,0, 1,1,1,1,0, 't','f','f','f'];
 const DAYS = ['S','M','T','W','T','F','S'];
 
 const statusBadge = (s) => {
@@ -341,14 +341,14 @@ const App = () => {
               {DAYS.map(d=><div key={d} className="att-day header" style={{fontSize:9,fontWeight:800,color:'#475569',textAlign:'center'}}>{d}</div>)}
               {ATT_DATA.map((v,i)=>(
                 <div key={i} className={`att-day${v===1?' present':v===0?' absent':v==='t'?' today':' future'}`} style={{width:32,height:32,display:'flex',alignItems:'center',justifyContent:'center'}}>
-                  {v==='f'?'':(i+1<=28?i+1:'')}
+                  {v==='f'?'':(i+1<=30?i+1:'')}
                 </div>
               ))}
             </div>
             <div style={{display:'flex',gap:12,marginTop:14,fontSize:11,fontWeight:700,color:'#64748b'}}>
               <span style={{color:'#34d399'}}>✅ 18 Present</span>
               <span style={{color:'#f87171'}}>❌ 4 Absent</span>
-              <span style={{color:'#7ea8c4'}}>📅 4 Left</span>
+              <span style={{color:'#7ea8c4'}}>📅 3 Left</span>
             </div>
           </div>
           {/* Performance ring */}

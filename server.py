@@ -776,10 +776,14 @@ def admin_calendar_config():
 
 @app.route("/api/delivered-projects")
 def get_delivered_from_db():
-    """Default: Load delivered projects instantly from MongoDB Archive."""
+    """Load delivered projects from MongoDB Archive, optionally filtered by month."""
     try:
         db = get_db()
-        projects = list(db["projects_archive"].find({"status": "Delivered"}, {"_id": 0}).sort("date", -1))
+        month_filter = request.args.get("month", "")
+        query = {"status": "Delivered"}
+        if month_filter:
+            query["month"] = month_filter
+        projects = list(db["projects_archive"].find(query, {"_id": 0}).sort("date", -1))
         return jsonify(projects)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -819,9 +823,6 @@ def get_archive_months():
     except Exception as e:
         return jsonify([])
 
-@app.route("/query-tracker")
-def query_tracker():
-    return render_template("query-tracker.html")
 
 @app.route("/api/query-tracker")
 def api_query_tracker():

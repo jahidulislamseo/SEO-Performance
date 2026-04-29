@@ -84,7 +84,7 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
 .st-pending-b{background:rgba(245,158,11,.12);color:#f59e0b;border:1px solid rgba(245,158,11,.28)}
 .st-closed-b{background:rgba(16,185,129,.12);color:#34d399;border:1px solid rgba(16,185,129,.28)}
 .q-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:12px}
-.q-item{}
+
 .q-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:#475569;font-weight:800;margin-bottom:3px}
 .q-val{font-size:12px;font-weight:700;color:#cbd5e1}
 .q-val.hi{color:#10b981}
@@ -263,7 +263,7 @@ const App = () => {
                   <div className="q-item"><div className="q-label">Service</div><div className="q-val">{q.service}</div></div>
                   <div className="q-item"><div className="q-label">Budget</div><div className="q-val hi">{q.budget}</div></div>
                   <div className="q-item"><div className="q-label">Source</div><div className="q-val">{q.source}</div></div>
-                  <div className="q-item"><div className="q-label">Contact</div><div className="q-val"><a href="#">{q.contact}</a></div></div>
+                  <div className="q-item"><div className="q-label">Contact</div><div className="q-val"><a href={q.contact.includes('@')?`mailto:${q.contact}`:`tel:${q.contact.replace(/\s/g,'')}`}>{q.contact}</a></div></div>
                 </div>
 
                 {q.remark && (

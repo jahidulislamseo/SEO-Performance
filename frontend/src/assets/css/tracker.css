@@ -10,11 +10,17 @@
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 16px;
   padding: 18px 24px;
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   gap: 20px;
-  align-items: start;
   transition: border-color 0.2s, transform 0.2s;
+}
+
+/* Left content fills available space */
+.dt-item > div:first-child {
+  flex: 1;
+  min-width: 0;
 }
 
 .dt-item:hover {
@@ -58,31 +64,40 @@
   font-size: 12px;
   color: #64748b;
   margin-top: 3px;
+  max-width: 560px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .dt-info {
   display: flex;
-  gap: 24px;
+  gap: 0;
   flex-wrap: wrap;
   margin-bottom: 14px;
+  justify-content: space-between;
+  max-width: 680px;
 }
 
 .dt-field {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+  flex: 1;
+  min-width: 120px;
+  padding-right: 16px;
 }
 
 .dt-field-lbl {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.2px;
   color: #475569;
 }
 
 .dt-field-val {
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: #cbd5e1;
 }

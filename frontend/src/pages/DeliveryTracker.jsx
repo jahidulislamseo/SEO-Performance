@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../components/Header';
 import '../assets/css/tracker.css';
@@ -37,54 +37,45 @@ const initials = (s) => s.split(' ').map(w => w[0]).join('').slice(0, 2).toUpper
 
 const FU_KEY = 'dt_followups_v2';
 const loadFuState = () => { try { return JSON.parse(localStorage.getItem(FU_KEY) || '{}'); } catch { return {}; } };
-const saveFuState = (s) => localStorage.setItem(FU_KEY, JSON.stringify(s));
 
 function DeliveryTracker() {
   const [rawProjects, setRawProjects] = useState([]);
-  const [fuState, setFuState]         = useState(loadFuState); // { orderId: [bool×5, sold] }
+  const [fuState, setFuState]         = useState(loadFuState);
   const [loading, setLoading]         = useState(true);
   const [search, setSearch]           = useState('');
   const [fuFilter, setFuFilter]       = useState('');
-  const [memberFilter, setMemberFilter] = useState('');
   const [modal, setModal]             = useState(null);
   const [toast, setToast]             = useState('');
 
   useEffect(() => {
-    // Fetch both project data and follow-up state from backend
+    const monthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+
     Promise.all([
-      fetch('/api/data').then(r => r.json()),
+      fetch(`/api/delivered-projects?month=${monthStr}`).then(r => r.json()),
       fetch('/api/followups').then(r => r.json())
     ])
-    .then(([d, fuData]) => {
-      // Convert follow-up list to lookup object
+    .then(([projects, fuData]) => {
       const lookup = {};
-      fuData.forEach(item => {
-        lookup[item.key] = item;
-      });
+      fuData.forEach(item => { lookup[item.key] = item; });
       setFuState(lookup);
 
-      const members = d.data || [];
-      const all = [];
-      members.forEach(m => {
-        (m.projects || []).filter(p => p.status === 'Delivered').forEach(p => {
-          all.push({
-            id:     p.order || `${m.id}-${p.date}`,
-            client: p.client || '—',
-            service: p.service || '—',
-            member: m.name,
-            team:   m.team,
-            amt:    p.share || p.amtX || 0,
-            date:   p.deliveredDate || p.date || '—',
-            link:   p.link || null,
-          });
-        });
-      });
+      const all = (Array.isArray(projects) ? projects : []).map(p => ({
+        id:      p.order || p._id || '—',
+        client:  p.client || '—',
+        service: p.service || '—',
+        member:  p.assign || p.member || '—',
+        team:    p.team || p.profile || '—',
+        amt:     p.amtX || p.share || 0,
+        date:    p.deliveredDate || p.date || '—',
+        link:    p.link || null,
+      }));
+
       setRawProjects(all);
       setLoading(false);
     })
-    .catch(() => { 
-      setRawProjects(SAMPLE_DATA.map(d => ({ ...d, id: d.id }))); 
-      setLoading(false); 
+    .catch(() => {
+      setRawProjects(SAMPLE_DATA.map(d => ({ ...d, id: d.id })));
+      setLoading(false);
     });
   }, []);
 
@@ -130,12 +121,9 @@ function DeliveryTracker() {
   const filtered = data.filter(d => {
     const q = search.toLowerCase();
     const matchSearch = !search || d.client.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.member.toLowerCase().includes(q);
-    const matchMember = !memberFilter || d.member === memberFilter;
     const matchFu = fuFilter === '' ? true : fuFilter === '6' ? d.sold : fuCount(d.followups) === parseInt(fuFilter);
-    return matchSearch && matchMember && matchFu;
+    return matchSearch && matchFu;
   });
-
-  const members = [...new Set(rawProjects.map(d => d.member))].sort();
   const total  = data.length;
   const noFu   = data.filter(d => fuCount(d.followups) === 0 && !d.sold).length;
   const inProg = data.filter(d => fuCount(d.followups) > 0 && fuCount(d.followups) < 5 && !d.sold).length;
@@ -212,7 +200,11 @@ function DeliveryTracker() {
 
         {/* List */}
         <div className="dt-list">
-          {filtered.map(item => {
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 48, color: '#64748b', fontSize: 14 }}>⏳ Loading delivered projects...</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 48, color: '#64748b', fontSize: 14 }}>📭 No delivered projects found.</div>
+          ) : filtered.map(item => {
             const fc = fuCount(item.followups);
             return (
               <div key={item.id} className={`dt-item ${item.sold ? 'sold' : ''}`}>
