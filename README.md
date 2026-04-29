@@ -1,27 +1,73 @@
-# Mull Performance Design System
+# SEO Performance Hub (FinTrack)
 
 ## Overview
 
 **Product:** SEO Performance Hub (internally: "Mull Performance Dashboard")
 **Company context:** An internal analytics platform built for SEO and SMM departments. Tracks project delivery, revenue targets ($35,000/month), and individual/team productivity across four teams: **Geo Rankers**, **Rank Riser**, **Search Apex**, and **SMM**.
 **Developer:** Jahidul Islam
+**Tech Stack:** React 18 (Vite) + Flask (Python) + MongoDB + Vercel
 
-### Sources
-- **GitHub Repository:** `https://github.com/jahidulislamseo/SEO-Performance` (main branch)
-  - `templates/` — HTML page templates (index, employee-dashboard, query-tracker, delivery-tracker)
-  - `static/css/` — base.css, dashboard.css, employee.css, tracker.css
-  - `static/js/` — themes.js, config.js, dashboard.js, api.js, utils.js, tracker.js, employee.js
-- No Figma file provided. Design system inferred from source code.
+### Repository & Architecture
+- **GitHub Repository:** `https://github.com/jahidulislamseo/SEO-Performance`
+- **Architecture:** 
+  - **Frontend:** React-based SPA located in `/frontend`. Uses Vite for fast development and building.
+  - **Backend:** Python/Flask API located in `/api`. Handles data processing, Google Sheets integration, and MongoDB storage.
+  - **Database:** MongoDB for persistent storage of summaries, member profiles, and attendance.
 
-### Products / Surfaces
-1. **Main Dashboard** (`/`) — Department overview, team cards, member stat cards, leaderboard, audit panels
-2. **Employee Portal** (`/employee`) — Individual employee login, personal stat view, project history
-3. **Delivery Tracker** (`/delivery-tracker`) — Project delivery pipeline tracker
-4. **Query Tracker** (`/query-tracker`) — SEO query management and tracking
+---
+
+## Project Structure
+
+```bash
+├── api/                     # Backend API (Flask)
+│   ├── index.py             # Main entry point (Vercel Function)
+│   ├── agent_engine.py      # Background logic & Data processing
+│   ├── shared_utils.py      # Database & Google Sheets utilities
+│   └── requirements.txt     # Python dependencies
+├── frontend/                # React Frontend
+│   ├── src/                 # Application source code
+│   ├── public/              # Static assets
+│   ├── package.json         # Node dependencies
+│   └── vite.config.js       # Vite configuration
+├── scripts/                 # Utility & Management scripts
+│   └── legacy/              # Older scripts and archived code
+├── vercel.json              # Vercel deployment configuration
+└── README.md                # This file
+```
+
+---
+
+## Getting Started
+
+### Local Development
+
+1. **Backend (Python):**
+   ```bash
+   cd api
+   pip install -r requirements.txt
+   python index.py
+   ```
+   *Note: Ensure you have a `.env` file in the `api/` directory with `MONGO_URI` and `SHEET_ID`.*
+
+2. **Frontend (React):**
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   *The frontend will be available at `http://localhost:5173`.*
+
+### Deployment (Vercel)
+
+The project is configured for one-click deployment on Vercel. 
+- The frontend is built using `@vercel/static-build`.
+- The backend runs as a Serverless Function using `@vercel/python`.
+- Environment variables (`MONGO_URI`, `SHEET_ID`) must be configured in the Vercel Dashboard.
 
 ---
 
 ## CONTENT FUNDAMENTALS
+... [Rest of the design system content remains the same] ...
 
 ### Voice & Tone
 - **Direct and data-forward.** Copy is terse and metric-focused. Numbers come first.
