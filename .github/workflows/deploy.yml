@@ -1,0 +1,65 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Copy files to VPS
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          source: "api/**,frontend/dist/**,package.json,vercel.json"
+          target: "/var/www/seo-performance"
+
+      - name: Setup & Restart Services on VPS
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: root
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: 22
+          script: |
+            cd /var/www/seo-performance/api
+            python3 -m venv venv || true
+            ./venv/bin/pip install -r requirements.txt gunicorn flask-cors
+            
+            # Setup environment variables in systemd service
+            echo "[Unit]
+            Description=Gunicorn instance to serve SEO Dashboard API
+            After=network.target
+            
+            [Service]
+            User=root
+            Group=www-data
+            WorkingDirectory=/var/www/seo-performance/api
+            Environment=\"PATH=/var/www/seo-performance/api/venv/bin\"
+            Environment=\"SHEET_ID=${{ secrets.SHEET_ID }}\"
+            Environment=\"MONGO_URI=${{ secrets.MONGO_URI }}\"
+            ExecStart=/var/www/seo-performance/api/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 index:app
+            
+            [Install]
+            WantedBy=multi-user.target" > /etc/systemd/system/seo-dashboard.service
+            
+            systemctl daemon-reload
+            systemctl restart seo-dashboard
+            systemctl restart nginx
