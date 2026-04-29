@@ -60,14 +60,16 @@ function DeliveryTracker() {
       setFuState(lookup);
 
       const all = (Array.isArray(projects) ? projects : []).map(p => ({
-        id:      p.order || p._id || '—',
-        client:  p.client || '—',
-        service: p.service || '—',
-        member:  p.assign || p.member || '—',
-        team:    p.team || p.profile || '—',
-        amt:     p.amtX || p.share || 0,
-        date:    p.deliveredDate || p.date || '—',
-        link:    p.link || null,
+        id:             p.order || p._id || '—',
+        client:         p.client || '—',
+        service:        p.service || '—',
+        assign:         p.assign || p.member || '—',
+        team:           p.team || p.profile || '—',
+        amt:            p.amtX || p.share || 0,
+        orderDate:      p.date || '—',
+        deliveredDate:  p.deliveredDate || '—',
+        instruction:    p.link || p.instruction || null,
+        profile:        p.profile || '—',
       }));
 
       setRawProjects(all);
@@ -135,7 +137,7 @@ function DeliveryTracker() {
   return (
     <div className="dashboard-root">
       <Header 
-        dept="Delivery Tracker" 
+        dept="Repeat Order" 
         month="Follow-Up Management" 
         onRefresh={() => window.location.reload()}
       />
@@ -143,7 +145,7 @@ function DeliveryTracker() {
       <div className="page-nav">
         <div className="page-nav-inner">
           <Link to="/" className="page-nav-btn">← Back to Dashboard</Link>
-          <button className="page-nav-btn active">📦 Delivery Tracker</button>
+          <button className="page-nav-btn active">📦 Repeat Order</button>
           <Link to="/query-tracker" className="page-nav-btn">🚀 Query Tracker</Link>
           <Link to="/employee" className="page-nav-btn">👤 Employee Portal</Link>
         </div>
@@ -208,20 +210,47 @@ function DeliveryTracker() {
             const fc = fuCount(item.followups);
             return (
               <div key={item.id} className={`dt-item ${item.sold ? 'sold' : ''}`}>
-                <div>
-                  <div className="dt-top">
-                    <div className="dt-av" style={{ background: gradFor(item.client) }}>{initials(item.client)}</div>
-                    <div>
-                      <div className="dt-client">{item.client}</div>
-                      <div className="dt-meta">{item.id} · {item.service} · {item.date}</div>
+                {/* Column 1: Client Info */}
+                <div className="dt-top">
+                  <div className="dt-av" style={{ background: gradFor(item.client) }}>{initials(item.client)}</div>
+                  <div className="dt-content">
+                    <div className="dt-client">{item.client}</div>
+                    <div className="dt-meta">
+                      <span>#{item.id.slice(-5)}</span>
+                      <span>·</span>
+                      <span>{item.service}</span>
                     </div>
                   </div>
-                  <div className="dt-info">
-                    <div className="dt-field"><div className="dt-field-lbl">Member</div><div className="dt-field-val">{item.member}</div></div>
-                    <div className="dt-field"><div className="dt-field-lbl">Team</div><div className="dt-field-val">{item.team}</div></div>
-                    <div className="dt-field"><div className="dt-field-lbl">Amount</div><div className="dt-field-val green">${item.amt}</div></div>
+                </div>
+
+                {/* Column 2: Details Grid */}
+                <div className="dt-info-grid">
+                  <div className="dt-field">
+                    <div className="dt-field-lbl">Assign / Profile</div>
+                    <div className="dt-field-val">{item.assign} <span style={{opacity:0.5, fontSize:'10px'}}>({item.profile})</span></div>
                   </div>
-                  <div style={{ fontSize: 10, fontWeight: 800, color: '#475569', marginBottom: 8, textTransform: 'uppercase' }}>Follow-up Progress ({fc}/5)</div>
+                  <div className="dt-field">
+                    <div className="dt-field-lbl">Team / Delivered By</div>
+                    <div className="dt-field-val">{item.team}</div>
+                  </div>
+                  <div className="dt-field">
+                    <div className="dt-field-lbl">Order / Del. Date</div>
+                    <div className="dt-field-val">{item.orderDate} / {item.deliveredDate}</div>
+                  </div>
+                  {item.instruction && (
+                    <div className="dt-field">
+                      <div className="dt-field-lbl">Instruction</div>
+                      <a href={item.instruction} target="_blank" rel="noreferrer" className="dt-field-val" style={{color:'var(--accent)', textDecoration:'underline'}}>View Sheet 📄</a>
+                    </div>
+                  )}
+                </div>
+
+                {/* Column 3: Progress */}
+                <div className="dt-progress-section">
+                  <div className="dt-progress-header">
+                    <div className="dt-progress-label">Follow-up Progress</div>
+                    <div className="dt-progress-count">{fc}/5</div>
+                  </div>
                   <div className="fu-dots">
                     {item.followups.map((done, i) => (
                       <button 
@@ -232,25 +261,31 @@ function DeliveryTracker() {
                         {item.sold ? '💰' : done ? '✓' : i + 1}
                       </button>
                     ))}
-                    <button className="dt-msg-btn" onClick={() => setModal({ item, step: Math.min(fc, 4) })}>
-                      📋 Message
-                    </button>
-                    <button className="dt-msg-btn" style={{ borderColor: 'rgba(245,158,11,.3)', color: '#f59e0b' }} onClick={() => toggleSold(item.id)}>
-                      {item.sold ? '↩️ Unmark' : '💰 Sold'}
-                    </button>
                   </div>
                 </div>
-                <div className="dt-right">
-                  <div className="dt-amt">${item.amt}</div>
-                  {item.sold ? (
-                    <span className="dt-status-badge" style={{ background: 'rgba(245,158,11,.12)', border: '1px solid rgba(245,158,11,.3)', color: '#fbbf24' }}>💰 Sold</span>
-                  ) : fc === 5 ? (
-                    <span className="dt-status-badge" style={{ background: 'rgba(16,185,129,.12)', border: '1px solid rgba(16,185,129,.3)', color: '#34d399' }}>✅ Complete</span>
-                  ) : fc === 0 ? (
-                    <span className="dt-status-badge" style={{ background: 'rgba(239,68,68,.1)', border: '1px solid rgba(239,68,68,.25)', color: '#f87171' }}>⏳ Not Started</span>
-                  ) : (
-                    <span className="dt-status-badge" style={{ background: 'rgba(99,102,241,.12)', border: '1px solid rgba(99,102,241,.28)', color: '#a5b4fc' }}>🔄 {fc}/5 Done</span>
-                  )}
+
+                {/* Column 4: Right Section */}
+                <div className="dt-right-col">
+                  <div className="dt-price-row">
+                    <div className="dt-price">${item.amt}</div>
+                    {item.sold ? (
+                      <span className="dt-status-pill sp-sold">💰 Sold</span>
+                    ) : fc === 5 ? (
+                      <span className="dt-status-pill sp-complete">✅ Complete</span>
+                    ) : fc === 0 ? (
+                      <span className="dt-status-pill sp-not-started">⏳ Not Started</span>
+                    ) : (
+                      <span className="dt-status-pill sp-in-progress">🔄 {fc}/5</span>
+                    )}
+                  </div>
+                  <div className="dt-actions">
+                    <button className="dt-btn message" onClick={() => setModal({ item, step: Math.min(fc, 4) })}>
+                      📋 Message
+                    </button>
+                    <button className="dt-btn sold-btn" onClick={() => toggleSold(item.id)}>
+                      {item.sold ? '↩️' : '💰 Sold'}
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -261,7 +296,7 @@ function DeliveryTracker() {
       <footer className="footer">
         <span>SEO Performance Hub</span>
         <span>·</span>
-        <span>Delivery Tracker</span>
+        <span>Repeat Order</span>
         <span>·</span>
         <span>April 2026</span>
       </footer>

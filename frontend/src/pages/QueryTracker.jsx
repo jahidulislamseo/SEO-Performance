@@ -14,32 +14,81 @@ const GRADS = [
 
 const gradFor = s => GRADS[s.charCodeAt(0) % GRADS.length];
 const initials = s => s.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-const SAMPLE_QUERIES = [
-  { id: 1, client: 'Dhaka Restaurant Group', contact: '+880 171 234 5678', source: 'Facebook Messenger', service: 'Local SEO Package', budget: '$150–200', member: 'Jahidul Islam', date: 'Apr 24', status: 'new', remark: 'Very interested, asked for proposal' },
-  { id: 2, client: 'RajShahi IT Solutions', contact: 'rajshahi.it@gmail.com', source: 'WhatsApp', service: 'National SEO — 3 Months', budget: '$400–600', member: 'Rafiq Ahmed', date: 'Apr 23', status: 'pending', remark: 'Sent proposal, waiting for approval' },
-  { id: 3, client: 'Chittagong Fashion House', contact: '+880 181 987 6543', source: 'Website Contact Form', service: 'SMM Package — Instagram', budget: '$120', member: 'Tanvir Hossain', date: 'Apr 22', status: 'closed', remark: 'Closed — converted to order ORD-4900 ✅' },
-  { id: 4, client: 'Sylhet Travels Agency', contact: 'sylhet.travels@gmail.com', source: 'Referral', service: 'GMB Optimization × 5', budget: '$250', member: 'Sara Rahman', date: 'Apr 22', status: 'new', remark: '' },
-  { id: 5, client: 'Khulna Electronics Hub', contact: '+880 192 345 6789', source: 'Facebook Group', service: 'E-commerce SEO Setup', budget: '$300–500', member: 'Omar Sheikh', date: 'Apr 21', status: 'pending', remark: 'Client wants to negotiate price' },
-  { id: 6, client: 'Barishal Medical Center', contact: 'barisal.med@gmail.com', source: 'LinkedIn', service: 'Local SEO + GMB', budget: '$180', member: 'Nadia Khan', date: 'Apr 20', status: 'new', remark: 'First contact, needs follow-up call' },
-  { id: 7, client: 'Mymensingh Agro Ltd', contact: '+880 155 678 9012', source: 'Cold Outreach', service: 'National SEO Campaign', budget: '$800', member: 'Priya Das', date: 'Apr 19', status: 'closed', remark: 'Lost — went with competitor ❌' },
-];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
 const BLANK_FORM = { client: '', contact: '', source: '', service: '', budget: '', member: '', remark: '' };
 
 function QueryTracker() {
-  const [queries, setQueries] = useState(SAMPLE_QUERIES);
+  const [queries, setQueries] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [memberFilter, setMemberFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [monthIdx, setMonthIdx] = useState(3); // April
+  const [monthIdx, setMonthIdx] = useState(new Date().getMonth());
+  const [year] = useState(new Date().getFullYear());
   const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState(BLANK_FORM);
   const [editId, setEditId] = useState(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
-  const membersList = [...new Set(SAMPLE_QUERIES.map(q => q.member))];
+  const fetchQueries = (forceRefresh = false) => {
+    setLoading(true);
+    const monthStr = `${year}-${String(monthIdx + 1).padStart(2, '0')}`;
+    const url = `/api/query-tracker?month=${monthStr}${forceRefresh ? '&refresh=true' : ''}`;
+    
+    fetch(url)
+      .then(res => res.json())
+      .then(data => {
+        const mapped = data.map(q => {
+          let status = 'new';
+          const s = (q.status || '').toLowerCase();
+          const cs = (q.convStatus || '').toLowerCase();
+          
+          if (cs === 'sold' || s === 'pass' || cs.includes('no need')) status = 'closed';
+          else if (s.includes('sent') || s.includes('follow-up') || cs.includes('done')) status = 'pending';
+          
+          return {
+            id: q.key,
+            client: q.client,
+            source: q.source,
+            service: q.service,
+            profile: q.profile || 'N/A',
+            member: q.member,
+            date: q.date,
+            status: status,
+            queryStatus: q.status,
+            fu1: q.fu1 || '',
+            fu2: q.fu2 || '',
+            fu3: q.fu3 || '',
+            inboxUrl: q.inboxUrl || '',
+            convUrl: q.convUrl || '',
+            briefUrl: q.briefUrl || '',
+            convStatus: q.convStatus || '',
+            sheetRemarks: q.sheetRemarks || '',
+            localRemark: q.localRemark || ''
+          };
+        });
+        setQueries(mapped);
+        setLoading(false);
+        setIsSyncing(false);
+      })
+      .catch(err => {
+        console.error("Fetch error:", err);
+        setLoading(false);
+        setIsSyncing(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchQueries();
+  }, [monthIdx]);
+
+  const handleRefresh = () => {
+    setIsSyncing(true);
+    fetchQueries(true);
+  };
+
+  const membersList = [...new Set(queries.map(q => q.member))].sort();
 
   const filtered = queries.filter(q => {
     const qs = search.toLowerCase();
@@ -58,8 +107,15 @@ function QueryTracker() {
 
   const setStatus = (id, status) => setQueries(prev => prev.map(q => q.id === id ? { ...q, status } : q));
 
+  const saveLocalRemark = (key, remark) => {
+    fetch('/api/query-remarks', {
+      method: 'POST',
+      body: JSON.stringify({ key, remark })
+    }).then(r => r.json()).catch(e => console.error("Remark save error:", e));
+  };
+
   const openAdd = () => { setForm(BLANK_FORM); setEditId(null); setShowModal(true); };
-  const openEdit = (q) => { setForm({ client: q.client, contact: q.contact, source: q.source, service: q.service, budget: q.budget, member: q.member, remark: q.remark }); setEditId(q.id); setShowModal(true); };
+  const openEdit = (q) => { setForm({ client: q.client, contact: q.inboxUrl, source: q.source, service: q.service, budget: q.profile, member: q.member, remark: q.sheetRemarks }); setEditId(q.id); setShowModal(true); };
 
   const saveForm = () => {
     if (!form.client.trim()) return;
@@ -81,14 +137,14 @@ function QueryTracker() {
     <div className="dashboard-root">
       <Header 
         dept="Query & Lead Tracker" 
-        month="Sales Assistant" 
-        onRefresh={() => window.location.reload()}
+        month={`${MONTHS[monthIdx]} ${year}`} 
+        onRefresh={handleRefresh}
       />
 
       <div className="page-nav">
         <div className="page-nav-inner">
           <Link to="/" className="page-nav-btn">← Back to Dashboard</Link>
-          <Link to="/delivery-tracker" className="page-nav-btn">📦 Delivery Tracker</Link>
+          <Link to="/delivery-tracker" className="page-nav-btn">📦 Repeat Order</Link>
           <button className="page-nav-btn active">🚀 Query Tracker</button>
           <Link to="/employee" className="page-nav-btn">👤 Employee Portal</Link>
           <button className="page-nav-btn" onClick={openAdd} style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', borderColor: 'transparent', color: 'white', marginLeft: 'auto' }}>+ Add Query</button>
@@ -115,7 +171,7 @@ function QueryTracker() {
             <div className="kpi-lbl" style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', color: '#64748b' }}>✅ Closed</div>
           </div>
           <div className="kpi-box" style={{ background: 'rgba(14,24,38,.97)', border: '1px solid rgba(148,163,184,.18)', borderRadius: 14, padding: 16 }}>
-            <div className="kpi-num" style={{ fontSize: 28, fontWeight: 900, color: '#34d399' }}>{queries.filter(q => q.status === 'closed' && q.remark.includes('✅')).length}</div>
+            <div className="kpi-num" style={{ fontSize: 28, fontWeight: 900, color: '#34d399' }}>{queries.filter(q => q.status === 'closed' && (q.sheetRemarks || '').includes('✅')).length}</div>
             <div className="kpi-lbl" style={{ fontSize: 9, fontWeight: 800, textTransform: 'uppercase', color: '#64748b' }}>💰 Converted</div>
           </div>
         </div>
@@ -151,7 +207,11 @@ function QueryTracker() {
 
         {/* Query List */}
         <div className="query-list">
-          {filtered.map(q => {
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>Loading real data from sheet...</div>
+          ) : filtered.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: 40, color: '#64748b' }}>No queries found for this month.</div>
+          ) : filtered.map(q => {
             const sc = statusConfig[q.status];
             return (
               <div key={q.id} className={`qc ${q.status}-q`}>
@@ -164,23 +224,51 @@ function QueryTracker() {
                     </div>
                   </div>
                   <div className="q-right">
-                    <span className={`status-badge ${sc.cls}`}>{sc.label}</span>
+                    <span className={`status-badge ${sc.cls}`}>{q.rawStatus || sc.label}</span>
                   </div>
                 </div>
 
-                <div className="q-grid">
-                  <div className="q-item"><div className="q-label">Service</div><div className="q-val">{q.service}</div></div>
-                  <div className="q-item"><div className="q-label">Budget</div><div className="q-val hi">{q.budget}</div></div>
+                <div className="q-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px' }}>
+                  <div className="q-item"><div className="q-label">Profile Name</div><div className="q-val hi">{q.profile}</div></div>
+                  <div className="q-item"><div className="q-label">Service Line</div><div className="q-val">{q.service}</div></div>
                   <div className="q-item"><div className="q-label">Source</div><div className="q-val">{q.source}</div></div>
-                  <div className="q-item"><div className="q-label">Contact</div><div className="q-val"><a href="#">{q.contact}</a></div></div>
+                  <div className="q-item"><div className="q-label">Query Status</div><div className="q-val">{q.queryStatus || '-'}</div></div>
+                  <div className="q-item"><div className="q-label">First Follow UP</div><div className="q-val">{q.fu1 || '-'}</div></div>
+                  <div className="q-item"><div className="q-label">Second Follow Up</div><div className="q-val">{q.fu2 || '-'}</div></div>
+                  <div className="q-item"><div className="q-label">Third Follow UP</div><div className="q-val">{q.fu3 || '-'}</div></div>
+                  <div className="q-item"><div className="q-label">Conversation Status</div><div className="q-val">{q.convStatus || '-'}</div></div>
+                  
+                  <div className="q-item"><div className="q-label">Inbox URL</div><div className="q-val">
+                    {q.inboxUrl.startsWith('http') ? <a href={q.inboxUrl} target="_blank" rel="noreferrer">Open Link ↗</a> : (q.inboxUrl || '-')}
+                  </div></div>
+                  <div className="q-item"><div className="q-label">Conversation URL</div><div className="q-val">
+                    {q.convUrl.startsWith('http') ? <a href={q.convUrl} target="_blank" rel="noreferrer">Open Link ↗</a> : (q.convUrl || '-')}
+                  </div></div>
+                  <div className="q-item"><div className="q-label">Brief URL</div><div className="q-val">
+                    {q.briefUrl.startsWith('http') ? <a href={q.briefUrl} target="_blank" rel="noreferrer">Open Link ↗</a> : (q.briefUrl || '-')}
+                  </div></div>
                 </div>
 
-                {q.remark && (
-                  <div className="q-remarks">
-                    <div className="q-remarks-label">Remarks</div>
-                    <div className="q-remark-text">{q.remark}</div>
+                {q.sheetRemarks && (
+                  <div className="q-remarks" style={{ marginTop: '16px' }}>
+                    <div className="q-remarks-label">Sheet Remarks</div>
+                    <div className="q-remark-text">{q.sheetRemarks}</div>
                   </div>
                 )}
+
+                <div className="q-local-remark" style={{ marginTop: 16, background: 'rgba(255,255,255,0.02)', padding: 12, borderRadius: 12, border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div className="q-remarks-label" style={{ marginBottom: 8, color: '#93c5fd' }}>Our Internal Remark (Auto-Saves)</div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input 
+                      type="text" 
+                      className="search-input" 
+                      style={{ flex: 1, padding: '8px 12px', fontSize: 13, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.1)' }}
+                      placeholder="Type your own remark here..." 
+                      defaultValue={q.localRemark}
+                      onBlur={(e) => saveLocalRemark(q.id, e.target.value)}
+                    />
+                  </div>
+                </div>
 
                 <div className="q-actions">
                   {q.status !== 'new' && <button className="q-action-btn" onClick={() => setStatus(q.id, 'new')} style={{ background: 'rgba(59,130,246,.1)', borderColor: 'rgba(59,130,246,.25)', color: '#60a5fa' }}>🆕 Mark New</button>}

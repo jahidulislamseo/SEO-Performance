@@ -184,7 +184,7 @@ def process_and_save(df, db):
                 official_name = tk.strip().title()
                 db["members"].update_one(
                     {"name": official_name},
-                    {"$setOnInsert": {"team": "GEO Rankers", "role": "Member", "id": f"AUTO-{tk.upper()[:3]}"}},
+                    {"$setOnInsert": {"team": "Guest", "role": "Member", "id": f"AUTO-{tk.upper()[:3]}", "isOfficial": False}},
                     upsert=True
                 )
                 member_lookup[tk] = official_name
@@ -235,10 +235,10 @@ def process_and_save(df, db):
     platform_stats = {k: round(v, 2) for k, v in platform_stats.items()}
 
     # 5. Member Stats
-    logger.info("Calculating Member stats...")
+    logger.info("Calculating Member stats for official members only...")
     
-    # 100% Accuracy Fix: Refetch members to include newly auto-registered ones
-    members_list = list(db["members"].find({}, {"_id": 0}))
+    # Filter for official members only
+    members_list = list(db["members"].find({"isOfficial": True}, {"_id": 0}))
     
     member_summaries = []
     for m in members_list:
@@ -290,31 +290,39 @@ def process_and_save(df, db):
         member_summaries.append(s)
 
     # 6. Team Stats
-    logger.info("Calculating Team stats...")
+    logger.info("Calculating Team stats (using Op. Department tags)...")
     team_data = {}
     targets = TEAM_TARGETS()
     mgmt = MANAGEMENT()
-    for team in targets.keys():
-        team_members = [s for s in member_summaries if s['team'] == team]
-        delivered_amt = sum(m['deliveredAmt'] for m in team_members)
-        wip_amt = sum(m['wipAmt'] for m in team_members)
-        total_projects = sum(m['total'] for m in team_members)
-        delivered_count = sum(m['delivered'] for m in team_members)
-        wip_count = sum(m['wip'] for m in team_members)
-        revision_count = sum(m['revision'] for m in team_members)
-        cancelled_count = sum(m['cancelled'] for m in team_members)
+    
+    # Mapping for sheet tags
+    TEAM_TAG_MAP = {
+        "GEO Rankers": "Geo_Rankers",
+        "Rank Riser": "Rank_Riser",
+        "Search Apex": "Search_Apex",
+        "SMM": "Dark_Rankers"
+    }
 
+    for team in targets.keys():
+        tag = TEAM_TAG_MAP.get(team, team.replace(" ", "_"))
+        
+        # Filter original dataframe for this team's tag in op_dept
+        t_df = df[df['op_dept'].astype(str).str.strip().str.lower() == tag.lower()]
+        
+        delivered = t_df[t_df['status'] == 'Delivered']
+        wip_rev = t_df[t_df['status'].isin(['WIP', 'Revision'])]
+        
         team_data[team] = {
             "name": team,
             "leader": mgmt["leaders"].get(team, {}).get("name", "N/A"),
-            "amt": round(delivered_amt, 2),
-            "deliveredAmt": round(delivered_amt, 2),
-            "wipAmt": round(wip_amt, 2),
-            "projects": total_projects,
-            "delivered": delivered_count,
-            "wip": wip_count,
-            "revision": revision_count,
-            "cancelled": cancelled_count,
+            "amt": round(delivered['amount_x'].sum(), 2),
+            "deliveredAmt": round(delivered['amount_x'].sum(), 2),
+            "wipAmt": round(wip_rev['amount_x'].sum(), 2),
+            "projects": len(t_df),
+            "delivered": len(delivered),
+            "wip": len(t_df[t_df['status'] == 'WIP']),
+            "revision": len(t_df[t_df['status'] == 'Revision']),
+            "cancelled": len(t_df[t_df['status'] == 'Cancelled']),
             "target": targets.get(team, 0)
         }
 

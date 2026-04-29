@@ -237,7 +237,7 @@ function MainDashboard() {
               {label}
             </button>
           ))}
-          <Link to="/delivery-tracker" className="page-nav-btn" style={{ background: 'rgba(16,185,129,.12)', borderColor: 'rgba(16,185,129,.3)', color: '#7ed2c7' }}>📦 Delivery Tracker ↗</Link>
+          <Link to="/delivery-tracker" className="page-nav-btn" style={{ background: 'rgba(16,185,129,.12)', borderColor: 'rgba(16,185,129,.3)', color: '#7ed2c7' }}>📦 Repeat Order ↗</Link>
           <Link to="/query-tracker" className="page-nav-btn" style={{ background: 'rgba(99,102,241,.12)', borderColor: 'rgba(99,102,241,.3)', color: '#a5b4fc' }}>🚀 Query Tracker ↗</Link>
           <Link to="/finance" className="page-nav-btn" style={{ background: 'rgba(245,158,11,.12)', borderColor: 'rgba(245,158,11,.3)', color: '#fbbf24' }}>💰 Finance Hub ↗</Link>
           <Link to="/employee" className="page-nav-btn" style={{ background: 'rgba(37,99,235,.12)', borderColor: 'rgba(37,99,235,.3)', color: '#93c5fd' }}>👤 Employee Portal ↗</Link>
@@ -410,7 +410,8 @@ function MainDashboard() {
               {TEAMS.map(t => (
                 <TeamCard 
                   key={t} 
-                  team={t} 
+                  team={t}
+                  teamData={teamSummaries[t]}
                   members={members.filter(m => m.team === t)} 
                   target={1100}
                 />

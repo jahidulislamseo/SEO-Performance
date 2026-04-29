@@ -779,10 +779,14 @@ def get_delivered_from_db():
     """Load delivered projects from MongoDB Archive, optionally filtered by month."""
     try:
         db = get_db()
+        import re
         month_filter = request.args.get("month", "")
-        query = {"status": "Delivered"}
+        query = {
+            "status": "Delivered",
+            "service": {"$regex": "seo|smm", "$options": "i"}
+        }
         if month_filter:
-            query["month"] = month_filter
+            query["deliveredDate"] = {"$regex": f"^{month_filter}"}
         projects = list(db["projects_archive"].find(query, {"_id": 0}).sort("date", -1))
         return jsonify(projects)
     except Exception as e:

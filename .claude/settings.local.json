@@ -29,7 +29,11 @@
       "Bash(curl -s http://localhost:5000/api/attendance-stats)",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(dict\\(list\\(d.items\\(\\)\\)[:3]\\), indent=2\\)\\)\")",
       "Bash(curl -s http://localhost:5000/api/delivered-projects)",
-      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(f'Count: {len\\(d\\)}'\\); print\\(json.dumps\\(d[0], indent=2, default=str\\)\\)\")"
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(f'Count: {len\\(d\\)}'\\); print\\(json.dumps\\(d[0], indent=2, default=str\\)\\)\")",
+      "Bash(sed -n '55,65p' server.py)",
+      "Bash(sed -n '820,870p' server.py)",
+      "Bash(python3 -c ' *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }

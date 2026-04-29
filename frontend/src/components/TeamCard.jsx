@@ -7,11 +7,20 @@ const TEAM_COLORS = {
   'SMM':          { from: '#ec4899', to: '#db2777', accent: '#f472b6', glow: 'rgba(236, 72, 153, 0.2)', leader: 'Istiak' },
 };
 
-const TeamCard = ({ team, members = [], target = 1100 }) => {
+const TeamCard = ({ team, teamData = {}, members = [], target = 1100 }) => {
   const colors = TEAM_COLORS[team] || TEAM_COLORS['Geo Rankers'];
-  const totalDelivered = members.reduce((s, m) => s + (m.deliveredAmt || 0), 0);
-  const totalTarget = members.length * target;
-  const totalWip = members.reduce((s, m) => s + (m.wipAmt || 0), 0);
+  
+  // Use backend teamData as the source of truth if available
+  const totalDelivered = teamData.deliveredAmt || members.reduce((s, m) => s + (m.deliveredAmt || 0), 0);
+  const totalTarget = teamData.target || members.length * target;
+  const totalWip = teamData.wipAmt || members.reduce((s, m) => s + (m.wipAmt || 0), 0);
+  
+  const deliveredCount = teamData.delivered !== undefined ? teamData.delivered : members.reduce((s,m)=>s+(m.delivered||0),0);
+  const wipCount = teamData.wip !== undefined ? teamData.wip : members.reduce((s,m)=>s+(m.wip||0),0);
+  const revisionCount = teamData.revision !== undefined ? teamData.revision : members.reduce((s,m)=>s+(m.revision||0),0);
+  const cancelledCount = teamData.cancelled !== undefined ? teamData.cancelled : members.reduce((s,m)=>s+(m.cancelled||0),0);
+  const totalCount = teamData.projects !== undefined ? teamData.projects : deliveredCount + wipCount;
+
   const remaining = Math.max(0, totalTarget - totalDelivered);
   const pct = totalTarget > 0 ? Math.min(100, Math.round((totalDelivered / totalTarget) * 100)) : 0;
 
@@ -81,11 +90,11 @@ const TeamCard = ({ team, members = [], target = 1100 }) => {
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-        <GridItem icon="✅" label="Delivery" value={members.reduce((s,m)=>s+(m.delivered||0),0)} color="#10b981" />
-        <GridItem icon="⏳" label="WIP" value={members.reduce((s,m)=>s+(m.wip||0),0)} color="#3b82f6" />
-        <GridItem icon="🔄" label="Revision" value={members.reduce((s,m)=>s+(m.revision||0),0)} color="#8b5cf6" />
-        <GridItem icon="❌" label="Cancel" value={members.reduce((s,m)=>s+(m.cancelled||0),0)} color="#ef4444" />
-        <GridItem icon="📦" label="Total" value={members.reduce((s,m)=>s+(m.delivered||0)+(m.wip||0),0)} color="#f59e0b" />
+        <GridItem icon="✅" label="Delivery" value={deliveredCount} color="#10b981" />
+        <GridItem icon="⏳" label="WIP" value={wipCount} color="#3b82f6" />
+        <GridItem icon="🔄" label="Revision" value={revisionCount} color="#8b5cf6" />
+        <GridItem icon="❌" label="Cancel" value={cancelledCount} color="#ef4444" />
+        <GridItem icon="📦" label="Total" value={totalCount} color="#f59e0b" />
         <GridItem icon="🎯" label="Complete" value={`${pct}%`} color={colors.accent} />
       </div>
     </div>

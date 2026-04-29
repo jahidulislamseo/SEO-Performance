@@ -65,6 +65,7 @@ COL = {
     "date": 3,        # D
     "profile": 6,     # G
     "instruction": 15,# P
+    "op_dept": 21,    # V — Team Tag (Op. Department in some views)
 }
 
 # ─── DATABASE ───────────────────────────────────────────────
