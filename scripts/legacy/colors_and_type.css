@@ -1,0 +1,310 @@
+/* ═══════════════════════════════════════════════════════════════
+   Mull Performance Design System — Colors & Typography Tokens
+   Source: jahidulislamseo/SEO-Performance (main branch)
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap');
+
+/* ── PRIMITIVE COLOR TOKENS ── */
+:root {
+  /* Neutrals */
+  --color-navy-950:  #09111f;   /* page background */
+  --color-navy-900:  #0a121e;
+  --color-navy-850:  #0d1826;
+  --color-navy-800:  #0e1826;   /* card bg base */
+  --color-navy-700:  #112030;
+  --color-slate-400: #94a3b8;   /* muted text */
+  --color-slate-300: #cbd5e1;   /* label text */
+  --color-slate-200: #e2e8f0;
+  --color-slate-100: #f1f5f9;   /* primary text */
+
+  /* Blue / Accent scale */
+  --color-blue-700:  #2f5d8a;   /* accent primary */
+  --color-blue-600:  #3d6f9b;
+  --color-blue-500:  #4f8ea6;
+  --color-blue-400:  #5f85a2;   /* accent secondary */
+  --color-blue-300:  #7ea8c4;
+
+  /* Green / Emerald */
+  --color-green-600: #059669;
+  --color-green-500: #10b981;   /* success / live */
+  --color-green-400: #34d399;
+  --color-green-300: #7ed2c7;   /* teal-ish highlight */
+
+  /* Yellow / Amber */
+  --color-amber-500: #f59e0b;   /* warning / WIP */
+  --color-amber-400: #fbbf24;
+  --color-amber-300: #e7c98e;   /* muted amber */
+
+  /* Red */
+  --color-red-500:   #ef4444;   /* danger / cancel */
+  --color-red-400:   #f87171;
+
+  /* Purple (used in manager avatar gradient) */
+  --color-purple-500: #8b5cf6;
+  --color-pink-500:   #ec4899;
+}
+
+/* ── SEMANTIC TOKENS — DARK MODE (default) ── */
+:root {
+  --bg:       var(--color-navy-950);
+  --card:     rgba(14, 24, 38, 0.97);
+  --card2:    rgba(10, 18, 30, 0.96);
+  --gb:       rgba(148, 163, 184, 0.18);   /* border / divider */
+  --glass:    rgba(255, 255, 255, 0.035);  /* glass fill */
+
+  /* Accent */
+  --accent:   var(--color-blue-700);
+  --a2:       var(--color-blue-400);
+
+  /* Functional */
+  --green:    var(--color-green-500);
+  --yellow:   var(--color-amber-500);
+  --red:      var(--color-red-500);
+  --blue:     var(--color-blue-600);
+
+  /* Text */
+  --text:     var(--color-slate-100);
+  --muted:    var(--color-slate-400);
+  --m2:       var(--color-slate-300);
+
+  /* Surfaces */
+  --hdr-bg:   rgba(9, 17, 31, 0.85);
+
+  /* Background gradients */
+  --grad-1:   rgba(61, 111, 155, 0.14);
+  --grad-2:   rgba(15, 118, 110, 0.08);
+}
+
+/* ── SEMANTIC TOKENS — LIGHT MODE ── */
+[data-theme="light"] {
+  --bg:       #fdfdfd;
+  --card:     #ffffff;
+  --card2:    #f3f4f6;
+  --gb:       rgba(0, 0, 0, 0.12);
+  --glass:    rgba(0, 0, 0, 0.04);
+
+  --accent:   #0f766e;
+  --a2:       #0d9488;
+
+  --text:     #111827;
+  --muted:    #4b5563;
+  --m2:       #374151;
+
+  --hdr-bg:   rgba(255, 255, 255, 0.95);
+  --grad-1:   rgba(15, 118, 110, 0.08);
+  --grad-2:   rgba(61, 111, 155, 0.06);
+}
+
+/* ── TYPOGRAPHY PRIMITIVES ── */
+:root {
+  /* Font family */
+  --font-sans: 'Manrope', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Courier New', Courier, monospace; /* not used in product */
+
+  /* Font weights */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semibold: 600;
+  --fw-bold:     700;
+  --fw-extrabold: 800;
+  --fw-black:    900;
+
+  /* Font sizes */
+  --text-2xs: 10px;
+  --text-xs:  11px;
+  --text-sm:  12px;
+  --text-md:  14px;
+  --text-lg:  16px;
+  --text-xl:  18px;
+  --text-2xl: 22px;
+  --text-3xl: 28px;
+  --text-4xl: 36px;
+
+  /* Letter spacing */
+  --tracking-tight:  -0.5px;
+  --tracking-tighter: -1px;
+  --tracking-wide:    1.8px;
+  --tracking-wider:   2px;
+}
+
+/* ── SEMANTIC TYPOGRAPHY ROLES ── */
+
+/* Display heading — large KPI values, dept heading */
+.t-display {
+  font-family: var(--font-sans);
+  font-size: var(--text-3xl);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-tighter);
+  background: linear-gradient(135deg, #f3f6fa, #c6d2de, #879caf);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+}
+
+[data-theme="light"] .t-display {
+  background: linear-gradient(135deg, #0f172a, #1e3a5f, #2f5d8a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* h1 — page/section heading */
+.t-h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* h2 — card/panel heading */
+.t-h2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-lg);
+  font-weight: var(--fw-extrabold);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text);
+  line-height: 1.3;
+}
+
+/* Section label — uppercase tag */
+.t-label {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-extrabold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--m2);
+  line-height: 1.4;
+}
+
+/* Body text */
+.t-body {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* Muted / secondary body */
+.t-muted {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+/* Caption / meta */
+.t-caption {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--m2);
+  line-height: 1.4;
+}
+
+/* KPI value — bold metric number */
+.t-kpi {
+  font-family: var(--font-sans);
+  font-size: var(--text-2xl);
+  font-weight: var(--fw-black);
+  letter-spacing: var(--tracking-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+/* ── SPACING SCALE ── */
+:root {
+  --space-1:  4px;
+  --space-2:  6px;
+  --space-3:  8px;
+  --space-4:  10px;
+  --space-5:  12px;
+  --space-6:  14px;
+  --space-7:  16px;
+  --space-8:  20px;
+  --space-9:  24px;
+  --space-10: 28px;
+  --space-11: 32px;
+  --space-12: 40px;
+  --space-13: 48px;
+}
+
+/* ── BORDER RADIUS SCALE ── */
+:root {
+  --radius-xs:  6px;
+  --radius-sm:  9px;
+  --radius-md:  12px;
+  --radius-lg:  18px;
+  --radius-xl:  22px;
+  --radius-2xl: 26px;
+  --radius-full: 999px;
+  --radius-bar: 50px;  /* progress bars */
+}
+
+/* ── ELEVATION / SHADOW SCALE ── */
+:root {
+  --shadow-none:  none;
+  --shadow-glow:  0 0 8px rgba(126, 210, 199, 0.7);   /* live dot glow */
+  --shadow-logo:  0 14px 28px rgba(18, 33, 54, 0.35);  /* logo / avatar */
+  --shadow-modal: 0 40px 100px rgba(0, 0, 0, 0.65);    /* modal */
+  --shadow-menu:  0 10px 30px rgba(0, 0, 0, 0.3);      /* dropdown */
+}
+
+/* ── ANIMATION TOKENS ── */
+:root {
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out:      ease;
+
+  --dur-fast:   0.2s;
+  --dur-base:   0.3s;
+  --dur-slow:   1.8s;
+  --dur-xslow:  2.5s;
+}
+
+/* ── UTILITY CLASSES ── */
+
+/* Background setup (use on body) */
+.bg-app {
+  background:
+    radial-gradient(circle at top left, var(--grad-1), transparent 32%),
+    radial-gradient(circle at bottom right, var(--grad-2), transparent 28%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+/* Card base */
+.card {
+  background: var(--card);
+  border: 1px solid var(--gb);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.card-xl {
+  background: var(--card);
+  border: 1px solid var(--gb);
+  border-radius: var(--radius-xl);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glass surface */
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--gb);
+}
+
+/* Status color utilities */
+.text-green  { color: var(--green); }
+.text-yellow { color: var(--yellow); }
+.text-red    { color: var(--red); }
+.text-accent { color: var(--a2); }
+.text-muted  { color: var(--muted); }
