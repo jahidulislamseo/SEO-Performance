@@ -63,16 +63,34 @@ def add_perf_headers(response):
 def index():
     return render_template("index.html")
 
-@app.route("/api/sync")
+@app.route("/api/sync", methods=["GET", "POST"])
 def api_sync():
-    """Pull fresh data from Google Sheets → MongoDB, then recalculate summaries."""
+    """Pull fresh data from Google Sheets → MongoDB, then recalculate summaries.
+    Accepts both GET (manual) and POST (from Google Apps Script webhook).
+    """
     try:
         import sync_mongo
-        sync_mongo.sync()          # Step 1: fetch from Sheet → save to MongoDB
-        agent_engine.calculate_summaries()  # Step 2: recalculate all summaries
+        sync_mongo.sync()                       # Step 1: fetch from Sheet → save to MongoDB
+        agent_engine.calculate_summaries()      # Step 2: recalculate all summaries
         clear_api_cache()
         return jsonify({"status": "ok", "message": "Live sync from Google Sheets complete. Dashboard updated."})
     except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route("/api/webhook/sheet-sync", methods=["POST", "GET"])
+def sheet_webhook():
+    """Dedicated webhook endpoint for Google Apps Script onEdit trigger.
+    Called automatically whenever the Google Sheet is edited.
+    """
+    try:
+        import sync_mongo
+        sync_mongo.sync()
+        agent_engine.calculate_summaries()
+        clear_api_cache()
+        print("🔔 Webhook triggered: Sheet changed → Dashboard synced!")
+        return jsonify({"status": "ok", "message": "Sheet webhook sync complete."})
+    except Exception as e:
+        print(f"❌ Webhook sync error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route("/api/data")
