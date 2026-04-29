@@ -1,8 +1,0 @@
-flask
-flask-cors
-pymongo
-dnspython
-python-dotenv
-gspread
-pandas
-oauth2client
