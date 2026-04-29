@@ -1078,6 +1078,31 @@ FINANCE_DATA = {
 def team_finance():
     return render_template("team-finance.html")
 
+@app.route("/api/work-examples", methods=["GET", "POST"])
+def api_work_examples():
+    db = get_db()
+    if request.method == "POST":
+        data = request.json
+        if not data or "categories" not in data:
+            return jsonify({"error": "Invalid data"}), 400
+        
+        # We store the entire structure in one document for simplicity, 
+        # or separate documents. One document with id 'portfolio' is easier.
+        db["work_examples"].update_one(
+            {"_id": "portfolio"},
+            {"$set": {"categories": data["categories"], "updated_at": time.time()}},
+            upsert=True
+        )
+        return jsonify({"message": "Successfully updated work examples"})
+
+    # GET
+    doc = db["work_examples"].find_one({"_id": "portfolio"})
+    if doc:
+        return jsonify(doc["categories"])
+    
+    # Return default empty list if nothing found
+    return jsonify([])
+
 @app.route("/target-tracking")
 def target_tracking():
     return render_template("target-tracking.html")

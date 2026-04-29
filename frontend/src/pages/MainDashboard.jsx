@@ -241,6 +241,7 @@ function MainDashboard() {
           <Link to="/query-tracker" className="page-nav-btn" style={{ background: 'rgba(99,102,241,.12)', borderColor: 'rgba(99,102,241,.3)', color: '#a5b4fc' }}>🚀 Query Tracker ↗</Link>
           <Link to="/finance" className="page-nav-btn" style={{ background: 'rgba(245,158,11,.12)', borderColor: 'rgba(245,158,11,.3)', color: '#fbbf24' }}>💰 Finance Hub ↗</Link>
           <Link to="/employee" className="page-nav-btn" style={{ background: 'rgba(37,99,235,.12)', borderColor: 'rgba(37,99,235,.3)', color: '#93c5fd' }}>👤 Employee Portal ↗</Link>
+          <Link to="/work-examples" className="page-nav-btn" style={{ background: 'rgba(139,92,246,.12)', borderColor: 'rgba(139,92,246,.3)', color: '#c4b5fd' }}>📂 Work Examples ↗</Link>
         </div>
       </div>
 
