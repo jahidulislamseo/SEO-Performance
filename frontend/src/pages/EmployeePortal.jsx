@@ -143,16 +143,7 @@ function EmployeePortal() {
             </div>
             {err && <div className="lf-err">{err}</div>}
             <button className="lf-submit" onClick={() => doLogin()}>Sign In to Portal</button>
-            <div className="lc-divider">Quick demo access</div>
-            <div className="lc-demos">
-              {members.slice(0, 3).map(m => (
-                <button key={m.id} className="demo-card" onClick={() => doLogin(m)}>
-                  <span className="demo-av" style={{ background: avatarGradient(m.name) }}>{getInitials(m.name)}</span>
-                  <div><div className="demo-name">{m.name}</div><div className="demo-role">{m.role || 'Team Member'}</div></div>
-                  <span className="demo-id">{m.id}</span>
-                </button>
-              ))}
-            </div>
+            {/* Demo access section removed */}
           </div>
         </div>
       </div>

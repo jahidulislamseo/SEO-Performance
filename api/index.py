@@ -65,11 +65,13 @@ def index():
 
 @app.route("/api/sync")
 def api_sync():
-    """Manually trigger data recalculation (Full Dashboard)."""
+    """Pull fresh data from Google Sheets → MongoDB, then recalculate summaries."""
     try:
-        agent_engine.calculate_summaries()
+        import sync_mongo
+        sync_mongo.sync()          # Step 1: fetch from Sheet → save to MongoDB
+        agent_engine.calculate_summaries()  # Step 2: recalculate all summaries
         clear_api_cache()
-        return jsonify({"status": "ok", "message": "Manual sync completed. Database updated."})
+        return jsonify({"status": "ok", "message": "Live sync from Google Sheets complete. Dashboard updated."})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
@@ -1117,12 +1119,13 @@ def start_background_sync():
     def run_sync_loop():
         import sync_mongo
         while True:
-            # Wait 10 minutes before running next scheduled sync
+            # Wait 5 minutes before running next scheduled sync
             # Sleep first to avoid running immediately on boot since we rely on DB mostly
-            time.sleep(600) 
+            time.sleep(300) 
             try:
-                print("⏳ Running automated background sync (10-min interval)...")
+                print("⏳ Running automated background sync (5-min interval)...")
                 sync_mongo.sync()
+                agent_engine.calculate_summaries()
                 clear_api_cache()
             except Exception as e:
                 print(f"❌ Background scheduler error: {e}")
