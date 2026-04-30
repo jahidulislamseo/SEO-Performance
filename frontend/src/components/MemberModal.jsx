@@ -121,10 +121,10 @@ const ProjectCard = ({ p, statusBadge }) => {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px 40px', marginBottom: '20px' }}>
         <InfoItem label="CLIENT" value={p.client || "N/A"} />
         <InfoItem label="SERVICE" value={p.service || "SEO"} />
-        <InfoItem label="ASSIGNED" value={p.assigned || "Team"} />
+        <InfoItem label="ASSIGNED" value={p.assign || p.assigned || "N/A"} />
         <InfoItem label="ORDER DATE" value={p.date || "N/A"} />
         <InfoItem label="DELIVERED" value={p.deliveredDate || p.date || "N/A"} />
-        <InfoItem label="ORDER LINK" value={<a href="#" style={{ color: '#3b82f6', textDecoration: 'none' }}>Open Order</a>} />
+        <InfoItem label="ORDER LINK" value={p.link && p.link.startsWith('http') ? <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 800 }}>Open Order ↗</a> : <span style={{ color: '#64748b' }}>N/A</span>} />
       </div>
 
       <div style={{ 
@@ -133,7 +133,7 @@ const ProjectCard = ({ p, statusBadge }) => {
       }}>
         <div>
           <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8' }}>Amount Share</div>
-          <div style={{ fontSize: '10px', color: '#64748b' }}>${totalAmt} + {persons} persons</div>
+          <div style={{ fontSize: '10px', color: '#64748b' }}>${totalAmt} total · your share below</div>
         </div>
         <div style={{ fontSize: '20px', fontWeight: 900, color: '#10b981' }}>${share.toLocaleString()}</div>
       </div>

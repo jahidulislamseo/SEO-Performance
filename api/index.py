@@ -93,6 +93,37 @@ def sheet_webhook():
         print(f"❌ Webhook sync error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route("/api/admin/cleanup-duplicates", methods=["POST"])
+def cleanup_duplicate_members():
+    """One-time cleanup: remove duplicate entries in member_summaries, keeping the latest per ID."""
+    try:
+        db = get_db()
+        all_docs = list(db["member_summaries"].find({}, {"_id": 1, "id": 1}))
+        
+        def clean_id(v):
+            s = str(v) if v else ""
+            return s[:-2] if s.endswith(".0") else s
+        
+        seen = {}
+        to_delete = []
+        for doc in all_docs:
+            eid = clean_id(doc.get("id", ""))
+            if eid in seen:
+                to_delete.append(doc["_id"])  # delete the older duplicate
+            else:
+                seen[eid] = doc["_id"]
+        
+        if to_delete:
+            result = db["member_summaries"].delete_many({"_id": {"$in": to_delete}})
+            deleted = result.deleted_count
+        else:
+            deleted = 0
+        
+        clear_api_cache()
+        return jsonify({"ok": True, "deleted_duplicates": deleted, "unique_members": len(seen)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/data")
 def api_data():
     """Main Dashboard: Instant load from MongoDB summaries only, merged with member profiles."""
@@ -102,6 +133,15 @@ def api_data():
             dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
             team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
             member_docs = list(db["member_summaries"].find({}, {"_id": 0}))
+
+            # ── Deduplicate by employee ID (keep latest record per ID) ──
+            seen_ids = {}
+            for m in member_docs:
+                raw_id = str(m.get("id", "")).strip()
+                if raw_id.endswith(".0"):
+                    raw_id = raw_id[:-2]
+                seen_ids[raw_id] = m   # later entry overwrites earlier duplicate
+            member_docs = list(seen_ids.values())
 
             ADMIN_IDS = {"17149", "17137", "17248", "17238"}
 
@@ -122,14 +162,21 @@ def api_data():
 
             if team_sum_doc and "teams" in team_sum_doc:
                 for team_name, team_data in team_sum_doc["teams"].items():
+                    # Preserve target calculated by agent_engine (from config)
+                    configured_target = team_data.get("target", 0)
+                    
                     team_target = 0
                     for tm in team_data.get("members", []):
                         prof = members_profiles.get(tm.get("id"))
                         if prof and "target" in prof: tm["target"] = prof["target"]
                         if prof and "name" in prof: tm["name"] = prof["name"]
                         team_target += tm.get("target", 1100)
-                    team_data["target"] = team_target
-                    team_data["progress"] = min(100, round((team_data.get("stats",{}).get("deliveredAmt",0) / team_target * 100))) if team_target > 0 else 0
+                    
+                    # If agent_engine provided a non-zero target, use it; otherwise fallback to sum of members
+                    final_target = configured_target if configured_target > 0 else team_target
+                    
+                    team_data["target"] = final_target
+                    team_data["progress"] = min(100, round((team_data.get("deliveredAmt", 0) / final_target * 100))) if final_target > 0 else 0
 
             if not dept_sum_doc:
                 return {"status": "syncing", "message": "Database initializing..."}
@@ -244,11 +291,11 @@ def get_templates():
         doc = db["settings"].find_one({"_id": "message_templates"})
         if not doc:
             return jsonify({
-                "1": "Hi! Your project has been successfully delivered.\n\nOrder: {order}\nService: {service}\n\nPlease review and let us know your feedback! 🙏",
+                "1": "Hi! Your project has been successfully delivered.\n\nOrder: {order}\nService: {service}\n\nPlease review and let us know your feedback! (Thank You)",
                 "2": "Hi! Checking in again regarding your delivery (Order: {order}).\n\nDid everything meet your expectations? Let us know if you need anything!",
                 "3": "Hi! Checking in (3rd follow-up) for Order: {order}.\n\nWe want to ensure you're satisfied. Please let us know if there's anything to review!",
                 "4": "Hi! Just following up (4th time) on Order: {order}.\n\nCould you please take a moment to confirm everything is in order?",
-                "5": "Hi! Final follow-up for Order: {order}.\n\nPlease let us know if you have any last concerns. Thank you for your trust! 🙏"
+                "5": "Hi! Final follow-up for Order: {order}.\n\nPlease let us know if you have any last concerns. Thank you for your trust! (Thank You)"
             })
         return jsonify(doc.get("templates", {}))
     except Exception as e:
@@ -361,22 +408,25 @@ def api_login():
 
 @app.route("/api/attendance-stats")
 def attendance_stats():
-    """Return late/absent count + today's in-time for all members."""
+    """Return late/absent count + today's in/out time for all members."""
     try:
         db = get_db()
-        today = datetime.now(timezone(timedelta(hours=6))).strftime('%Y-%m-%d')
-        docs = list(db["attendance"].find({}, {"_id": 0, "emp_id": 1, "status": 1, "date": 1, "in": 1}))
+        tz_bd = timezone(timedelta(hours=6))
+        today = datetime.now(tz_bd).strftime('%Y-%m-%d')
+        docs = list(db["attendance"].find({}, {"_id": 0, "emp_id": 1, "status": 1, "date": 1, "in": 1, "out": 1}))
         stats = {}
         for d in docs:
             raw = str(d.get("emp_id", ""))
             eid = raw[:-2] if raw.endswith(".0") else raw
             if eid not in stats:
-                stats[eid] = {"late": 0, "absent": 0, "today_in": None}
+                stats[eid] = {"late": 0, "absent": 0, "today_in": None, "today_out": None, "today_status": None}
             s = d.get("status", "")
             if s == "Late":   stats[eid]["late"]   += 1
             if s == "Absent": stats[eid]["absent"] += 1
-            if d.get("date") == today and d.get("in"):
-                stats[eid]["today_in"] = d["in"]
+            if d.get("date") == today:
+                if d.get("in"):  stats[eid]["today_in"]     = d["in"]
+                if d.get("out"): stats[eid]["today_out"]    = d["out"]
+                if s:            stats[eid]["today_status"]  = s
         return jsonify(stats)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -394,13 +444,37 @@ def get_attendance():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/api/attendance", methods=["POST"])
-def save_attendance():
-    """Update or insert a check-in/out record in MongoDB using SERVER time."""
+@app.route("/api/attendance/status", methods=["GET"])
+def attendance_status():
+    """Check if the user is already checked in today."""
+    emp_id = request.args.get("memberId")
+    if not emp_id: return jsonify({"error": "memberId required"}), 400
+    try:
+        db = get_db()
+        tz_bd = timezone(timedelta(hours=6))
+        today_str = datetime.now(tz_bd).strftime('%Y-%m-%d')
+        existing = db["attendance"].find_one({"emp_id": emp_id, "date": today_str})
+        
+        has_checked_in = bool(existing and existing.get("in"))
+        is_checked_out = bool(existing and existing.get("out"))
+        
+        return jsonify({
+            "checkedIn": has_checked_in and not is_checked_out,
+            "hasCheckedInToday": has_checked_in,
+            "checkedOut": is_checked_out
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/attendance/checkin", methods=["POST"])
+def attendance_checkin():
     try:
         data = request.get_json(force=True)
-        emp_id = data.get("emp_id")
-        if not emp_id: return jsonify({"error": "invalid data"}), 400
+        print(f"[ATTENDANCE] Checkin request data: {data}")
+        emp_id = data.get("memberId") or data.get("emp_id")
+        if not emp_id: 
+            print("[ATTENDANCE] Error: memberId missing")
+            return jsonify({"error": "memberId required"}), 400
         
         db = get_db()
         tz_bd = timezone(timedelta(hours=6))
@@ -409,50 +483,109 @@ def save_attendance():
         time_str = now.strftime('%I:%M %p')
         ip = request.remote_addr
         
-        is_checkin = "in" in data
+        print(f"[ATTENDANCE] Processing checkin for {emp_id} on {today_str}")
         existing = db["attendance"].find_one({"emp_id": emp_id, "date": today_str})
         
-        if is_checkin:
-            if existing and existing.get("in"):
-                return jsonify({"error": "Already checked in today"}), 400
-                
-            cutoff = now.replace(hour=9, minute=15, second=0, microsecond=0)
-            status = "Late" if now > cutoff else "Present"
+        user_agent = request.headers.get("User-Agent", "").lower()
+        device = "Mobile" if "mobi" in user_agent or "android" in user_agent or "iphone" in user_agent else "PC"
+        
+        if existing and existing.get("in"):
+            # User is checking in again (e.g. back from a break)
+            # Remove the out time and duration so they are 'Active' again
+            # Do NOT overwrite their first 'in' time
+            db["attendance"].update_one(
+                {"_id": existing["_id"]},
+                {"$unset": {"out": "", "duration": ""},
+                 "$set": {"device_in": device, "ip_in": ip}}
+            )
+            print(f"[ATTENDANCE] Success: {emp_id} checked back in")
+            return jsonify({"ok": True, "message": "Welcome back", "status": existing.get("status")})
             
-            update_doc = {
-                "in": time_str,
-                "ip_in": ip,
-                "status": status,
-                "date": today_str,
-                "emp_id": emp_id
-            }
-            db["attendance"].update_one({"emp_id": emp_id, "date": today_str}, {"$set": update_doc}, upsert=True)
-            return jsonify({"ok": True, "time": time_str, "status": status})
+        from shared_utils import TEAM_SHIFTS
+        member = db["members"].find_one({"id": emp_id})
+        team = member.get("team", "GEO Rankers") if member else "GEO Rankers"
+        
+        team_shifts = TEAM_SHIFTS()
+        shift_time_str = team_shifts.get(team, "08:00")
+        
+        try:
+            shift_hour, shift_minute = map(int, shift_time_str.split(":"))
+        except:
+            shift_hour, shift_minute = 8, 0
             
-        else: # check-out
-            if not existing or not existing.get("in"):
-                return jsonify({"error": "Must check in first"}), 400
-            if existing.get("out"):
-                return jsonify({"error": "Already checked out"}), 400
-                
-            in_time_str = existing["in"]
-            in_time = datetime.strptime(in_time_str, '%I:%M %p').time()
-            in_dt = now.replace(hour=in_time.hour, minute=in_time.minute, second=0, microsecond=0)
-            duration = now - in_dt
-            hours = duration.seconds // 3600
-            minutes = (duration.seconds % 3600) // 60
-            duration_str = f"{hours}h {minutes}m"
-            
-            update_doc = {
-                "out": time_str,
-                "ip_out": ip,
-                "duration": duration_str
-            }
-            db["attendance"].update_one({"emp_id": emp_id, "date": today_str}, {"$set": update_doc})
-            return jsonify({"ok": True, "time": time_str, "duration": duration_str})
-            
+        shift_time = now.replace(hour=shift_hour, minute=shift_minute, second=0, microsecond=0)
+        cutoff = shift_time + timedelta(minutes=15)
+        
+        status = "Late" if now > cutoff else "Present"
+        
+        update_doc = {
+            "in": time_str,
+            "ip_in": ip,
+            "device_in": device,
+            "status": status,
+            "date": today_str,
+            "emp_id": emp_id
+        }
+        db["attendance"].update_one({"emp_id": emp_id, "date": today_str}, {"$set": update_doc}, upsert=True)
+        print(f"[ATTENDANCE] Success: {emp_id} checked in as {status}")
+        return jsonify({"ok": True, "time": time_str, "status": status})
     except Exception as e:
+        print(f"[ATTENDANCE] Exception: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/attendance/checkout", methods=["POST"])
+def attendance_checkout():
+    try:
+        data = request.get_json(force=True)
+        print(f"[ATTENDANCE] Checkout request data: {data}")
+        emp_id = data.get("memberId") or data.get("emp_id")
+        if not emp_id: 
+            print("[ATTENDANCE] Error: memberId missing")
+            return jsonify({"error": "memberId required"}), 400
+        
+        db = get_db()
+        tz_bd = timezone(timedelta(hours=6))
+        now = datetime.now(tz_bd)
+        today_str = now.strftime('%Y-%m-%d')
+        time_str = now.strftime('%I:%M %p')
+        ip = request.remote_addr
+        
+        user_agent = request.headers.get("User-Agent", "").lower()
+        device = "Mobile" if "mobi" in user_agent or "android" in user_agent or "iphone" in user_agent else "PC"
+        
+        print(f"[ATTENDANCE] Processing checkout for {emp_id} on {today_str}")
+        existing = db["attendance"].find_one({"emp_id": emp_id, "date": today_str})
+        if not existing or not existing.get("in"):
+            print(f"[ATTENDANCE] Error: {emp_id} must check in first")
+            return jsonify({"error": "Must check in first"}), 400
+            
+        in_time_str = existing["in"]
+        in_time = datetime.strptime(in_time_str, '%I:%M %p').time()
+        in_dt = now.replace(hour=in_time.hour, minute=in_time.minute, second=0, microsecond=0)
+        
+        # If check out time is somehow before check in time (e.g. checked in at 11:50 PM, checked out at 12:10 AM next day)
+        # This simple logic assumes same day. If `now` is less than `in_dt`, it might be an issue, but we'll stick to same-day logic.
+        if now < in_dt:
+            now += timedelta(days=1)
+            
+        duration = now - in_dt
+        hours = duration.seconds // 3600
+        minutes = (duration.seconds % 3600) // 60
+        duration_str = f"{hours}h {minutes}m"
+        
+        update_doc = {
+            "out": time_str,
+            "ip_out": ip,
+            "device_out": device,
+            "duration": duration_str
+        }
+        db["attendance"].update_one({"emp_id": emp_id, "date": today_str}, {"$set": update_doc})
+        print(f"[ATTENDANCE] Success: {emp_id} checked out. Duration: {duration_str}")
+        return jsonify({"ok": True, "time": time_str, "duration": duration_str})
+    except Exception as e:
+        print(f"[ATTENDANCE] Exception: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/notifications", methods=["GET"])
 def get_notifications():
@@ -604,7 +737,7 @@ def admin_update_member():
     if not emp_id: return jsonify({"error": "missing id"}), 400
     db = get_db()
     # Allow updating more fields in admin mode
-    allowed_fields = ["name", "fullName", "role", "team", "target", "email", "phone", "password", "isAdmin"]
+    allowed_fields = ["name", "fullName", "role", "team", "target", "email", "phone", "password", "isAdmin", "offDay"]
     update_data = {k: v for k, v in data.items() if k in allowed_fields}
     db["members"].update_one({"id": emp_id}, {"$set": update_data})
     clear_api_cache()
@@ -639,6 +772,40 @@ def admin_get_all_attendance():
     records = list(db["attendance"].find({"date": date_str}, {"_id": 0}))
     return jsonify(records)
 
+@app.route("/api/admin/config", methods=["GET"])
+def get_admin_config():
+    try:
+        from shared_utils import get_config
+        return jsonify(get_config())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/admin/config", methods=["POST"])
+def update_admin_config():
+    try:
+        db = get_db()
+        from shared_utils import get_config
+        data = request.json
+        if not data: return jsonify({"error": "No data"}), 400
+        
+        # update config
+        existing_config = get_config()
+        update_doc = {
+            "dept_target": float(data.get("dept_target", existing_config.get("dept_target", 36000))),
+            "team_targets": data.get("team_targets", existing_config.get("team_targets", {})),
+            "updated_at": time.time()
+        }
+        
+        db["config"].update_one({"_id": "app_settings"}, {"$set": update_doc}, upsert=True)
+        
+        # Invalidate cache
+        from shared_utils import _CONFIG_CACHE
+        _CONFIG_CACHE["last_updated"] = 0
+        
+        return jsonify({"ok": True, "message": "Targets updated successfully!"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/admin/attendance/update", methods=["POST"])
 def admin_update_attendance():
     data = request.get_json(force=True)
@@ -659,25 +826,70 @@ def admin_send_announcement():
     if not message: return jsonify({"error": "message required"}), 400
     db = get_db()
     title = data.get("title", "Announcement")
-    recipients = [target]
+    
+    docs = []
     if target == "all":
-        all_members = list(db["members"].find({}, {"id": 1, "_id": 0}))
-        recipients = [m["id"] for m in all_members if m.get("id")] or ["all"]
+        # Create a global announcement for the public dashboard
+        docs.append({
+            "emp_id": "all",
+            "text": message,
+            "title": title,
+            "read": False,
+            "timestamp": time.time(),
+            "target": "all"
+        })
+        
+        # Also create for individual members so it shows in their private notification center
+        all_members = list(db["members"].find({"isOfficial": True}, {"id": 1, "_id": 0}))
+        for m in all_members:
+            if m.get("id"):
+                docs.append({
+                    "emp_id": m["id"],
+                    "text": message,
+                    "title": title,
+                    "read": False,
+                    "timestamp": time.time(),
+                    "target": "all"
+                })
     else:
+        # Team specific
         team_members = list(db["members"].find({"team": target}, {"id": 1, "_id": 0}))
-        if team_members:
-            recipients = [m["id"] for m in team_members if m.get("id")]
-    docs = [{
-        "emp_id": recipient,
-        "text": message,
-        "title": title,
-        "read": False,
-        "timestamp": time.time()
-    } for recipient in recipients]
+        for m in team_members:
+            if m.get("id"):
+                docs.append({
+                    "emp_id": m["id"],
+                    "text": message,
+                    "title": title,
+                    "read": False,
+                    "timestamp": time.time(),
+                    "target": target
+                })
+                
     if docs:
         db["notifications"].insert_many(docs)
-    audit_log(db, "announcement_sent", f"Sent announcement to {target}")
+    
+    audit_log(db, "announcement_sent", f"Sent announcement to {target}: {title}")
     return jsonify({"ok": True})
+
+@app.route("/api/admin/announcements/history", methods=["GET"])
+def get_announcement_history():
+    """Retrieve history of sent announcements."""
+    db = get_db()
+    # We group by timestamp/title to show unique announcements sent (not one for each recipient)
+    pipeline = [
+        {"$match": {"target": {"$exists": True}}},
+        {"$group": {
+            "_id": {"timestamp": "$timestamp", "title": "$title", "text": "$text", "target": "$target"},
+            "timestamp": {"$first": "$timestamp"},
+            "title": {"$first": "$title"},
+            "text": {"$first": "$text"},
+            "target": {"$first": "$target"}
+        }},
+        {"$sort": {"timestamp": -1}},
+        {"$limit": 50}
+    ]
+    history = list(db["notifications"].aggregate(pipeline))
+    return jsonify(history)
 
 @app.route("/api/attendance-stats", methods=["GET"])
 def get_attendance_stats():
@@ -795,6 +1007,37 @@ def admin_calendar_config():
             )
             clear_api_cache()
             audit_log(db, "calendar_updated", "Updated working day calendar")
+            return jsonify({"ok": True})
+        except Exception as e: return jsonify({"error": str(e)}), 500
+
+@app.route("/api/admin/shifts", methods=["GET", "POST"])
+def admin_shifts():
+    """Manage team shift timings."""
+    db = get_db()
+    if request.method == "GET":
+        try:
+            config = db["config"].find_one({"_id": "app_settings"})
+            shifts = config.get("team_shifts", {}) if config else {}
+            if not shifts:
+                from shared_utils import TEAM_SHIFTS
+                shifts = TEAM_SHIFTS()
+            return jsonify(shifts)
+        except Exception as e: return jsonify({"error": str(e)}), 500
+    
+    if request.method == "POST":
+        try:
+            data = request.get_json(force=True)
+            db["config"].update_one(
+                {"_id": "app_settings"},
+                {"$set": {"team_shifts": data}},
+                upsert=True
+            )
+            # Clear cache to force reload of TEAM_SHIFTS
+            from shared_utils import _CONFIG_CACHE
+            _CONFIG_CACHE["data"] = None
+            _CONFIG_CACHE["last_updated"] = 0
+            
+            audit_log(db, "shifts_updated", "Updated team shift timings")
             return jsonify({"ok": True})
         except Exception as e: return jsonify({"error": str(e)}), 500
 
@@ -1010,7 +1253,7 @@ def api_finance_stats():
         for i, m in enumerate(sorted_months):
             stats = monthly_stats[m]
             if i == 0:
-                stats["focus"] = "🚀 Start of period. Push all channels."
+                stats["focus"] = "[START] Start of period. Push all channels."
                 continue
             
             prev_m = sorted_months[i-1]
@@ -1018,13 +1261,13 @@ def api_finance_stats():
             
             focus_msg = ""
             if stats["platforms"]["Fiverr"] < prev_stats["platforms"]["Fiverr"] * 0.8:
-                focus_msg = "🔴 Fiverr dropped >20%. Optimize gigs!"
+                focus_msg = "[ALERT] Fiverr dropped >20%. Optimize gigs!"
             elif stats["platforms"]["B2B"] > prev_stats["platforms"]["B2B"] * 1.2 and prev_stats["platforms"]["B2B"] > 0:
-                focus_msg = "🟢 B2B growing fast! Double down on outreach."
+                focus_msg = "[GOOD] B2B growing fast! Double down on outreach."
             elif stats["repeat_sales"] < prev_stats["repeat_sales"]:
-                focus_msg = "⚠️ Repeat clients down. Send follow-ups."
+                focus_msg = "[WARNING] Repeat clients down. Send follow-ups."
             else:
-                focus_msg = "⭐ Stable growth. Maintain quality control."
+                focus_msg = "[STABLE] Stable growth. Maintain quality control."
                 
             stats["focus"] = focus_msg
         
@@ -1141,12 +1384,12 @@ def start_background_sync():
             # Sleep first to avoid running immediately on boot since we rely on DB mostly
             time.sleep(300) 
             try:
-                print("⏳ Running automated background sync (5-min interval)...")
+                print("[SYNC] Running automated background sync (5-min interval)...")
                 sync_mongo.sync()
                 agent_engine.calculate_summaries()
                 clear_api_cache()
             except Exception as e:
-                print(f"❌ Background scheduler error: {e}")
+                print(f"[ERROR] Background scheduler error: {e}")
 
     # Only start the thread in the main process (avoids duplicates in debug mode)
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:

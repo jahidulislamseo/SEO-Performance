@@ -34,7 +34,7 @@ def sync():
                             "$set": {
                                 "name": str(r[2]).strip(),
                                 "fullName": str(r[1]).strip() if len(r)>1 else str(r[2]),
-                                "team": str(r[6]).strip(),
+                                "team": "Dark Rankers" if str(r[6]).strip() == "SMM" else str(r[6]).strip(),
                                 "role": str(r[3]).strip() if len(r) > 3 else "Member",
                                 "email": str(r[4]).strip() if len(r) > 4 else "",
                                 "phone": str(r[5]).strip() if len(r) > 5 else "",
@@ -73,11 +73,14 @@ def sync():
                 
             order_num = str(r[COL["order_num"]]).strip()
             del_by = str(r[COL["del_by"]]).strip()
+            client_name = str(r[COL["client"]]).strip()
+            amount = safe_float(r[COL["amount_x"]])
             
-            # Create a unique-ish ID to prevent duplicates but allow updates
-            # Order Number + Assigned Team/Person context. Adding row index (i) 
-            # prevents overwrites of different projects missing order_nums.
-            doc_id = f"{order_num}_{del_by}_{i}".replace(" ", "_").strip("_")
+            # Create a unique, stable ID to prevent duplicates
+            # Using row index (i) caused massive duplicates when rows shifted.
+            # Now we use order_num + del_by + amount to make it unique per delivery without relying on row position.
+            id_str = f"{order_num}_{del_by}_{client_name}_{amount}"
+            doc_id = "".join(c for c in id_str if c.isalnum() or c == '_').strip("_")
             
             doc = {
                 "order_num": order_num,

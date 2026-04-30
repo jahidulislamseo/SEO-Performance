@@ -87,11 +87,27 @@ const MemberCard = ({ member, onClick, att }) => {
         <BoxStat label="WIP PIPELINE" value={`$${wipAmt}`} sub={`${wip} active`} />
       </div>
 
-      {/* Attendance strip */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '16px' }}>
-        <AttStat label="LATE" value={att?.late ?? '—'} color="#f59e0b" />
-        <AttStat label="ABSENT" value={att?.absent ?? '—'} color="#ef4444" />
-        <AttStat label="IN TIME" value={att?.today_in || '—'} color={att?.today_in ? '#10b981' : '#334155'} />
+      {/* Attendance strip — PRESENT = total checked-in days (on-time + late) */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+        <AttStat label="PRESENT" value={member.presentCount ?? ((member.inTimeCount ?? 0) + (member.lateCount ?? 0))} color="#10b981" />
+        <AttStat label="LATE"    value={member.lateCount ?? 0}   color="#f59e0b" />
+        <AttStat label="ABSENT"  value={member.absentCount ?? 0} color="#ef4444" />
+      </div>
+
+      {/* Today's In / Out times — always visible */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+        <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: '10px', padding: '8px 12px', textAlign: 'center' }}>
+          <div style={{ fontSize: '8px', fontWeight: 800, color: '#334155', letterSpacing: '0.8px', marginBottom: '3px' }}>IN TIME</div>
+          <div style={{ fontSize: '13px', fontWeight: 900, color: att?.today_in ? '#10b981' : '#334155' }}>
+            {att?.today_in || '—'}
+          </div>
+        </div>
+        <div style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '10px', padding: '8px 12px', textAlign: 'center' }}>
+          <div style={{ fontSize: '8px', fontWeight: 800, color: '#334155', letterSpacing: '0.8px', marginBottom: '3px' }}>OUT TIME</div>
+          <div style={{ fontSize: '13px', fontWeight: 900, color: att?.today_out ? '#ef4444' : '#334155' }}>
+            {att?.today_out || '—'}
+          </div>
+        </div>
       </div>
 
       <button style={{ 

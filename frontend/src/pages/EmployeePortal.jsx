@@ -11,7 +11,7 @@ const PROJECTS = [
   { title: 'Competitor Analysis Report', service: 'Research', amtX: 60, status: 'Cancelled', date: 'Apr 8' },
 ];
 
-const ATT_DATA = [1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 't', 'f', 'f', 'f', 'f', 'f'];
+
 const DAYS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 const avatarGradient = (name) => {
@@ -40,8 +40,21 @@ const statusBadge = (s) => {
 };
 
 function EmployeePortal() {
-  const [screen, setScreen] = useState('login');
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem('user');
+    try {
+      const u = saved ? JSON.parse(saved) : null;
+      // If old structure (nested profile), clear it to force re-login
+      if (u && u.profile && !u.id) {
+        localStorage.removeItem('user');
+        return null;
+      }
+      return u;
+    } catch {
+      return null;
+    }
+  });
+  const [screen, setScreen] = useState(user ? 'dashboard' : 'login');
   const [members, setMembers] = useState([]);
   const [deptSummary, setDeptSummary] = useState(null);
   const [membersLoaded, setMembersLoaded] = useState(false);
@@ -49,8 +62,11 @@ function EmployeePortal() {
   const [pass, setPass] = useState('');
   const [err, setErr] = useState('');
   const [checkedIn, setCheckedIn] = useState(false);
+  const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
+  const [checkedOut, setCheckedOut] = useState(false);
   const [navItem, setNavItem] = useState('overview');
   const [clock, setClock] = useState(new Date());
+  const [logs, setLogs] = useState([]);
 
   useEffect(() => {
     fetch('/api/data')
@@ -59,12 +75,34 @@ function EmployeePortal() {
       .catch(() => setMembersLoaded(true));
   }, []);
 
+  const fetchLogs = (id) => {
+    fetch(`/api/attendance?id=${id}`)
+      .then(res => res.json())
+      .then(d => setLogs(Array.isArray(d) ? d : []))
+      .catch(e => console.error(e));
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetch(`/api/attendance/status?memberId=${user.id}`)
+        .then(res => res.json())
+        .then(d => {
+          setCheckedIn(d.checkedIn || false);
+          setHasCheckedInToday(d.hasCheckedInToday || false);
+          setCheckedOut(d.checkedOut || false);
+        })
+        .catch(err => console.error('Status check failed:', err));
+        
+      fetchLogs(user.id);
+    }
+  }, [user]);
+
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  const doLogin = (member = null) => {
+  const doLogin = async (member = null) => {
     if (member) {
       setUser(member);
       localStorage.setItem('user', JSON.stringify(member));
@@ -72,18 +110,58 @@ function EmployeePortal() {
       return;
     }
 
-    if (!membersLoaded) { setErr('Connecting to server...'); return; }
-    if (members.length === 0) { setErr('Cannot reach server. Make sure the backend is running.'); return; }
-    const found = members.find(m => m.id === empId || m.name.toLowerCase() === empId.toLowerCase());
-    if (!found) { setErr('Employee not found. Try clicking a demo card below.'); return; }
-    if (pass !== 'pass123') { setErr('Wrong password. Default password: pass123'); return; }
-    setUser(found);
-    localStorage.setItem('user', JSON.stringify(found));
-    setScreen('dashboard');
-    setErr('');
+    if (!empId.trim()) { setErr('Please enter your Employee ID or Name'); return; }
+    if (!pass.trim()) { setErr('Please enter your password'); return; }
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: empId.trim(), password: pass })
+      });
+      const data = await res.json();
+
+      if (data.status === 'ok' && data.user) {
+        // Flatten the user object for easy access throughout the app
+        const u = data.user;
+        const flatUser = {
+          ...u.profile,
+          ...u.stats,
+          projects: u.projects || [],
+          performance: u.performance || [],
+          // Ensure key fields are at root level
+          id: u.profile.id,
+          name: u.profile.name,
+          fullName: u.profile.fullName,
+          team: u.profile.department,
+          isAdmin: u.profile.isAdmin,
+          target: u.profile.target,
+          deliveredAmt: u.stats?.deliveredAmt || 0,
+          wipAmt: u.stats?.wipAmt || 0,
+          delivered: u.stats?.present || 0,
+        };
+        setUser(flatUser);
+        localStorage.setItem('user', JSON.stringify(flatUser));
+        setScreen('dashboard');
+        setErr('');
+      } else {
+        setErr(data.message || 'Invalid credentials. Check your ID and password.');
+      }
+    } catch (e) {
+      // Fallback to local check if backend is down
+      if (!membersLoaded || members.length === 0) { setErr('Cannot reach server.'); return; }
+      const found = members.find(m => m.id === empId || m.name?.toLowerCase() === empId.toLowerCase());
+      if (!found) { setErr('Employee not found.'); return; }
+      if (pass !== (found.password || 'pass123')) { setErr('Wrong password.'); return; }
+      setUser(found);
+      localStorage.setItem('user', JSON.stringify(found));
+      setScreen('dashboard');
+      setErr('');
+    }
   };
 
   const logout = () => {
+    localStorage.removeItem('user');
     setScreen('login');
     setUser(null);
     setEmpId('');
@@ -184,6 +262,53 @@ function EmployeePortal() {
 
   return (
     <div className="emp-app">
+      {/* Force Check-In Overlay */}
+      {!hasCheckedInToday && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(15,23,42,0.95)', backdropFilter: 'blur(20px)',
+          zIndex: 9999, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ fontSize: 64, marginBottom: 20 }}>👋</div>
+          <h2 style={{ fontSize: 36, color: '#f8fafc', marginBottom: 12, fontWeight: 900, textAlign: 'center' }}>
+            {greeting}, {user?.name?.split(' ')[0]}!
+          </h2>
+          <p style={{ color: '#94a3b8', fontSize: 18, marginBottom: 40, fontWeight: 500, textAlign: 'center' }}>
+            Please check in to start your day and access your portal.
+          </p>
+          
+          <button 
+            onClick={async () => {
+              try {
+                const res = await fetch('/api/attendance/checkin', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ memberId: user.id })
+                });
+                const data = await res.json();
+                if (res.ok && data.ok) {
+                  setCheckedIn(true);
+                  setHasCheckedInToday(true);
+                } else {
+                  alert(`Error: ${data.error || 'Check-in failed'}`);
+                }
+              } catch (err) {
+                alert('Network error during check-in');
+              }
+            }} 
+            style={{
+              background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontSize: 24, fontWeight: 900, 
+              padding: '20px 60px', borderRadius: 100, border: 'none', cursor: 'pointer', 
+              boxShadow: '0 0 40px rgba(16,185,129,0.5)', transition: 'all 0.3s ease',
+              display: 'flex', alignItems: 'center', gap: 12
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 0 60px rgba(16,185,129,0.7)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.transform = 'scale(1)'; e.currentTarget.style.boxShadow = '0 0 40px rgba(16,185,129,0.5)'; }}
+          >
+            <span>✅</span> Check In Now
+          </button>
+        </div>
+      )}
+
       <aside className="emp-sidebar">
         <div className="sb-top">
           <div className="sb-brand">
@@ -278,28 +403,36 @@ function EmployeePortal() {
               user={user} members={members} deptSummary={deptSummary}
               pct={pct} da={da} ds={ds}
               clock={clock} checkedIn={checkedIn} setCheckedIn={setCheckedIn}
+              checkedOut={checkedOut} setCheckedOut={setCheckedOut}
+              logs={logs} fetchLogs={() => fetchLogs(user.id)}
             />
           )}
 
           {/* ATTENDANCE TAB */}
-          {navItem === 'attendance' && (
-            <div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
-                {[
-                  { label: 'Present', value: ATT_DATA.filter(v => v === 1).length, color: '#10b981' },
-                  { label: 'Absent',  value: ATT_DATA.filter(v => v === 0).length, color: '#ef4444' },
-                  { label: 'Today',   value: ATT_DATA.filter(v => v === 't').length, color: '#3b82f6' },
-                  { label: 'Future',  value: ATT_DATA.filter(v => v === 'f').length, color: '#64748b' },
-                ].map(s => (
-                  <div key={s.label} className="emp-card" style={{ padding: '18px 20px' }}>
-                    <div style={{ fontSize: 28, fontWeight: 900, color: s.color }}>{s.value}</div>
-                    <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{s.label}</div>
-                  </div>
-                ))}
+          {navItem === 'attendance' && (() => {
+            const currentMonth = `${clock.getFullYear()}-${String(clock.getMonth()+1).padStart(2,'0')}`;
+            const monthlyLogs = logs.filter(l => l.date.startsWith(currentMonth));
+            const present = monthlyLogs.filter(l => l.status === 'Present' || l.status === 'Late').length;
+            const absent = clock.getDate() - present;
+            return (
+              <div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
+                  {[
+                    { label: 'Present', value: present, color: '#10b981' },
+                    { label: 'Absent',  value: Math.max(0, absent - 1), color: '#ef4444' }, // -1 for today
+                    { label: 'Today',   value: 1, color: '#3b82f6' },
+                    { label: 'Future',  value: new Date(clock.getFullYear(), clock.getMonth() + 1, 0).getDate() - clock.getDate(), color: '#64748b' },
+                  ].map(s => (
+                    <div key={s.label} className="emp-card" style={{ padding: '18px 20px' }}>
+                      <div style={{ fontSize: 28, fontWeight: 900, color: s.color }}>{s.value}</div>
+                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{s.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <AttendanceCard clock={clock} checkedIn={checkedIn} setCheckedIn={setCheckedIn} checkedOut={checkedOut} setCheckedOut={setCheckedOut} user={user} logs={logs} fetchLogs={() => fetchLogs(user.id)} />
               </div>
-              <AttendanceCard clock={clock} checkedIn={checkedIn} setCheckedIn={setCheckedIn} fullPage />
-            </div>
-          )}
+            );
+          })()}
 
           {/* PROJECTS TAB */}
           {navItem === 'projects' && (
@@ -341,42 +474,134 @@ function EmployeePortal() {
   );
 }
 
-const AttendanceCard = ({ clock, checkedIn, setCheckedIn, fullPage }) => (
-  <div className="emp-card" style={fullPage ? {} : {}}>
-    <div className="emp-card-header">
-      <div className="emp-card-title">📅 Attendance — {clock.toLocaleString('default', { month: 'long' })}</div>
-    </div>
-    <div style={{ padding: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div className="lpl-live-dot" style={{ opacity: checkedIn ? 1 : 0.3 }}></div>
-          <span style={{ color: checkedIn ? '#10b981' : '#64748b', fontWeight: 700 }}>
-            {checkedIn ? 'Checked In — 9:02 AM' : 'Not Checked In'}
-          </span>
-        </div>
-        <button
-          className={`wb-checkin-btn ${checkedIn ? 'check-out' : 'check-in'}`}
-          onClick={() => setCheckedIn(!checkedIn)}
-        >
-          {checkedIn ? '⬛ Check Out' : '✅ Check In'}
-        </button>
+const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setCheckedOut, user, logs = [], fetchLogs = () => {} }) => {
+  const handleAttendance = async () => {
+    try {
+      const action = checkedIn ? 'checkout' : 'checkin';
+      const res = await fetch(`/api/attendance/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId: user.id })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        alert(`Error: ${data.error || 'Request failed'}`);
+        return;
+      }
+      
+      if (data.ok) {
+        if (checkedIn) {
+          setCheckedOut(true);
+          setCheckedIn(false);
+        } else {
+          setCheckedIn(true);
+        }
+        fetchLogs(); // Reload table data instantly
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error. Is the backend running?');
+    }
+  };
+
+  const year = clock.getFullYear();
+  const month = clock.getMonth();
+  const todayDate = clock.getDate();
+  
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+  
+  const grid = [];
+  for (let i = 0; i < firstDay; i++) grid.push({ empty: true });
+  
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const log = logs.find(l => l.date === dateStr);
+    
+    let type = 'f'; // future
+    if (d > todayDate) type = 'f';
+    else if (d === todayDate) type = 't'; // today
+    else if (log && (log.status === 'Present' || log.status === 'Late')) type = 1; // present
+    else type = 0; // absent
+    
+    grid.push({ day: d, type, log });
+  }
+
+  const statusColor = { Present: '#10b981', Late: '#f59e0b', Absent: '#ef4444', Leave: '#a78bfa' };
+
+  return (
+    <div className="emp-card">
+      <div className="emp-card-header">
+        <div className="emp-card-title">📅 Attendance — {clock.toLocaleString('default', { month: 'long' })}</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8 }}>
-        {DAYS.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 10, fontWeight: 800, color: '#64748b' }}>{d}</div>)}
-        {ATT_DATA.map((v, i) => (
-          <div key={i} style={{
-            aspectRatio: '1', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
-            background: v === 1 ? 'rgba(16,185,129,0.1)' : v === 0 ? 'rgba(239,68,68,0.1)' : v === 't' ? 'rgba(59,130,246,0.15)' : 'transparent',
-            color: v === 1 ? '#10b981' : v === 0 ? '#ef4444' : v === 't' ? '#3b82f6' : '#475569',
-            border: v === 't' ? '1px solid #3b82f6' : 'none',
-          }}>
-            {i + 1 <= 28 ? i + 1 : ''}
+      <div style={{ padding: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="lpl-live-dot" style={{ opacity: checkedIn ? 1 : 0.3 }}></div>
+            <span style={{ color: checkedIn ? '#10b981' : '#64748b', fontWeight: 700 }}>
+              {checkedIn ? 'You are Checked In' : 'Not Checked In'}
+            </span>
           </div>
-        ))}
+          <button
+            className={`wb-checkin-btn ${checkedIn ? 'check-out' : 'check-in'}`}
+            onClick={handleAttendance}
+          >
+            {checkedIn ? '⬛ Check Out' : '✅ Check In'}
+          </button>
+        </div>
+        
+        {/* Calendar Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 24 }}>
+          {DAYS.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 10, fontWeight: 800, color: '#64748b' }}>{d}</div>)}
+          {grid.map((c, i) => (
+            <div key={i} style={{
+              aspectRatio: '1', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
+              background: c.empty ? 'transparent' : c.type === 1 ? 'rgba(16,185,129,0.1)' : c.type === 0 ? 'rgba(239,68,68,0.1)' : c.type === 't' ? 'rgba(59,130,246,0.15)' : 'transparent',
+              color: c.empty ? 'transparent' : c.type === 1 ? '#10b981' : c.type === 0 ? '#ef4444' : c.type === 't' ? '#3b82f6' : '#475569',
+              border: c.type === 't' ? '1px solid #3b82f6' : 'none',
+              cursor: c.log ? 'pointer' : 'default'
+            }} title={c.log ? `In: ${c.log.in || '—'} | Out: ${c.log.out || '—'}` : ''}>
+              {!c.empty ? c.day : ''}
+            </div>
+          ))}
+        </div>
+
+        {/* Personal Log Table */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', marginBottom: 12 }}>Detailed Log</div>
+          {logs.length === 0 ? (
+             <div style={{ fontSize: 12, color: '#475569', textAlign: 'center', padding: '10px 0' }}>No attendance records found.</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                    {['Date','Status','Check In','Check Out','Duration'].map(h => (
+                      <th key={h} style={{ padding: '8px 10px', fontSize: 9, fontWeight: 800, color: '#64748b', textAlign: 'left', letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.slice(0, 30).map((l, i) => (
+                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                      <td style={{ padding: '8px 10px', fontSize: 12, color: '#94a3b8' }}>{l.date}</td>
+                      <td style={{ padding: '8px 10px' }}>
+                        <span style={{ fontSize: 10, fontWeight: 800, color: statusColor[l.status]||'#64748b', background: `${statusColor[l.status]||'#64748b'}18`, padding: '2px 8px', borderRadius: 99 }}>{l.status||'—'}</span>
+                      </td>
+                      <td style={{ padding: '8px 10px', fontSize: 12, color: '#e2e8f0', fontWeight: 600 }}>{l.in||'—'}</td>
+                      <td style={{ padding: '8px 10px', fontSize: 12, color: '#94a3b8' }}>{l.out||'—'}</td>
+                      <td style={{ padding: '8px 10px', fontSize: 12, color: '#3b82f6', fontWeight: 700 }}>{l.duration||'—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const PerformanceRing = ({ pct, da, ds, user }) => (
   <div className="emp-card">
@@ -538,34 +763,73 @@ const ProjectCard = ({ p }) => {
 
 const ProjectsPage = ({ user }) => {
   const [filter, setFilter] = React.useState('All');
+  const [searchQ, setSearchQ] = React.useState('');
   const allProjects = user.projects || PROJECTS;
   const statuses = ['All', 'Delivered', 'WIP', 'Revision', 'Cancelled'];
   const counts = statuses.reduce((acc, s) => {
     acc[s] = s === 'All' ? allProjects.length : allProjects.filter(p => p.status === s).length;
     return acc;
   }, {});
-  const visible = filter === 'All' ? allProjects : allProjects.filter(p => p.status === filter);
+  
+  const visible = allProjects
+    .filter(p => filter === 'All' || p.status === filter)
+    .filter(p => {
+      if (!searchQ.trim()) return true;
+      const q = searchQ.toLowerCase();
+      return (
+        (p.order || '').toLowerCase().includes(q) ||
+        (p.title || '').toLowerCase().includes(q) ||
+        (p.client || '').toLowerCase().includes(q) ||
+        (p.service || '').toLowerCase().includes(q) ||
+        (p.assign || '').toLowerCase().includes(q)
+      );
+    });
 
   return (
     <div>
-      {/* Filter tabs */}
-      <div className="pfilter-bar">
-        {statuses.map(s => (
-          <button
-            key={s}
-            className={`pfilter-btn ${filter === s ? 'active' : ''}`}
-            onClick={() => setFilter(s)}
-          >
-            {s}
-            <span className="pfilter-count">{counts[s]}</span>
-          </button>
-        ))}
+      {/* Search + Filter bar */}
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
+        {/* Search */}
+        <div style={{ position: 'relative', flex: '1', minWidth: 200 }}>
+          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14 }}>🔍</span>
+          <input
+            value={searchQ}
+            onChange={e => setSearchQ(e.target.value)}
+            placeholder="Search by client, order, service..."
+            style={{
+              width: '100%', padding: '8px 32px 8px 32px', background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#f1f5f9',
+              fontSize: 13, fontFamily: 'Manrope,sans-serif', boxSizing: 'border-box'
+            }}
+          />
+          {searchQ && (
+            <button onClick={() => setSearchQ('')} style={{
+              position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+              background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 16, padding: 0
+            }}>×</button>
+          )}
+        </div>
+        {/* Filter tabs */}
+        <div className="pfilter-bar" style={{ marginBottom: 0 }}>
+          {statuses.map(s => (
+            <button
+              key={s}
+              className={`pfilter-btn ${filter === s ? 'active' : ''}`}
+              onClick={() => setFilter(s)}
+            >
+              {s}
+              <span className="pfilter-count">{counts[s]}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Cards */}
       <div className="pcard-list">
         {visible.length === 0
-          ? <div className="pcard-empty">No projects found</div>
+          ? <div className="pcard-empty">
+              {searchQ ? `No results for "${searchQ}"` : `No ${filter.toLowerCase()} projects found`}
+            </div>
           : visible.map((p, i) => <ProjectCard key={i} p={p} />)
         }
       </div>
@@ -575,8 +839,8 @@ const ProjectsPage = ({ user }) => {
 
 // ─── Admin Panel ───────────────────────────────────────────────
 // ── shared admin UI helpers ─────────────────────────────────────
-const TEAMS = ['GEO Rankers', 'Rank Riser', 'Search Apex', 'SMM'];
-const ROLES = ['SEO Executive', 'Team Leader', 'Team Member', 'Manager', 'SMM Executive'];
+const TEAMS = ['GEO Rankers', 'Rank Riser', 'Search Apex', 'Dark Rankers'];
+const ROLES = ['SEO Executive', 'Team Leader', 'Team Member', 'Manager', 'Dark Rankers Executive'];
 const TEAM_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#a78bfa'];
 
 const Btn = ({ children, onClick, color = '#3b82f6', sm, danger, disabled }) => (
@@ -700,8 +964,15 @@ const AdminMembers = ({ members }) => {
 
   const showToast = (msg, type = 'ok') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
-  const openEdit = (m) => { setForm({ ...m, isAdmin: m.isAdmin || false }); setModal('edit'); };
-  const openAdd  = () => { setForm({ id: '', name: '', fullName: '', team: TEAMS[0], role: ROLES[0], target: 1100, email: '', phone: '', password: 'pass123', isAdmin: false }); setModal('add'); };
+  const OFF_DAYS = [
+    { label: 'Friday',    value: 4 },
+    { label: 'Saturday',  value: 5 },
+    { label: 'Sunday',    value: 6 },
+    { label: 'Monday',    value: 0 },
+  ];
+
+  const openEdit = (m) => { setForm({ ...m, isAdmin: m.isAdmin || false, offDay: m.offDay ?? 4 }); setModal('edit'); };
+  const openAdd  = () => { setForm({ id: '', name: '', fullName: '', team: TEAMS[0], role: ROLES[0], target: 1100, email: '', phone: '', password: 'pass123', isAdmin: false, offDay: 4 }); setModal('add'); };
 
   const save = async () => {
     const url = modal === 'add' ? '/api/admin/members/add' : '/api/admin/members/update';
@@ -746,6 +1017,15 @@ const AdminMembers = ({ members }) => {
             <Field label="Email"><Input value={form.email||''} onChange={f('email')} placeholder="email@example.com" /></Field>
             <Field label="Phone"><Input value={form.phone||''} onChange={f('phone')} placeholder="+880..." /></Field>
             <Field label="Password"><Input value={form.password||''} onChange={f('password')} placeholder="pass123" /></Field>
+            <Field label="Weekly Off Day">
+              <select
+                value={form.offDay ?? 4}
+                onChange={e => f('offDay')(Number(e.target.value))}
+                style={{ width: '100%', padding: '8px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f1f5f9', fontSize: 13, fontFamily: 'Manrope,sans-serif' }}
+              >
+                {OFF_DAYS.map(d => <option key={d.value} value={d.value} style={{ background: '#0f172a' }}>{d.label}</option>)}
+              </select>
+            </Field>
             <Field label="Admin Access">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
                 <button onClick={() => f('isAdmin')(!form.isAdmin)} style={{ width: 40, height: 22, borderRadius: 99, border: 'none', cursor: 'pointer', background: form.isAdmin ? '#f59e0b' : 'rgba(255,255,255,0.08)', transition: 'background 0.2s', position: 'relative' }}>
@@ -772,7 +1052,7 @@ const AdminMembers = ({ members }) => {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-              {['ID','Name','Team','Role','Target','Email','Admin','Actions'].map(h => (
+              {['ID','Name','Team','Role','Target','Off Day','Email','Admin','Actions'].map(h => (
                 <th key={h} style={{ padding: '10px 14px', fontSize: 9, fontWeight: 800, color: '#334155', textAlign: 'left', letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{h}</th>
               ))}
             </tr></thead>
@@ -787,6 +1067,11 @@ const AdminMembers = ({ members }) => {
                   <td style={{ padding: '10px 14px', fontSize: 11, color: '#64748b' }}>{m.team}</td>
                   <td style={{ padding: '10px 14px', fontSize: 11, color: '#475569' }}>{m.role}</td>
                   <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 800, color: '#3b82f6' }}>${(m.target||0).toLocaleString()}</td>
+                  <td style={{ padding: '10px 14px' }}>
+                    <span style={{ fontSize: 10, fontWeight: 800, color: '#a78bfa', background: 'rgba(167,139,250,0.1)', padding: '2px 8px', borderRadius: 99, border: '1px solid rgba(167,139,250,0.2)' }}>
+                      {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][m.offDay ?? 4]}
+                    </span>
+                  </td>
                   <td style={{ padding: '10px 14px', fontSize: 11, color: '#475569' }}>{m.email||'—'}</td>
                   <td style={{ padding: '10px 14px' }}>
                     {m.isAdmin ? <span style={{ fontSize: 9, fontWeight: 800, color: '#f59e0b', background: 'rgba(245,158,11,0.12)', padding: '2px 8px', borderRadius: 99, border: '1px solid rgba(245,158,11,0.25)' }}>ADMIN</span>
@@ -854,7 +1139,7 @@ const AdminAttendance = () => {
           : <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead><tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                  {['Employee ID','Status','Check In','Check Out','Duration','Action'].map(h => (
+                  {['Employee ID','Status','Check In','Check Out','Duration','Device','IP','Action'].map(h => (
                     <th key={h} style={{ padding: '10px 14px', fontSize: 9, fontWeight: 800, color: '#334155', textAlign: 'left', letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{h}</th>
                   ))}
                 </tr></thead>
@@ -868,6 +1153,8 @@ const AdminAttendance = () => {
                       <td style={{ padding: '10px 14px', fontSize: 12, color: '#94a3b8' }}>{r.in||'—'}</td>
                       <td style={{ padding: '10px 14px', fontSize: 12, color: '#94a3b8' }}>{r.out||'—'}</td>
                       <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748b' }}>{r.duration||'—'}</td>
+                      <td style={{ padding: '10px 14px', fontSize: 11, color: '#64748b' }}>{r.device_out || r.device_in || '—'}</td>
+                      <td style={{ padding: '10px 14px', fontSize: 10, color: '#475569', fontFamily: 'monospace' }}>{r.ip_out || r.ip_in || '—'}</td>
                       <td style={{ padding: '10px 14px' }}><Btn sm onClick={() => setEditing({...r})}>Edit</Btn></td>
                     </tr>
                   ))}
@@ -885,21 +1172,32 @@ const AdminAnnouncements = ({ members }) => {
   const [msg, setMsg] = React.useState('');
   const [target, setTarget] = React.useState('all');
   const [toast, setToast] = React.useState(null);
+  const [history, setHistory] = React.useState([]);
 
   const showToast = (m, type='ok') => { setToast({msg:m,type}); setTimeout(()=>setToast(null),3000); };
 
+  const fetchHistory = () => fetch('/api/admin/announcements/history').then(r => r.json()).then(d => setHistory(Array.isArray(d) ? d : []));
+  React.useEffect(() => { fetchHistory(); }, []);
+
   const send = async () => {
-    if (!msg.trim()) return showToast('Message required', 'error');
+    if (!msg.trim()) return showToast('Please enter a message', 'error');
     const r = await fetch('/api/admin/announcements', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ title, message: msg, target }) });
     const d = await r.json();
-    if (d.ok) { showToast('Announcement sent!'); setTitle(''); setMsg(''); }
+    if (d.ok) { 
+      showToast('Announcement sent!'); 
+      setTitle(''); 
+      setMsg(''); 
+      fetchHistory();
+    }
     else showToast(d.error||'Error','error');
   };
 
   return (
-    <div>
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 24 }}>
       {toast && <Toast msg={toast.msg} type={toast.type} />}
-      <div className="emp-card" style={{ maxWidth: 600 }}>
+      
+      {/* Sender Form */}
+      <div className="emp-card">
         <div className="emp-card-header"><div className="emp-card-title">Send Announcement</div></div>
         <div style={{ padding: 20 }}>
           <Field label="TITLE"><Input value={title} onChange={setTitle} placeholder="Monthly update..." /></Field>
@@ -911,6 +1209,27 @@ const AdminAnnouncements = ({ members }) => {
               style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 9, color: '#f1f5f9', fontSize: 13, fontFamily: 'Manrope,sans-serif', resize: 'vertical', boxSizing: 'border-box' }} />
           </Field>
           <Btn onClick={send} color="#10b981">Send to {target === 'all' ? `All (${members.length})` : target}</Btn>
+        </div>
+      </div>
+
+      {/* History List */}
+      <div className="emp-card" style={{ display: 'flex', flexDirection: 'column' }}>
+        <div className="emp-card-header"><div className="emp-card-title">Announcement History</div></div>
+        <div style={{ padding: '0 20px 20px', flex: 1, overflowY: 'auto', maxHeight: '500px' }}>
+          {history.length === 0 ? (
+             <div style={{ padding: 40, textAlign: 'center', color: '#475569', fontSize: 13 }}>No announcements sent yet.</div>
+          ) : history.map((h, i) => (
+            <div key={i} style={{ padding: '14px 0', borderBottom: i < history.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                 <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9' }}>{h.title}</div>
+                 <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>{new Date(h.timestamp * 1000).toLocaleString()}</div>
+               </div>
+               <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5, marginBottom: 8 }}>{h.text}</div>
+               <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, background: h.target === 'all' ? 'rgba(59,130,246,0.1)' : 'rgba(245,158,11,0.1)', color: h.target === 'all' ? '#60a5fa' : '#f59e0b', border: `1px solid ${h.target === 'all' ? 'rgba(59,130,246,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
+                 Sent to: {h.target}
+               </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
@@ -974,6 +1293,20 @@ const AdminLeaveRequests = () => {
 const AdminSettings = () => {
   const [syncing, setSyncing] = React.useState(false);
   const [toast, setToast] = React.useState(null);
+  const [config, setConfig] = React.useState({ dept_target: 36000, team_targets: {} });
+  const [shifts, setShifts] = React.useState({ "GEO Rankers": "08:00", "Rank Riser": "07:00", "Dark Rankers": "15:00", "Search Apex": "22:00" });
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    fetch('/api/admin/config').then(r => r.json()).then(d => {
+      if(!d.error) setConfig({ dept_target: d.dept_target || 36000, team_targets: d.team_targets || {} });
+    }).catch(e => console.error(e));
+    
+    fetch('/api/admin/shifts').then(r => r.json()).then(d => {
+      if(!d.error && Object.keys(d).length > 0) setShifts(d);
+    }).catch(e => console.error(e));
+  }, []);
+
   const showToast = (m, type='ok') => { setToast({msg:m,type}); setTimeout(()=>setToast(null),3000); };
 
   const sync = async () => {
@@ -984,15 +1317,143 @@ const AdminSettings = () => {
     showToast(d.message || (d.status === 'ok' ? 'Sync complete!' : 'Error'), d.status === 'ok' ? 'ok' : 'error');
   };
 
+  const handleSaveConfig = async () => {
+    setSaving(true);
+    try {
+      // Save Targets
+      const r1 = await fetch('/api/admin/config', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config)
+      });
+      
+      // Save Shifts
+      const r2 = await fetch('/api/admin/shifts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(shifts)
+      });
+      
+      const d1 = await r1.json();
+      const d2 = await r2.json();
+      
+      if(d1.ok && d2.ok) {
+        showToast('Settings saved! Triggering dashboard sync...', 'ok');
+        // Auto-sync after save so dashboard reflects changes
+        await sync();
+        showToast('Dashboard updated with new targets!', 'ok');
+      } else {
+        showToast('Error saving settings', 'error');
+      }
+    } catch (err) {
+      showToast('Connection error', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateTeamTarget = (team, val) => {
+    setConfig(c => ({...c, team_targets: {...c.team_targets, [team]: Number(val) || 0}}));
+  };
+  
+  const updateTeamShift = (team, val) => {
+    setShifts(s => ({...s, [team]: val}));
+  };
+
   return (
-    <div>
+    <div className="settings-container">
       {toast && <Toast msg={toast.msg} type={toast.type} />}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-        <div className="emp-card" style={{ padding: 24 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', marginBottom: 8 }}>Data Sync</div>
-          <div style={{ fontSize: 12, color: '#475569', marginBottom: 20, lineHeight: 1.6 }}>Manually trigger a full data recalculation from Google Sheets → MongoDB. This updates all member summaries, team stats, and department totals.</div>
-          <Btn onClick={sync} color="#3b82f6" disabled={syncing}>{syncing ? 'Syncing...' : 'Sync Now'}</Btn>
+
+      <div className="settings-header">
+        <div className="settings-icon">🎯</div>
+        <div>
+          <div className="settings-title">Financial Targets & Shifts</div>
+          <div className="settings-subtitle">Configure departmental revenue goals and employee attendance rules</div>
         </div>
+      </div>
+
+      <div className="settings-grid">
+        {/* Dept Target Card */}
+        <div className="settings-card">
+          <div className="card-tag">DEPARTMENT</div>
+          <div className="card-title">Monthly Revenue Target</div>
+          <div className="input-group">
+            <span className="input-prefix">$</span>
+            <input 
+              type="number" 
+              value={config.dept_target} 
+              onChange={e => setConfig({...config, dept_target: Number(e.target.value) || 0})} 
+              className="settings-input" 
+            />
+          </div>
+          <div className="card-info">This sets the overall progress goal for the GEO Rankers department.</div>
+        </div>
+
+        {/* Sync Card */}
+        <div className="settings-card sync-card">
+          <div className="card-tag">DATA INTEGRITY</div>
+          <div className="card-title">Database Sync</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 20, lineHeight: 1.6, fontWeight: 600 }}>
+            Updates all metrics from Google Sheets. Run this manually if you suspect data discrepancies.
+          </div>
+          <button className="save-btn sync-btn" onClick={sync} disabled={syncing}>
+            {syncing ? 'Syncing...' : '🔄 Sync Now'}
+          </button>
+        </div>
+
+        {/* Team Targets Card */}
+        <div className="settings-card full-width">
+          <div className="card-tag">TEAMS</div>
+          <div className="card-title">Individual Team Revenue Goals</div>
+          <div className="teams-grid">
+            {['GEO Rankers', 'Rank Riser', 'Search Apex', 'Dark Rankers'].map((team, i) => (
+              <div key={team} className="team-input-card">
+                <div className="team-name">
+                  <div className="team-dot" style={{ background: TEAM_COLORS[i % 5] }}></div>
+                  {team}
+                </div>
+                <div className="input-group">
+                  <span className="input-prefix">$</span>
+                  <input 
+                    type="number" 
+                    value={config.team_targets[team] || 0} 
+                    onChange={e => updateTeamTarget(team, e.target.value)} 
+                    className="settings-input" 
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Shift Timings Card */}
+        <div className="settings-card full-width">
+          <div className="card-tag">ATTENDANCE</div>
+          <div className="card-title">Shift Schedules (15 min grace period)</div>
+          <div className="shifts-grid">
+            {['GEO Rankers', 'Rank Riser', 'Search Apex', 'Dark Rankers'].map((team, i) => (
+              <div key={team} className="team-input-card">
+                <div className="team-name">
+                  <div className="team-dot" style={{ background: TEAM_COLORS[i % 5] }}></div>
+                  {team}
+                </div>
+                <input 
+                  type="time" 
+                  value={shifts[team] || ''} 
+                  onChange={e => updateTeamShift(team, e.target.value)} 
+                  className="settings-input no-prefix" 
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="settings-footer">
+        <button className="save-btn" onClick={handleSaveConfig} disabled={saving}>
+          {saving ? 'Processing...' : '✅ Save All Changes'}
+        </button>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
         <div className="emp-card" style={{ padding: 24 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', marginBottom: 8 }}>Admin IDs</div>
           <div style={{ fontSize: 12, color: '#475569', marginBottom: 12, lineHeight: 1.6 }}>These IDs have full admin access to the panel:</div>
@@ -1000,10 +1461,22 @@ const AdminSettings = () => {
             <div key={s} style={{ padding: '7px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, marginBottom: 6, fontSize: 12, fontWeight: 700, color: '#f59e0b', fontFamily: 'monospace' }}>{s}</div>
           ))}
         </div>
+        <div className="emp-card" style={{ padding: 24 }}>
+          <div style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', marginBottom: 8 }}>System Health</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
+            <div className="lpl-live-dot"></div>
+            <span style={{ fontSize: 12, color: '#10b981', fontWeight: 700 }}>MongoDB Connected</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+            <div className="lpl-live-dot" style={{ background: '#3b82f6', boxShadow: '0 0 6px #3b82f6' }}></div>
+            <span style={{ fontSize: 12, color: '#3b82f6', fontWeight: 700 }}>Google Sheets API Active</span>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
+
 
 // ── Main AdminPanel ─────────────────────────────────────────────
 const AdminPanel = ({ members, deptSummary }) => {
@@ -1045,7 +1518,15 @@ const MiniBar = ({ value, color }) => (
 );
 
 // ─── OverviewDashboard ──────────────────────────────────────────
-const OverviewDashboard = ({ user, members, deptSummary, pct, da, ds, clock, checkedIn, setCheckedIn }) => {
+const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds, clock, checkedIn, setCheckedIn, checkedOut, setCheckedOut, logs, fetchLogs }) => {
+  // Deduplicate members by ID on the frontend (safety net)
+  const seenIds = new Set();
+  const members = rawMembers.filter(m => {
+    if (!m.id || seenIds.has(m.id)) return false;
+    seenIds.add(m.id);
+    return true;
+  });
+
   const dept = deptSummary?.dept || {};
   const deptTarget    = dept.target || 35000;
   const deptAchieved  = dept.achieved || 0;
@@ -1223,7 +1704,7 @@ const OverviewDashboard = ({ user, members, deptSummary, pct, da, ds, clock, che
       {/* ── Row 4: Recent Projects + Attendance ── */}
       <div className="ovd-row4">
         <ProjectsList user={user} title="📁 My Projects — Recent" limit={5} />
-        <AttendanceCard clock={clock} checkedIn={checkedIn} setCheckedIn={setCheckedIn} />
+        <AttendanceCard clock={clock} checkedIn={checkedIn} setCheckedIn={setCheckedIn} checkedOut={checkedOut} setCheckedOut={setCheckedOut} user={user} logs={logs} fetchLogs={fetchLogs} />
       </div>
 
     </div>

@@ -39,9 +39,20 @@ def get_config():
     return _CONFIG_CACHE["data"] or {
         "dept_target": 35000, 
         "member_target": 1100, 
-        "team_targets": {}, 
+        "team_targets": {
+            "GEO Rankers": 6000,
+            "Rank Riser": 12000,
+            "Search Apex": 9000,
+            "Dark Rankers": 9000
+        }, 
         "management": {"manager": {}, "leaders": {}},
-        "name_aliases": {}
+        "name_aliases": {},
+        "team_shifts": {
+            "GEO Rankers": "08:00",
+            "Rank Riser": "07:00",
+            "Dark Rankers": "15:00",
+            "Search Apex": "22:00"
+        }
     }
 
 # Dynamic property helpers
@@ -50,6 +61,12 @@ def MEM_TARGET(): return get_config().get("member_target", 1100)
 def TEAM_TARGETS(): return get_config().get("team_targets", {})
 def MANAGEMENT(): return get_config().get("management", {"manager": {}, "leaders": {}})
 def NAME_ALIASES(): return get_config().get("name_aliases", {})
+def TEAM_SHIFTS(): return get_config().get("team_shifts", {
+    "GEO Rankers": "08:00",
+    "Rank Riser": "07:00",
+    "Dark Rankers": "15:00",
+    "Search Apex": "22:00"
+})
 
 # Column indices (0-indexed)
 COL = {

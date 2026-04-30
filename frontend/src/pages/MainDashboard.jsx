@@ -92,50 +92,65 @@ function MainDashboard() {
 
   if (loading) return <div className="loading" style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading Dashboard...</div>;
   if (error) return <div className="error" style={{ padding: 40, textAlign: 'center', color: '#ef4444' }}>Error: {error}</div>;
-  if (!data) return null;
 
-  const { data: members = [], summary = {}, audit = {} } = data;
-  const deptSummary = summary.dept || {};
-  const teamSummaries = summary.teams || {};
-  const TEAMS = Object.keys(teamSummaries);
+  try {
+    const { data: members = [], summary = {}, audit = {} } = data || {};
+    const deptSummary = summary.dept || {};
+    const teamSummaries = summary.teams || {};
+    const TEAMS = Object.keys(teamSummaries);
 
-  const filteredMembers = members.filter(m => 
-    (teamFilter === 'All' || m.team === teamFilter) &&
-    (m.name?.toLowerCase().includes(searchQ.toLowerCase()) || m.fullName?.toLowerCase().includes(searchQ.toLowerCase()))
-  );
+    const filteredMembers = members.filter(m => 
+      (teamFilter === 'All' || m.team === teamFilter) &&
+      (m.name?.toLowerCase().includes(searchQ.toLowerCase()) || m.fullName?.toLowerCase().includes(searchQ.toLowerCase()))
+    );
 
-  const topPerformers = [...members].sort((a, b) => (b.deliveredAmt || 0) - (a.deliveredAmt || 0)).slice(0, 4);
-
-  // Countdown logic
-  const now = new Date();
-  const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
-  const daysLeft = daysInMonth - now.getDate();
-  const elapsedPct = Math.round((now.getDate() / daysInMonth) * 100);
-
-  const attSummary = Object.values(attStats).reduce((acc, curr) => {
-    if (curr.status === 'Late') acc.late += 1;
-    if (curr.status === 'Absent') acc.absent += 1;
-    if (curr.status === 'Present') acc.present += 1;
-    return acc;
-  }, { late: 0, absent: 0, present: 0 });
-
-  const handleExport = () => {
-    let csv = 'ID,Name,Team,Role,Delivered,WIP,Target\n';
+    // Select one best performer per team based on performanceScore
+    const topPerformers = [];
+    const teamBest = {};
     members.forEach(m => {
-      csv += `${m.id},"${m.name}","${m.team}","${m.role || 'Member'}",${m.deliveredAmt || 0},${m.wipAmt || 0},${m.target || 1100}\n`;
+      const t = m.team || 'Others';
+      if (!teamBest[t] || (m.performanceScore || 0) > (teamBest[t].performanceScore || 0)) {
+        teamBest[t] = m;
+      }
     });
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `Performance_Export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
+    Object.values(teamBest)
+      .sort((a, b) => {
+        const scoreDiff = (b.performanceScore || 0) - (a.performanceScore || 0);
+        if (scoreDiff !== 0) return scoreDiff;
+        return (b.deliveredAmt || 0) - (a.deliveredAmt || 0);
+      })
+      .slice(0, 4)
+      .forEach(m => topPerformers.push(m));
 
+    // Countdown logic
+    const now = new Date();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const daysLeft = daysInMonth - now.getDate();
+    const elapsedPct = Math.round((now.getDate() / daysInMonth) * 100);
 
-  return (
+    const attSummary = Object.values(attStats || {}).reduce((acc, curr) => {
+      if (curr.status === 'Late') acc.late += 1;
+      if (curr.status === 'Absent') acc.absent += 1;
+      if (curr.status === 'Present') acc.present += 1;
+      return acc;
+    }, { late: 0, absent: 0, present: 0 });
+
+    const handleExport = () => {
+      let csv = 'ID,Name,Team,Role,Delivered,WIP,Target\n';
+      members.forEach(m => {
+        csv += `${m.id},"${m.name}","${m.team}","${m.role || 'Member'}",${m.deliveredAmt || 0},${m.wipAmt || 0},${m.target || 1100}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Performance_Export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    };
+
+    return (
     <div className="dashboard-root">
       <div className="g1"></div>
       <div className="g2"></div>
@@ -164,14 +179,16 @@ function MainDashboard() {
       )}
 
 
-      <div className="welcome-strip" style={{ padding: '20px 32px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div className="welcome-strip" style={{ padding: '24px 32px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative', zIndex: 10 }}>
         <div>
-          <h2 style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '-0.5px' }}>Welcome back, <span style={{ color: '#3b82f6' }}>{userName}</span> 👋</h2>
-          <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>Here's what's happening in the {deptSummary.name || "GEO Rankers"} department today.</p>
+          <h2 style={{ fontSize: '28px', fontWeight: 900, letterSpacing: '-0.5px', color: '#f8fafc' }}>
+            Welcome back, <span style={{ background: 'linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', textShadow: '0 0 20px rgba(139, 92, 246, 0.3)' }}>{userName}</span> 👋
+          </h2>
+          <p style={{ fontSize: '13px', color: '#94a3b8', marginTop: '6px', fontWeight: 500 }}>Here's what's happening in the <strong style={{ color: '#cbd5e1' }}>{deptSummary.name || "GEO Rankers"}</strong> department today.</p>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Last Sync</div>
-          <div style={{ fontSize: '12px', fontWeight: 700, color: '#10b981' }}>{new Date().toLocaleTimeString()}</div>
+        <div style={{ textAlign: 'right', background: 'rgba(255,255,255,0.03)', padding: '8px 16px', borderRadius: '12px', border: '1px solid rgba(148,163,184,0.1)' }}>
+          <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Last Live Sync</div>
+          <div style={{ fontSize: '13px', fontWeight: 800, color: '#10b981', textShadow: '0 0 10px rgba(16,185,129,0.4)' }}>{new Date().toLocaleTimeString()}</div>
         </div>
       </div>
 
@@ -207,15 +224,15 @@ function MainDashboard() {
       <div className="att-summary-strip" style={{ margin: '0 32px 10px', display: 'flex', gap: '12px' }}>
         <div style={{ flex: 1, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: '12px', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '11px', fontWeight: 800, color: '#10b981' }}>PRESENT TODAY</span>
-          <span style={{ fontSize: '16px', fontWeight: 900, color: '#10b981' }}>{attSummary.present}</span>
+          <span style={{ fontSize: '16px', fontWeight: 900, color: '#10b981' }}>{deptSummary.presentToday || 0}</span>
         </div>
         <div style={{ flex: 1, background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: '12px', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '11px', fontWeight: 800, color: '#f59e0b' }}>LATE</span>
-          <span style={{ fontSize: '16px', fontWeight: 900, color: '#f59e0b' }}>{attSummary.late}</span>
+          <span style={{ fontSize: '16px', fontWeight: 900, color: '#f59e0b' }}>{deptSummary.lateToday || 0}</span>
         </div>
         <div style={{ flex: 1, background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)', borderRadius: '12px', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span style={{ fontSize: '11px', fontWeight: 800, color: '#ef4444' }}>ABSENT</span>
-          <span style={{ fontSize: '16px', fontWeight: 900, color: '#ef4444' }}>{attSummary.absent}</span>
+          <span style={{ fontSize: '16px', fontWeight: 900, color: '#ef4444' }}>{deptSummary.absentToday || 0}</span>
         </div>
       </div>
 
@@ -245,10 +262,38 @@ function MainDashboard() {
         </div>
       </div>
 
-      <main className="main">
+      <main className="main" style={{ position: 'relative', zIndex: 10 }}>
         {/* Overview Section */}
         {activeSection === 'overview' && (
           <section className="dash-section">
+            
+            {/* Quick Insights Highlights */}
+            <div className="quick-insights" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+              <div className="tc" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '1px solid rgba(59,130,246,0.3)', boxShadow: '0 0 15px rgba(59,130,246,0.2)' }}>🚀</div>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Top Performer</div>
+                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#f1f5f9', marginTop: '2px' }}>{topPerformers[0]?.name || 'N/A'}</div>
+                  <div style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 700 }}>${topPerformers[0]?.deliveredAmt || 0} Delivered</div>
+                </div>
+              </div>
+              <div className="tc" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(52,211,153,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '1px solid rgba(16,185,129,0.3)', boxShadow: '0 0 15px rgba(16,185,129,0.2)' }}>📈</div>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Dept Progress</div>
+                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#f1f5f9', marginTop: '2px' }}>{Math.round(((summary.totalAchieved || 0) / (summary.dept?.target || 35000)) * 100)}% to Goal</div>
+                  <div style={{ fontSize: '12px', color: '#10b981', fontWeight: 700 }}>${summary.totalAchieved || 0} Total</div>
+                </div>
+              </div>
+              <div className="tc" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, rgba(245,158,11,0.2), rgba(251,191,36,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '1px solid rgba(245,158,11,0.3)', boxShadow: '0 0 15px rgba(245,158,11,0.2)' }}>⚡</div>
+                <div>
+                  <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Active Projects</div>
+                  <div style={{ fontSize: '16px', fontWeight: 900, color: '#f1f5f9', marginTop: '2px' }}>{summary.dept?.wipRows || 0} In Progress</div>
+                  <div style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 700 }}>${summary.dept?.wipAmt || 0} WIP</div>
+                </div>
+              </div>
+            </div>
             <DeptOverview 
               total={summary.dept?.target || 35000} 
               delivered={summary.totalAchieved || 0}
@@ -342,7 +387,6 @@ function MainDashboard() {
                   const c = colors[i] || colors[3];
                   const target = m.target || 1100;
                   const pct = Math.round(((m.deliveredAmt || 0) / target) * 100);
-
                   return (
                     <div key={m.id || i} className="spot-card" onClick={() => setSelectedMember(m)} style={{
                       background: 'rgba(15, 23, 42, 0.8)',
@@ -385,7 +429,14 @@ function MainDashboard() {
                         <div style={{ height: '100%', width: `${Math.min(100, pct)}%`, background: 'linear-gradient(90deg, #10b981, #3b82f6)', borderRadius: '10px' }}></div>
                       </div>
 
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
+                        {pct > 120 && <div style={{ fontSize: '9px', fontWeight: 900, background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(16,185,129,0.2)' }}>🚀 HIGH EFFICIENCY</div>}
+                        {(m.lateCount || 0) === 0 && (m.presentCount || 0) > 0 && <div style={{ fontSize: '9px', fontWeight: 900, background: 'rgba(59,130,246,0.1)', color: '#3b82f6', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(59,130,246,0.2)' }}>⏱️ PERFECT PUNCTUALITY</div>}
+                        {(m.cancelled || 0) === 0 && (m.delivered || 0) > 5 && <div style={{ fontSize: '9px', fontWeight: 900, background: 'rgba(139,92,246,0.1)', color: '#8b5cf6', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(139,92,246,0.2)' }}>💎 ZERO CANCELLATION</div>}
+                        {(m.presentCount || 0) > 20 && <div style={{ fontSize: '9px', fontWeight: 900, background: 'rgba(236,72,153,0.1)', color: '#ec4899', padding: '3px 8px', borderRadius: '4px', border: '1px solid rgba(236,72,153,0.2)' }}>⭐ TOP ATTENDANCE</div>}
+                      </div>
+
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                         <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8' }}>
                           {m.delivered || 0} delivered • {pct}% target
                         </div>
@@ -394,6 +445,30 @@ function MainDashboard() {
                             ✅ Target Hit!
                           </div>
                         )}
+                      </div>
+
+                      {/* Detailed Stats Row */}
+                      <div style={{ 
+                        padding: '12px 16px', background: 'rgba(255,255,255,0.02)', 
+                        borderRadius: '16px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px',
+                        border: '1px solid rgba(255,255,255,0.03)'
+                      }}>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 800 }}>LATE</div>
+                          <div style={{ fontSize: '13px', fontWeight: 900, color: (m.lateCount || 0) > 0 ? '#ef4444' : '#10b981' }}>{m.lateCount || 0}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 800 }}>ABSENT</div>
+                          <div style={{ fontSize: '13px', fontWeight: 900, color: (m.absentCount || 0) > 5 ? '#ef4444' : '#94a3b8' }}>{m.absentCount || 0}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 800 }}>CANCEL</div>
+                          <div style={{ fontSize: '13px', fontWeight: 900, color: (m.cancelled || 0) > 0 ? '#ef4444' : '#94a3b8' }}>{m.cancelled || 0}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 800 }}>TOTAL</div>
+                          <div style={{ fontSize: '13px', fontWeight: 900, color: '#3b82f6' }}>{m.total || 0}</div>
+                        </div>
                       </div>
                     </div>
                   );
@@ -425,38 +500,59 @@ function MainDashboard() {
         {activeSection === 'members' && (
           <section className="dash-section">
             <div className="controls">
-              <div className="search-wrap">
+              <div className="search-wrap" style={{ position: 'relative' }}>
                 <span className="si">🔍</span>
                 <input 
                   className="search-input" 
-                  placeholder="Search member..." 
+                  placeholder="Search member by name or ID..." 
                   value={searchQ}
                   onChange={e => setSearchQ(e.target.value)}
                 />
+                {searchQ && (
+                  <button
+                    onClick={() => setSearchQ('')}
+                    style={{
+                      position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
+                      background: 'none', border: 'none', color: '#64748b', cursor: 'pointer',
+                      fontSize: 16, lineHeight: 1, padding: 0
+                    }}
+                  >×</button>
+                )}
               </div>
               <div className="filter-tabs">
                 {['All', ...TEAMS].map(t => (
                   <button 
                     key={t} 
                     className={`ftab ${teamFilter === t ? 'active' : ''}`}
-                    onClick={() => setTeamFilter(t)}
+                    onClick={() => { setTeamFilter(t); setSearchQ(''); }}
                   >
                     {t}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="stitle">👥 Team Members</div>
+            <div className="stitle">
+              👥 Team Members
+              {searchQ && <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600, marginLeft: 10 }}>
+                {filteredMembers.length} result{filteredMembers.length !== 1 ? 's' : ''} for "{searchQ}"
+              </span>}
+            </div>
             <div className="members-grid">
-              {filteredMembers.map((m, i) => (
-                <MemberCard
-                  key={m.id || i}
-                  member={m}
-                  rank={members.findIndex(x => x.id === m.id) + 1}
-                  onClick={setSelectedMember}
-                  att={attStats[m.id] || null}
-                />
-              ))}
+              {filteredMembers.length === 0 ? (
+                <div style={{ gridColumn: '1/-1', padding: '40px', textAlign: 'center', color: '#475569', fontSize: 14 }}>
+                  No members found matching "<strong style={{ color: '#94a3b8' }}>{searchQ}</strong>"
+                </div>
+              ) : (
+                filteredMembers.map((m, i) => (
+                  <MemberCard
+                    key={m.id || i}
+                    member={m}
+                    rank={members.findIndex(x => x.id === m.id) + 1}
+                    onClick={setSelectedMember}
+                    att={attStats[m.id] || null}
+                  />
+                ))
+              )}
             </div>
           </section>
         )}
@@ -482,7 +578,10 @@ function MainDashboard() {
         <span>April 2026</span>
       </footer>
     </div>
-  );
+    );
+  } catch (err) {
+    return <div className="error" style={{ padding: 40, textAlign: 'center', color: '#ef4444' }}>Runtime Error: {err.message}</div>;
+  }
 }
 
 export default MainDashboard;

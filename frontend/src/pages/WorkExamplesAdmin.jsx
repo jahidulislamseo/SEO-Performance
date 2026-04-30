@@ -122,6 +122,34 @@ function WorkExamplesAdmin() {
                   </div>
 
                   <div style={{ marginBottom: '10px' }}>
+                    <label style={{ display: 'block', fontSize: '10px', color: '#64748b', marginBottom: '4px' }}>CASE STUDY URL</label>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <input 
+                        value={ex.url || ''} 
+                        onChange={(e) => updateProject(cIdx, pIdx, 'url', e.target.value)} 
+                        placeholder="https://..."
+                        style={{ flex: 1, background: '#0f172a', border: '1px solid #334155', color: '#3b82f6', padding: '8px', borderRadius: '6px' }} 
+                      />
+                      <button 
+                        onClick={() => { navigator.clipboard.writeText(ex.url || ''); alert('Copied!'); }}
+                        style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', border: '1px solid rgba(59,130,246,0.2)', padding: '0 12px', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}
+                      >
+                        Copy
+                      </button>
+                      {ex.url && (
+                        <a 
+                          href={ex.url} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          style={{ background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', padding: '8px 12px', borderRadius: '6px', fontSize: '11px', textDecoration: 'none' }}
+                        >
+                          Visit ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ marginBottom: '10px' }}>
                     <label style={{ display: 'block', fontSize: '10px', color: '#64748b', marginBottom: '4px' }}>RESULT / KPI</label>
                     <input value={ex.result} onChange={(e) => updateProject(cIdx, pIdx, 'result', e.target.value)} style={{ width: '100%', background: '#0f172a', border: '1px solid #334155', color: '#10b981', padding: '8px', borderRadius: '6px', fontWeight: 800 }} />
                   </div>

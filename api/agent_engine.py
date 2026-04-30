@@ -235,22 +235,57 @@ def process_and_save(df, db):
     platform_stats = {k: round(v, 2) for k, v in platform_stats.items()}
 
     # 5. Member Stats
-    logger.info("Calculating Member stats for official members only...")
+    logger.info("Calculating Member stats and Attendance for official members only...")
     
     # Filter for official members only
     members_list = list(db["members"].find({"isOfficial": True}, {"_id": 0}))
     
+    # Fetch current month attendance
+    from datetime import datetime, timedelta, timezone
+    tz_bd = timezone(timedelta(hours=6))
+    now_bd = datetime.now(tz_bd)
+    cur_month_prefix = now_bd.strftime("%Y-%m")
+    
+    attendance_records = list(db["attendance"].find({
+        "date": {"$regex": f"^{cur_month_prefix}"}
+    }))
+    
     member_summaries = []
     for m in members_list:
         name = m["name"]
+        emp_id = m.get("id", "")
         m_df = edf[edf['matched_name'] == name] if not edf.empty else pd.DataFrame()
+        
+        # Filter attendance for this member
+        m_att = [r for r in attendance_records if str(r.get("emp_id", "")).rstrip(".0") == str(emp_id).rstrip(".0")]
+        late_count = sum(1 for r in m_att if r.get("status") == "Late")
+        present_count = sum(1 for r in m_att if r.get("status") == "Present")
+        
+        # Each member has their own weekly off day (default: Friday=4)
+        # 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+        off_day = m.get("offDay", 4)  # Default Friday
+        
+        # Count past working days this month (exclude today and member's off day)
+        today_day = now_bd.day
+        working_days_elapsed = 0
+        for day_num in range(1, today_day):   # exclude today itself
+            weekday = now_bd.replace(day=day_num).weekday()
+            if weekday != off_day:
+                working_days_elapsed += 1
+        
+        total_checked_in = late_count + present_count
+        absent_count = max(0, working_days_elapsed - total_checked_in)
+        in_time_count = present_count          # On-time only (no Late)
+        checked_in_count = total_checked_in    # Total days present (Present + Late)
         
         if not m_df.empty:
             delivered = m_df[m_df['status'] == 'Delivered']
             wip_rev = m_df[m_df['status'].isin(['WIP', 'Revision'])]
             
+            team_name = m.get("team", "GEO Rankers")
+            if team_name == "SMM": team_name = "Dark Rankers"
             s = {
-                "name": name, "fullName": m.get("fullName", name), "team": m.get("team", "GEO Rankers"), "id": m.get("id",""),
+                "name": name, "fullName": m.get("fullName", name), "team": team_name, "id": emp_id,
                 "role": m.get("role", "Member"),
                 "email": m.get("email", ""),
                 "phone": m.get("phone", ""),
@@ -264,6 +299,10 @@ def process_and_save(df, db):
                 "cancelled": len(m_df[m_df['status'] == 'Cancelled']),
                 "deliveredAmt": round(delivered['share'].sum(), 2),
                 "wipAmt": round(wip_rev['share'].sum(), 2),
+                "lateCount": late_count,
+                "absentCount": absent_count,
+                "inTimeCount": in_time_count,
+                "presentCount": checked_in_count,
                 "projects": []
             }
             
@@ -279,12 +318,32 @@ def process_and_save(df, db):
                     "profile": p.get("profile")
                 })
         else:
+            team_name = m.get("team", "GEO Rankers")
+            if team_name == "SMM": team_name = "Dark Rankers"
             s = {
-                "name": name, "fullName": m.get("fullName", name), "team": m.get("team", "GEO Rankers"), "id": m.get("id",""),
+                "name": name, "fullName": m.get("fullName", name), "team": team_name, "id": emp_id,
                 "target": MEM_TARGET(), "total": 0, "delivered": 0, "wip": 0, "revision": 0,
-                "cancelled": 0, "deliveredAmt": 0.0, "wipAmt": 0.0, "projects": []
+                "cancelled": 0, "deliveredAmt": 0.0, "wipAmt": 0.0, 
+                "lateCount": late_count, "absentCount": absent_count, "inTimeCount": in_time_count,
+                "presentCount": checked_in_count,
+                "projects": []
             }
         
+        # ─── Performance Scoring Logic ───
+        # Factors: 
+        # 1. Delivery vs Target (Weight 50)
+        # 2. Present Days (Weight 20)
+        # 3. Late Days (Penalty -5 each)
+        # 4. Absent Days (Penalty -10 each)
+        # 5. Cancelled Projects (Penalty -15 each)
+        
+        target_val = s["target"] or 1100
+        delivery_score = (s["deliveredAmt"] / target_val) * 50
+        attendance_score = (s["presentCount"] * 1) # reduced weight for now
+        # Reduced penalties for now until everyone uses the portal
+        penalty_score = (s["lateCount"] * 1) + (absent_count * 0) + (s["cancelled"] * 5)
+        
+        s["performanceScore"] = round(max(0, delivery_score + attendance_score - penalty_score), 1)
         s["remaining"] = round(s["deliveredAmt"] - s["target"], 2)
         s["progress"] = round((s["deliveredAmt"] / s["target"]) * 100, 1) if s["target"] else 0
         member_summaries.append(s)
@@ -293,6 +352,7 @@ def process_and_save(df, db):
     logger.info("Calculating Team stats (using Op. Department tags)...")
     team_data = {}
     targets = TEAM_TARGETS()
+    print(f"DEBUG TEAM_TARGETS: {targets}")
     mgmt = MANAGEMENT()
     
     # Mapping for sheet tags
@@ -300,9 +360,10 @@ def process_and_save(df, db):
         "GEO Rankers": "Geo_Rankers",
         "Rank Riser": "Rank_Riser",
         "Search Apex": "Search_Apex",
-        "SMM": "Dark_Rankers"
+        "Dark Rankers": "Dark_Rankers"
     }
 
+    logger.info(f"Team targets from config: {targets}")
     for team in targets.keys():
         tag = TEAM_TAG_MAP.get(team, team.replace(" ", "_"))
         
@@ -323,7 +384,9 @@ def process_and_save(df, db):
             "wip": len(t_df[t_df['status'] == 'WIP']),
             "revision": len(t_df[t_df['status'] == 'Revision']),
             "cancelled": len(t_df[t_df['status'] == 'Cancelled']),
-            "target": targets.get(team, 0)
+            "target": targets.get(team, 0),
+            "remaining": round(targets.get(team, 0) - round(delivered['amount_x'].sum(), 2), 2),
+            "progress": round((round(delivered['amount_x'].sum(), 2) / targets.get(team, 0)) * 100, 1) if targets.get(team, 0) else 0
         }
 
     # 7. Save to MongoDB
@@ -334,6 +397,14 @@ def process_and_save(df, db):
     db["team_summaries"].delete_many({})
     db["team_summaries"].insert_one({"_id": "current_stats", "teams": team_data})
     
+    # Calculate Today's Attendance for Dept Summary
+    today_str = now_bd.strftime("%Y-%m-%d")
+    today_att = [r for r in attendance_records if r.get("date") == today_str]
+    total_checked_in = len(today_att)
+    total_late_today = sum(1 for r in today_att if r.get("status") == "Late")
+    total_present_today = sum(1 for r in today_att if r.get("status") == "Present")
+    total_absent_today = max(0, len(members_list) - total_checked_in)
+
     db["dept_summary"].delete_many({})
     db["dept_summary"].insert_one({
         "_id": "current_stats",
@@ -355,6 +426,9 @@ def process_and_save(df, db):
         "cancelledRows": cancelledRows,
         "unmatchedRows": unmatchedRows,
         "platformStats": platform_stats,
+        "presentToday": total_present_today,
+        "lateToday": total_late_today,
+        "absentToday": total_absent_today,
         "bestPerformer": sorted(member_summaries, key=lambda x: x['deliveredAmt'], reverse=True)[0] if member_summaries else None,
         "bestTeam": sorted(team_data.values(), key=lambda x: x['deliveredAmt'], reverse=True)[0] if team_data else None,
         "name": "GEO Rankers",

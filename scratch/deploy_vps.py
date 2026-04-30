@@ -7,6 +7,10 @@ def deploy():
     user = 'root'
     pw = 'JahiDul90@jf'
     remote_path = '/var/www/seo-performance'
+
+    # 0. Build frontend locally
+    print("Building frontend locally...")
+    os.system("cd frontend && npm install && npm run build")
     
     print("Connecting to VPS...")
     client = paramiko.SSHClient()
@@ -25,13 +29,15 @@ def deploy():
             print("[Output contains characters that cannot be printed in this console]")
         return out, err
 
-    # 1. Install dependencies
-    run("apt update && apt install -y nginx python3-pip python3-venv")
+    # 1. Install dependencies & Setup Swap (for low RAM)
+    run("apt update && apt install -y nginx python3-pip python3-venv ufw")
+    run("if [ ! -f /swapfile ]; then fallocate -l 1G /swapfile && chmod 600 /swapfile && mkswap /swapfile && swapon /swapfile && echo '/swapfile none swap sw 0 0' >> /etc/fstab; fi")
+    run("ufw allow 80/tcp && ufw allow 65002/tcp && ufw --force enable")
     
     # 2. Prepare directory
     run(f"mkdir -p {remote_path}/api")
     
-    # 3. Compress and Upload files (faster than single file SFTP)
+    # 3. Compress and Upload files
     print("Compressing files...")
     with tarfile.open("deploy.tar.gz", "w:gz") as tar:
         tar.add("api", arcname="api")
@@ -47,7 +53,7 @@ def deploy():
     # 5. Setup Python Venv and Install requirements
     run(f"cd {remote_path}/api && python3 -m venv venv && ./venv/bin/pip install -r requirements.txt gunicorn flask-cors")
     
-    # 6. Create Systemd Service for Gunicorn
+    # 6. Create Systemd Service for Gunicorn (Reduced workers for 512MB RAM)
     service_content = f"""[Unit]
 Description=Gunicorn instance to serve SEO Dashboard API
 After=network.target
@@ -59,7 +65,7 @@ WorkingDirectory={remote_path}/api
 Environment="PATH={remote_path}/api/venv/bin"
 Environment="SHEET_ID=1jClQQmwVHg4Eg3WGda0R3w7_B_qwuRE5_W4QGxvabIE"
 Environment="MONGO_URI=mongodb+srv://seo-data:seo-data@seo-data.s5zj7yf.mongodb.net/?appName=seo-data"
-ExecStart={remote_path}/api/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:5000 index:app
+ExecStart={remote_path}/api/venv/bin/gunicorn --workers 1 --bind 0.0.0.0:5000 index:app
 
 [Install]
 WantedBy=multi-user.target

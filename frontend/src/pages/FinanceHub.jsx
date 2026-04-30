@@ -11,7 +11,7 @@ const PLATFORM_MAP = { 'Fiverr': 'Green', 'Upwork': 'Repeat', 'B2B': 'B2B', 'PPH
 const MONTHLY_TARGETS = [32000,32000,33000,35000,36000,38000,40000,40000,40000,42000,43000,45000];
 const REPEAT_VALS     = [5000,6000,5500,7000,6500,8000,7500,8500,9000,9500,10000,11000];
 const B2B_VALS        = [1000,1500,1200,1800,1600,2000,1900,2200,2500,2800,3000,3500];
-const SCALE           = 520000 / 456000;
+const SCALE           = 600000 / 456000;
 const SALES_TARGETS   = MONTHLY_TARGETS.map(v => Math.round(v * SCALE));
 
 const FinanceHub = () => {
@@ -100,7 +100,7 @@ const FinanceHub = () => {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '20px', marginBottom: '40px' }}>
             <StatCard label="TOTAL REVENUE"   value={usd(totalRev)} sub="Jul 2026 – Jun 2027" icon="💰" color="#3b82f6" />
             <StatCard label="OPERATION TARGET" value={usd(456000)}   sub="SEO Operation"       icon="🏢" color="#06b6d4" />
-            <StatCard label="SALES TARGET"    value={usd(520000)}   sub="SEO Sales"            icon="📊" color="#10b981" />
+            <StatCard label="SALES TARGET"    value={usd(600000)}   sub="SEO Sales"            icon="📊" color="#10b981" />
             <StatCard label="AVG MONTHLY"     value={usd(avgRev)}   sub="Per month average"    icon="🎯" color="#ec4899" />
           </div>
 
@@ -117,7 +117,7 @@ const FinanceHub = () => {
           </div>
 
           <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#f59e0b', marginBottom: '20px' }}>Monthly Breakdown — Sales ($520k Target)</h2>
+            <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#f59e0b', marginBottom: '20px' }}>Monthly Breakdown — Sales ($600k Target)</h2>
             <BreakdownTable months={months} profiles={salesProfiles} monthlyTargets={SALES_TARGETS} usd={usd} />
           </div>
 
@@ -227,7 +227,7 @@ const FinanceHub = () => {
                 <div style={{ fontSize: '12px', fontWeight: 800, color: '#3b82f6', marginBottom: '16px' }}>SEO TEAM</div>
                 {[
                   { label: 'Operation Target', value: usd(456000), color: '#06b6d4' },
-                  { label: 'Sales Target',     value: usd(520000), color: '#f59e0b' },
+                  { label: 'Sales Target',     value: usd(600000), color: '#f59e0b' },
                   { label: 'Combined',         value: usd(totalRev), color: '#10b981' },
                 ].map(r => (
                   <div key={r.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>

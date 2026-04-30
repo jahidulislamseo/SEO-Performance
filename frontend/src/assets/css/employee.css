@@ -761,3 +761,40 @@
   .notif-panel    { right: 8px; width: calc(100vw - 16px); }
   .ovd-kpi-strip  { grid-template-columns: 1fr 1fr; }
 }
+
+/* ── SETTINGS PAGE PREMIUM ── */
+.settings-container { display: flex; flex-direction: column; gap: 24px; animation: cardIn 0.4s ease both; margin-bottom: 40px; }
+.settings-header { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+.settings-icon { width: 48px; height: 48px; background: rgba(37,99,235,0.1); border: 1px solid rgba(37,99,235,0.2); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+.settings-title { font-size: 22px; font-weight: 900; color: #f8fafc; letter-spacing: -0.5px; }
+.settings-subtitle { font-size: 13px; color: #64748b; margin-top: 2px; }
+
+.settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+.settings-card { padding: 24px; position: relative; border: 1px solid rgba(255,255,255,0.06); background: rgba(15, 23, 42, 0.4); border-radius: 24px; backdrop-filter: blur(10px); }
+.settings-card.full-width { grid-column: 1 / -1; }
+.card-tag { font-size: 9px; font-weight: 800; letter-spacing: 1.5px; color: #3b82f6; text-transform: uppercase; margin-bottom: 12px; }
+.card-title { font-size: 16px; font-weight: 800; color: #e2e8f0; margin-bottom: 20px; }
+.card-info { font-size: 11px; color: #475569; margin-top: 12px; font-weight: 600; }
+
+.input-group { position: relative; display: flex; align-items: center; }
+.input-prefix { position: absolute; left: 16px; font-size: 14px; font-weight: 800; color: #475569; pointer-events: none; }
+.settings-input { width: 100%; background: rgba(255,255,255,0.03); border: 1.5px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 12px 16px 12px 32px; color: #f1f5f9; font-size: 15px; font-weight: 700; transition: all 0.2s; font-family: inherit; }
+.settings-input:focus { border-color: #3b82f6; background: rgba(37,99,235,0.05); outline: none; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+.settings-input.no-prefix { padding-left: 16px; }
+
+.teams-grid, .shifts-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
+.team-input-card { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 18px; padding: 16px; transition: all 0.2s; }
+.team-input-card:hover { transform: translateY(-3px); background: rgba(255,255,255,0.04); border-color: rgba(37,99,235,0.2); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+.team-name { font-size: 12px; font-weight: 800; color: #94a3b8; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.team-dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; }
+
+.settings-footer { margin-top: 12px; display: flex; justify-content: flex-end; gap: 12px; }
+.save-btn { padding: 14px 36px; border-radius: 14px; background: linear-gradient(135deg, #10b981, #059669); border: none; color: white; font-size: 14px; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.25); display: flex; align-items: center; gap: 8px; }
+.save-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(16, 185, 129, 0.35); filter: brightness(1.1); }
+.save-btn:active { transform: translateY(0); }
+.save-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.sync-card { background: linear-gradient(135deg, rgba(37,99,235,0.1), rgba(124,58,237,0.05)); border: 1px solid rgba(37,99,235,0.2); }
+.sync-btn { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); }
+.sync-btn:hover { box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35); }
+
