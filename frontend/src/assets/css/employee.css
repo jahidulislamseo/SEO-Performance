@@ -553,6 +553,70 @@
 .att-time.late { color: #f59e0b; }
 .att-hours     { color: var(--m2); font-size: 11px; }
 
+/* ── ATTENDANCE REDESIGN (SAME TO SAME) ── */
+.att-page-layout { display: grid; grid-template-columns: 1fr 380px; gap: 20px; align-items: start; }
+@media (max-width: 1200px) { .att-page-layout { grid-template-columns: 1fr; } }
+
+.att-card-main { background: var(--card); border: 1px solid var(--gb); border-radius: 20px; padding: 24px; }
+.att-header-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--gb); padding-bottom: 16px; margin-bottom: 20px; }
+.att-title-wrap { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 800; color: var(--text); }
+.att-summary-row { display: flex; gap: 20px; align-items: center; }
+.att-sum-item { display: flex; align-items: center; gap: 8px; }
+.att-sum-bar { width: 3px; height: 14px; border-radius: 2px; }
+.att-sum-val { font-size: 15px; font-weight: 900; color: var(--text); }
+.att-sum-label { font-size: 10px; color: var(--m2); font-weight: 600; text-transform: uppercase; }
+
+.att-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.att-nav-btn { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--gb); background: rgba(255,255,255,0.03); color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+.att-nav-btn:hover { background: rgba(59,130,246,0.1); border-color: #3b82f6; }
+.att-selector { background: rgba(255,255,255,0.03); border: 1px solid var(--gb); border-radius: 8px; padding: 6px 12px; color: var(--text); font-size: 13px; font-weight: 700; outline: none; }
+
+.att-grid-7 { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
+.att-weekday { text-align: center; font-size: 10px; font-weight: 900; color: #475569; letter-spacing: 1px; padding-bottom: 6px; }
+
+.att-day-box {
+  background: rgba(255,255,255,0.01);
+  border: 1px solid var(--gb);
+  border-radius: 12px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 70px;
+  justify-content: center;
+}
+.att-day-box.today { border-color: #3b82f6; background: rgba(59,130,246,0.03); }
+.att-day-num { font-size: 13px; font-weight: 800; color: var(--text); }
+.att-status-pill {
+  font-size: 8px; font-weight: 900; padding: 2px 8px; border-radius: 20px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.att-pill-present { background: rgba(16,185,129,0.1); color: #10b981; }
+.att-pill-absent  { background: rgba(239,68,68,0.1); color: #ef4444; }
+.att-pill-late    { background: rgba(245,158,11,0.1); color: #f59e0b; }
+.att-pill-leave   { background: rgba(167,139,250,0.1); color: #a78bfa; }
+.att-pill-future  { background: rgba(255,255,255,0.02); color: #475569; }
+
+/* ── SIDEBAR CARD (RECENT CHECK-INS) ── */
+.att-sidebar-card { background: var(--card); border: 1px solid var(--gb); border-radius: 20px; overflow: hidden; }
+.att-side-head { padding: 16px 20px; border-bottom: 1px solid var(--gb); display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 15px; color: var(--text); }
+.att-side-body { padding: 0; max-height: 600px; overflow-y: auto; }
+.att-side-body::-webkit-scrollbar { width: 6px; }
+.att-side-body::-webkit-scrollbar-thumb { background: var(--gb); border-radius: 10px; }
+
+.att-log-row { padding: 16px 20px; border-bottom: 1px solid var(--gb); transition: background 0.2s; }
+.att-log-row:last-child { border-bottom: none; }
+.att-log-row:hover { background: rgba(255,255,255,0.01); }
+.att-log-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.att-log-date { font-size: 13px; font-weight: 700; color: var(--text); }
+.att-log-dur { font-size: 12px; color: var(--m2); font-weight: 600; }
+.att-log-actions { display: flex; gap: 20px; }
+.att-log-act { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: var(--m2); }
+.att-log-act span { font-size: 14px; }
+.att-log-act.in span { color: #10b981; }
+.att-log-act.out span { color: #f59e0b; }
+
 /* ═══════════════════════════════════════════════════════════════
    PROJECTS PAGE
    ═══════════════════════════════════════════════════════════════ */

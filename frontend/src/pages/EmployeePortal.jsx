@@ -39,6 +39,24 @@ const statusBadge = (s) => {
   return <span className="sbadge" style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color }}>{c.icon} {s}</span>;
 };
 
+const calcDuration = (inStr, outStr) => {
+  if (!inStr || !outStr || inStr === '--:--' || outStr === '--:--') return '--';
+  try {
+    const parse = (s) => {
+      const [time, amp] = s.split(' ');
+      let [h, m] = time.split(':').map(Number);
+      if (amp === 'PM' && h < 12) h += 12;
+      if (amp === 'AM' && h === 12) h = 0;
+      return h * 60 + m;
+    };
+    const diff = parse(outStr) - parse(inStr);
+    if (diff <= 0) return '--';
+    const hrs = Math.floor(diff / 60);
+    const mins = diff % 60;
+    return `${hrs}H ${mins}M`;
+  } catch { return '--'; }
+};
+
 function EmployeePortal() {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
@@ -416,19 +434,6 @@ function EmployeePortal() {
             const absent = clock.getDate() - present;
             return (
               <div>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 20 }}>
-                  {[
-                    { label: 'Present', value: present, color: '#10b981' },
-                    { label: 'Absent',  value: Math.max(0, absent - 1), color: '#ef4444' }, // -1 for today
-                    { label: 'Today',   value: 1, color: '#3b82f6' },
-                    { label: 'Future',  value: new Date(clock.getFullYear(), clock.getMonth() + 1, 0).getDate() - clock.getDate(), color: '#64748b' },
-                  ].map(s => (
-                    <div key={s.label} className="emp-card" style={{ padding: '18px 20px' }}>
-                      <div style={{ fontSize: 28, fontWeight: 900, color: s.color }}>{s.value}</div>
-                      <div style={{ fontSize: 11, color: '#64748b', marginTop: 4 }}>{s.label}</div>
-                    </div>
-                  ))}
-                </div>
                 <AttendanceCard clock={clock} checkedIn={checkedIn} setCheckedIn={setCheckedIn} checkedOut={checkedOut} setCheckedOut={setCheckedOut} user={user} logs={logs} fetchLogs={() => fetchLogs(user.id)} />
               </div>
             );
@@ -475,6 +480,8 @@ function EmployeePortal() {
 }
 
 const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setCheckedOut, user, logs = [], fetchLogs = () => {} }) => {
+  const [viewDate, setViewDate] = React.useState(new Date());
+  
   const handleAttendance = async () => {
     try {
       const action = checkedIn ? 'checkout' : 'checkin';
@@ -484,29 +491,18 @@ const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setChecked
         body: JSON.stringify({ memberId: user.id })
       });
       const data = await res.json();
-      if (!res.ok) {
-        alert(`Error: ${data.error || 'Request failed'}`);
-        return;
-      }
-      
+      if (!res.ok) { alert(`Error: ${data.error || 'Request failed'}`); return; }
       if (data.ok) {
-        if (checkedIn) {
-          setCheckedOut(true);
-          setCheckedIn(false);
-        } else {
-          setCheckedIn(true);
-        }
-        fetchLogs(); // Reload table data instantly
+        if (checkedIn) { setCheckedOut(true); setCheckedIn(false); }
+        else { setCheckedIn(true); }
+        fetchLogs(); 
       }
-    } catch (err) {
-      console.error(err);
-      alert('Network error. Is the backend running?');
-    }
+    } catch (err) { console.error(err); alert('Network error'); }
   };
 
-  const year = clock.getFullYear();
-  const month = clock.getMonth();
-  const todayDate = clock.getDate();
+  const year = viewDate.getFullYear();
+  const month = viewDate.getMonth();
+  const today = new Date();
   
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
@@ -514,88 +510,136 @@ const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setChecked
   const grid = [];
   for (let i = 0; i < firstDay; i++) grid.push({ empty: true });
   
+  let presentCount = 0, lateCount = 0, absentCount = 0, leaveCount = 0;
+
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const log = logs.find(l => l.date === dateStr);
     
-    let type = 'f'; // future
-    if (d > todayDate) type = 'f';
-    else if (d === todayDate) type = 't'; // today
-    else if (log && (log.status === 'Present' || log.status === 'Late')) type = 1; // present
-    else type = 0; // absent
+    let status = 'future';
+    const isPast = new Date(year, month, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const isToday = year === today.getFullYear() && month === today.getMonth() && d === today.getDate();
+
+    if (log) {
+      status = log.status;
+      if (status === 'Present') presentCount++;
+      else if (status === 'Late') lateCount++;
+      else if (status === 'Leave') leaveCount++;
+    } else if (isPast) {
+      status = 'Absent';
+      absentCount++;
+    }
     
-    grid.push({ day: d, type, log });
+    grid.push({ day: d, status, isToday });
   }
 
-  const statusColor = { Present: '#10b981', Late: '#f59e0b', Absent: '#ef4444', Leave: '#a78bfa' };
+  const changeMonth = (offset) => {
+    const d = new Date(viewDate);
+    d.setMonth(d.getMonth() + offset);
+    setViewDate(d);
+  };
 
   return (
-    <div className="emp-card">
-      <div className="emp-card-header">
-        <div className="emp-card-title">📅 Attendance — {clock.toLocaleString('default', { month: 'long' })}</div>
-      </div>
-      <div style={{ padding: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div className="lpl-live-dot" style={{ opacity: checkedIn ? 1 : 0.3 }}></div>
-            <span style={{ color: checkedIn ? '#10b981' : '#64748b', fontWeight: 700 }}>
-              {checkedIn ? 'You are Checked In' : 'Not Checked In'}
-            </span>
+    <div className="att-page-layout">
+      {/* LEFT: Calendar */}
+      <div className="att-card-main">
+        <div className="att-header-row">
+          <div className="att-title-wrap">
+            <span>📅</span> Attendance Calendar
           </div>
+          <div className="att-summary-row">
+            {[
+              { label: 'Payable Days', val: presentCount + lateCount, color: '#64748b' },
+              { label: 'Present', val: presentCount, color: '#10b981' },
+              { label: 'Late', val: lateCount, color: '#f59e0b' },
+              { label: 'Movement', val: 0, color: '#3b82f6' },
+              { label: 'Leave', val: leaveCount, color: '#a78bfa' },
+              { label: 'Absent', val: absentCount, color: '#ef4444' },
+            ].map(s => (
+              <div key={s.label} className="att-sum-item">
+                <div className="att-sum-bar" style={{ background: s.color }} />
+                <div>
+                  <div className="att-sum-val">{s.val}</div>
+                  <div className="att-sum-label">{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="att-controls">
+          <button className="att-nav-btn" onClick={() => changeMonth(-1)}>❮</button>
+          <select className="att-selector" value={month} onChange={e => {
+            const d = new Date(viewDate);
+            d.setMonth(parseInt(e.target.value));
+            setViewDate(d);
+          }}>
+            {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+              <option key={m} value={i}>{m}</option>
+            ))}
+          </select>
+          <select className="att-selector" value={year} onChange={e => {
+            const d = new Date(viewDate);
+            d.setFullYear(parseInt(e.target.value));
+            setViewDate(d);
+          }}>
+            {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
+          </select>
+          <button className="att-nav-btn" onClick={() => changeMonth(1)}>❯</button>
+          
           <button
             className={`wb-checkin-btn ${checkedIn ? 'check-out' : 'check-in'}`}
             onClick={handleAttendance}
+            style={{ marginLeft: 'auto', padding: '8px 20px', borderRadius: 10 }}
           >
             {checkedIn ? '⬛ Check Out' : '✅ Check In'}
           </button>
         </div>
-        
-        {/* Calendar Grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 8, marginBottom: 24 }}>
-          {DAYS.map((d, i) => <div key={i} style={{ textAlign: 'center', fontSize: 10, fontWeight: 800, color: '#64748b' }}>{d}</div>)}
+
+        <div className="att-grid-7">
+          {['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'].map(d => (
+            <div key={d} className="att-weekday">{d}</div>
+          ))}
           {grid.map((c, i) => (
-            <div key={i} style={{
-              aspectRatio: '1', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700,
-              background: c.empty ? 'transparent' : c.type === 1 ? 'rgba(16,185,129,0.1)' : c.type === 0 ? 'rgba(239,68,68,0.1)' : c.type === 't' ? 'rgba(59,130,246,0.15)' : 'transparent',
-              color: c.empty ? 'transparent' : c.type === 1 ? '#10b981' : c.type === 0 ? '#ef4444' : c.type === 't' ? '#3b82f6' : '#475569',
-              border: c.type === 't' ? '1px solid #3b82f6' : 'none',
-              cursor: c.log ? 'pointer' : 'default'
-            }} title={c.log ? `In: ${c.log.in || '—'} | Out: ${c.log.out || '—'}` : ''}>
-              {!c.empty ? c.day : ''}
+            <div key={i} className={`att-day-box ${c.isToday ? 'today' : ''} ${c.empty ? 'empty' : ''}`} style={{ visibility: c.empty ? 'hidden' : 'visible' }}>
+              {!c.empty && (
+                <>
+                  <div className="att-day-num">{c.day}</div>
+                  <div className={`att-status-pill att-pill-${c.status.toLowerCase()}`}>
+                    {c.status}
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>
+      </div>
 
-        {/* Personal Log Table */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
-          <div style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', marginBottom: 12 }}>Detailed Log</div>
+      {/* RIGHT: Sidebar */}
+      <div className="att-sidebar-card">
+        <div className="att-side-head">
+          <span>🕒</span> Recent Check-ins
+        </div>
+        <div className="att-side-body">
           {logs.length === 0 ? (
-             <div style={{ fontSize: 12, color: '#475569', textAlign: 'center', padding: '10px 0' }}>No attendance records found.</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#475569', fontSize: 13 }}>No check-in history found.</div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                    {['Date','Status','Check In','Check Out','Duration'].map(h => (
-                      <th key={h} style={{ padding: '8px 10px', fontSize: 9, fontWeight: 800, color: '#64748b', textAlign: 'left', letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {logs.slice(0, 30).map((l, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                      <td style={{ padding: '8px 10px', fontSize: 12, color: '#94a3b8' }}>{l.date}</td>
-                      <td style={{ padding: '8px 10px' }}>
-                        <span style={{ fontSize: 10, fontWeight: 800, color: statusColor[l.status]||'#64748b', background: `${statusColor[l.status]||'#64748b'}18`, padding: '2px 8px', borderRadius: 99 }}>{l.status||'—'}</span>
-                      </td>
-                      <td style={{ padding: '8px 10px', fontSize: 12, color: '#e2e8f0', fontWeight: 600 }}>{l.in||'—'}</td>
-                      <td style={{ padding: '8px 10px', fontSize: 12, color: '#94a3b8' }}>{l.out||'—'}</td>
-                      <td style={{ padding: '8px 10px', fontSize: 12, color: '#3b82f6', fontWeight: 700 }}>{l.duration||'—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            logs.slice(0, 10).map((l, i) => (
+              <div key={i} className="att-log-row">
+                <div className="att-log-top">
+                  <div className="att-log-date">{l.date}</div>
+                  <div className="att-log-dur">{calcDuration(l.in, l.out)}</div>
+                </div>
+                <div className="att-log-actions">
+                  <div className="att-log-act in">
+                    <span>⬆️</span> Check In <span style={{ marginLeft: 4, opacity: 0.5 }}>{l.in || '--:--'}</span>
+                  </div>
+                  <div className="att-log-act out">
+                    <span>⬇️</span> Check Out <span style={{ marginLeft: 4, opacity: 0.5 }}>{l.out || '--:--'}</span>
+                  </div>
+                </div>
+              </div>
+            ))
           )}
         </div>
       </div>
@@ -1517,6 +1561,66 @@ const MiniBar = ({ value, color }) => (
   </div>
 );
 
+// ─── CheckInWidget (for Dashboard) ──────────────────────────────
+const CheckInWidget = ({ checkedIn, setCheckedIn, checkedOut, setCheckedOut, user, logs = [], fetchLogs = () => {} }) => {
+  const handleAttendance = async () => {
+    try {
+      const action = checkedIn ? 'checkout' : 'checkin';
+      const res = await fetch(`/api/attendance/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId: user.id })
+      });
+      const data = await res.json();
+      if (!res.ok) { alert(`Error: ${data.error || 'Request failed'}`); return; }
+      if (data.ok) {
+        if (checkedIn) { setCheckedOut(true); setCheckedIn(false); }
+        else { setCheckedIn(true); }
+        fetchLogs(); 
+      }
+    } catch (err) { console.error(err); alert('Network error'); }
+  };
+
+  return (
+    <div className="att-sidebar-card" style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+      <div className="att-side-head" style={{ justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span>🕒</span> Recent Check-ins
+        </div>
+        <button
+          className={`wb-checkin-btn ${checkedIn ? 'check-out' : 'check-in'}`}
+          onClick={handleAttendance}
+          style={{ padding: '6px 16px', borderRadius: 8, fontSize: 11 }}
+        >
+          {checkedIn ? '⬛ Check Out' : '✅ Check In'}
+        </button>
+      </div>
+      <div className="att-side-body" style={{ flex: 1 }}>
+        {logs.length === 0 ? (
+          <div style={{ padding: 40, textAlign: 'center', color: '#475569', fontSize: 13 }}>No check-in history found.</div>
+        ) : (
+          logs.slice(0, 5).map((l, i) => (
+            <div key={i} className="att-log-row">
+              <div className="att-log-top">
+                <div className="att-log-date">{l.date}</div>
+                <div className="att-log-dur">{calcDuration(l.in, l.out)}</div>
+              </div>
+              <div className="att-log-actions">
+                <div className="att-log-act in">
+                  <span>⬆️</span> {l.in || '--:--'}
+                </div>
+                <div className="att-log-act out">
+                  <span>⬇️</span> {l.out || '--:--'}
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
 // ─── OverviewDashboard ──────────────────────────────────────────
 const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds, clock, checkedIn, setCheckedIn, checkedOut, setCheckedOut, logs, fetchLogs }) => {
   // Deduplicate members by ID on the frontend (safety net)
@@ -1701,10 +1805,14 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
         </div>
       </div>
 
-      {/* ── Row 4: Recent Projects + Attendance ── */}
+      {/* ── Row 4: Recent Projects + Quick Attendance ── */}
       <div className="ovd-row4">
         <ProjectsList user={user} title="📁 My Projects — Recent" limit={5} />
-        <AttendanceCard clock={clock} checkedIn={checkedIn} setCheckedIn={setCheckedIn} checkedOut={checkedOut} setCheckedOut={setCheckedOut} user={user} logs={logs} fetchLogs={fetchLogs} />
+        <CheckInWidget 
+          checkedIn={checkedIn} setCheckedIn={setCheckedIn} 
+          checkedOut={checkedOut} setCheckedOut={setCheckedOut} 
+          user={user} logs={logs} fetchLogs={fetchLogs} 
+        />
       </div>
 
     </div>
