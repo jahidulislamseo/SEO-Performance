@@ -45,6 +45,7 @@ function MainDashboard() {
   const [finStats, setFinStats] = useState(null);
   const [attStats, setAttStats] = useState({});
   const [userName, setUserName] = useState('Admin');
+  const [isAdmin, setIsAdmin] = useState(false);
   const [notifs, setNotifs] = useState([]);
 
   useEffect(() => {
@@ -77,6 +78,7 @@ function MainDashboard() {
       try {
         const u = JSON.parse(storedUser);
         if (u && u.name) setUserName(u.name.split(' ')[0]);
+        if (u && u.isAdmin) setIsAdmin(true);
       } catch (e) { console.error("Error parsing user from localStorage", e); }
     }
 
@@ -272,7 +274,7 @@ function MainDashboard() {
           ))}
           <Link to="/delivery-tracker" className="page-nav-btn" style={{ background: 'rgba(16,185,129,.12)', borderColor: 'rgba(16,185,129,.3)', color: '#7ed2c7' }}>📦 Repeat Order ↗</Link>
           <Link to="/query-tracker" className="page-nav-btn" style={{ background: 'rgba(99,102,241,.12)', borderColor: 'rgba(99,102,241,.3)', color: '#a5b4fc' }}>🚀 Query Tracker ↗</Link>
-          <Link to="/finance" className="page-nav-btn" style={{ background: 'rgba(245,158,11,.12)', borderColor: 'rgba(245,158,11,.3)', color: '#fbbf24' }}>💰 Finance Hub ↗</Link>
+          {isAdmin && <Link to="/finance" className="page-nav-btn" style={{ background: 'rgba(245,158,11,.12)', borderColor: 'rgba(245,158,11,.3)', color: '#fbbf24' }}>💰 Finance Hub ↗</Link>}
           <Link to="/employee" className="page-nav-btn" style={{ background: 'rgba(37,99,235,.12)', borderColor: 'rgba(37,99,235,.3)', color: '#93c5fd' }}>👤 Employee Portal ↗</Link>
           <Link to="/work-examples" className="page-nav-btn" style={{ background: 'rgba(139,92,246,.12)', borderColor: 'rgba(139,92,246,.3)', color: '#c4b5fd' }}>📂 Work Examples ↗</Link>
         </div>
