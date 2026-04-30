@@ -94,9 +94,25 @@ function MainDashboard() {
   if (error) return <div className="error" style={{ padding: 40, textAlign: 'center', color: '#ef4444' }}>Error: {error}</div>;
 
   try {
-    const { data: members = [], summary = {}, audit = {} } = data || {};
+    // Normalize SMM to Dark Rankers in data
+    const members = (data.data || []).map(m => ({
+      ...m,
+      team: m.team === 'SMM' ? 'Dark Rankers' : m.team
+    }));
+    
+    const summary = data.summary || {};
+    const rawTeamSums = summary.teams || {};
+    const teamSummaries = {};
+    Object.keys(rawTeamSums).forEach(t => {
+      const targetTeam = (t === 'SMM') ? 'Dark Rankers' : t;
+      if (teamSummaries[targetTeam]) {
+        teamSummaries[targetTeam] = { ...teamSummaries[targetTeam], ...rawTeamSums[t] };
+      } else {
+        teamSummaries[targetTeam] = rawTeamSums[t];
+      }
+    });
+
     const deptSummary = summary.dept || {};
-    const teamSummaries = summary.teams || {};
     const TEAMS = Object.keys(teamSummaries);
 
     const filteredMembers = members.filter(m => 

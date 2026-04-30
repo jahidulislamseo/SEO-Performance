@@ -4,7 +4,7 @@ const TEAM_COLORS = {
   'Geo Rankers':  { from: '#6366f1', to: '#8b5cf6', accent: '#a78bfa', glow: 'rgba(99, 102, 241, 0.2)', leader: 'Md. Jahidul Islam' },
   'Rank Riser':   { from: '#10b981', to: '#059669', accent: '#34d399', glow: 'rgba(16, 185, 129, 0.2)', leader: 'Gazi Fahim Hasan' },
   'Search Apex':  { from: '#f59e0b', to: '#d97706', accent: '#fbbf24', glow: 'rgba(245, 158, 11, 0.2)', leader: 'Shihadul Islam Tihim' },
-  'SMM':          { from: '#ec4899', to: '#db2777', accent: '#f472b6', glow: 'rgba(236, 72, 153, 0.2)', leader: 'Istiak' },
+  'Dark Rankers': { from: '#ec4899', to: '#db2777', accent: '#f472b6', glow: 'rgba(236, 72, 153, 0.2)', leader: 'Istiak' },
 };
 
 const TeamCard = ({ team, teamData = {}, members = [], target = 1100 }) => {
