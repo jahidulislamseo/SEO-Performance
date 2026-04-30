@@ -1081,6 +1081,60 @@ def background_sync_task():
             print(f"Background Sync Error: {e}")
         time.sleep(600)
 
+@app.route("/api/admin/all-projects")
+def admin_all_projects():
+    """Load ALL projects from MongoDB Archive with advanced filtering."""
+    try:
+        db = get_db()
+        month_filter = request.args.get("month", "")
+        search_q = request.args.get("q", "").strip().lower()
+        
+        query = {}
+        if month_filter:
+            query["month"] = month_filter
+            
+        if search_q:
+            query["$or"] = [
+                {"order": {"$regex": search_q, "$options": "i"}},
+                {"client": {"$regex": search_q, "$options": "i"}},
+                {"assign": {"$regex": search_q, "$options": "i"}},
+                {"service": {"$regex": search_q, "$options": "i"}},
+                {"status": {"$regex": search_q, "$options": "i"}}
+            ]
+            
+        projects = list(db["projects_archive"].find(query, {"_id": 0}).sort("date", -1).limit(1000))
+        return jsonify(projects)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/user/work-history")
+def get_user_work_history():
+    """Load lifetime project history for a specific member from the archive."""
+    try:
+        db = get_db()
+        member_id = request.args.get("memberId", "")
+        if not member_id:
+            return jsonify({"error": "memberId required"}), 400
+            
+        # Get member name for name-based search in 'assign' field
+        member = db["members"].find_one({"id": member_id})
+        if not member:
+            return jsonify({"error": "member not found"}), 404
+            
+        name = member.get("name", "")
+        
+        # Search for projects where this member is mentioned in 'assign'
+        query = {
+            "assign": {"$regex": name, "$options": "i"}
+        }
+        
+        projects = list(db["projects_archive"].find(query, {"_id": 0}).sort("date", -1))
+        return jsonify(projects)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 @app.route("/api/months")
 def get_archive_months():
     """Returns a unique list of YYYY-MM months found in the archive."""

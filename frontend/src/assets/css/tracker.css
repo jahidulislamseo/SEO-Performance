@@ -1,25 +1,31 @@
-/* ── TRACKER STYLES (BALANCED ROW LAYOUT) ── */
-
+/* ── DELIVERY TRACKER PREMIUM STYLES ── */
 .dt-list {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  animation: cardIn 0.5s ease-out;
+  gap: 20px;
 }
 
 .dt-item {
-  background: var(--card);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  border-radius: 20px;
-  padding: 20px 28px;
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  padding: 24px 32px;
   display: grid;
-  grid-template-columns: 280px 1fr 300px 180px;
+  grid-template-columns: 320px 1fr 280px 200px;
   align-items: center;
   gap: 32px;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+.dt-item:hover {
+  transform: translateY(-4px) scale(1.01);
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.7);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
 }
 
 .dt-item::before {
@@ -29,20 +35,13 @@
   left: 0;
   width: 4px;
   height: 100%;
-  background: var(--accent);
+  background: #3b82f6;
   opacity: 0;
   transition: opacity 0.3s;
 }
 
-.dt-item:hover {
-  border-color: rgba(95, 133, 162, 0.3);
-  transform: translateX(4px);
-  background: rgba(31, 41, 55, 0.4);
-}
-
-.dt-item:hover::before {
-  opacity: 1;
-}
+.dt-item.sold::before { background: #fbbf24; opacity: 1; }
+.dt-item:hover::before { opacity: 1; }
 
 .dt-top {
   display: flex;
@@ -51,195 +50,153 @@
 }
 
 .dt-av {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 900;
   color: #fff;
-  flex-shrink: 0;
-}
-
-.dt-content {
-  flex: 1;
-  min-width: 0;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 .dt-client {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--text);
-  margin-bottom: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: 18px;
+  font-weight: 900;
+  color: #f8fafc;
+  letter-spacing: -0.5px;
 }
 
 .dt-meta {
   font-size: 11px;
-  color: var(--muted);
-  display: flex;
-  gap: 6px;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
 }
 
-/* Middle Section: Member & Team Details */
 .dt-info-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 16px 32px;
-}
-
-.dt-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 16px;
+  background: rgba(255,255,255,0.02);
+  padding: 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.03);
 }
 
 .dt-field-lbl {
   font-size: 9px;
-  font-weight: 800;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--muted);
-  opacity: 0.6;
+  letter-spacing: 1.5px;
+  color: #475569;
+  margin-bottom: 4px;
 }
 
 .dt-field-val {
   font-size: 13px;
-  font-weight: 700;
-  color: var(--m2);
+  font-weight: 800;
+  color: #cbd5e1;
 }
 
-/* Progress Section */
 .dt-progress-section {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
-
-.dt-progress-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 
 .dt-progress-label {
-  font-size: 9px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--muted);
-}
-
-.dt-progress-count {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 900;
-  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #64748b;
 }
 
 .fu-dots {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .fu-dot {
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 900;
   cursor: pointer;
-  border: 1px solid rgba(148, 163, 184, 0.1);
-  background: rgba(148, 163, 184, 0.05);
-  color: var(--muted);
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.03);
+  color: #475569;
   transition: all 0.2s;
 }
 
 .fu-dot.done {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.2);
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
   color: #34d399;
 }
 
 .fu-dot.sold {
-  background: rgba(245, 158, 11, 0.15);
-  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
   color: #fbbf24;
 }
 
-/* Actions & Price Section */
 .dt-right-col {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 12px;
-}
-
-.dt-price-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .dt-price {
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 900;
-  color: var(--green);
+  color: #10b981;
 }
 
 .dt-status-pill {
-  padding: 4px 10px;
-  border-radius: 6px;
-  font-size: 9px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  font-size: 10px;
   font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
 }
 
-.sp-not-started { background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); }
-.sp-in-progress { background: rgba(59, 130, 246, 0.1); color: #a5b4fc; border: 1px solid rgba(59, 130, 246, 0.2); }
-.sp-complete { background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.2); }
-.sp-sold { background: rgba(245, 158, 11, 0.1); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.2); }
-
-.dt-actions {
-  display: flex;
-  gap: 8px;
-}
+.sp-not-started { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+.sp-in-progress { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
+.sp-complete { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+.sp-sold { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
 
 .dt-btn {
-  padding: 6px 12px;
-  border-radius: 8px;
-  font-size: 10px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 11px;
   font-weight: 800;
   cursor: pointer;
   border: 1px solid transparent;
   transition: all 0.2s;
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
 }
 
-.dt-btn.message { background: rgba(59, 130, 246, 0.1); color: #60a5fa; border-color: rgba(59, 130, 246, 0.2); }
-.dt-btn.sold-btn { background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-color: rgba(245, 158, 11, 0.2); }
+.dt-btn.message { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border-color: rgba(59, 130, 246, 0.3); }
+.dt-btn.sold-btn { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border-color: rgba(245, 158, 11, 0.3); }
 
-@media (max-width: 1100px) {
+@media (max-width: 1300px) {
   .dt-item {
-    grid-template-columns: 240px 1fr 180px;
+    grid-template-columns: 280px 1fr 180px;
     gap: 20px;
   }
   .dt-progress-section { display: none; }
-}
-
-@media (max-width: 800px) {
-  .dt-item {
-    grid-template-columns: 1fr 150px;
-  }
-  .dt-info-grid { display: none; }
 }

@@ -99,13 +99,16 @@ def backup_to_db(df, db):
             order_num = str(p.get('order_num', '')).strip()
             if not order_num or order_num.lower() in ['n/a', 'none', '']: continue
             
-            project_date = str(p.get("date") or p.get("del_date") or "")
-            month_bucket = project_date[:7] if len(project_date) >= 7 else "Unknown"
+            # User requested Date column to strictly show Column D (date)
+            order_date = str(p.get("date") or "").strip()
+            # We still need a date for the month bucket, fallback to del_date if order_date is missing
+            bucket_date = order_date if order_date else str(p.get("del_date") or "")
+            month_bucket = bucket_date[:7] if len(bucket_date) >= 7 else "Unknown"
 
             doc = {
                 "order": order_num, "client": p.get("client"), "service": p.get("service"),
                 "status": p.get("status"), "amtX": safe_float(p.get("amount_x")),
-                "date": project_date, "month": month_bucket, "deliveredDate": p.get("del_date"),
+                "date": order_date, "month": month_bucket, "deliveredDate": p.get("del_date"),
                 "assign": p.get("assign"), "team": p.get("op_dept"), "link": p.get("order_link"),
                 "instruction": p.get("instruction"), "profile": p.get("profile"), "last_seen": time.time()
             }

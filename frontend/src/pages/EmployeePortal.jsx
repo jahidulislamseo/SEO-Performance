@@ -101,7 +101,30 @@ function EmployeePortal() {
   };
 
   useEffect(() => {
-    if (user) {
+    if (user && user.id) {
+      // Re-fetch full user profile to get REAL projects and latest amounts
+      fetch(`/api/user/profile?id=${user.id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.status === 'ok' && data.user) {
+            const u = data.user;
+            const flatUser = {
+              ...u.profile, ...u.stats,
+              projects: u.projects || [],
+              performance: u.performance || [],
+              id: u.profile.id, name: u.profile.name,
+              fullName: u.profile.fullName, team: u.profile.department,
+              isAdmin: u.profile.isAdmin, target: u.profile.target,
+              deliveredAmt: u.stats?.deliveredAmt || 0,
+              wipAmt: u.stats?.wipAmt || 0,
+              delivered: u.stats?.present || 0,
+            };
+            setUser(flatUser);
+            localStorage.setItem('user', JSON.stringify(flatUser));
+          }
+        })
+        .catch(err => console.error('Failed to sync user data:', err));
+
       fetch(`/api/attendance/status?memberId=${user.id}`)
         .then(res => res.json())
         .then(d => {
@@ -110,10 +133,10 @@ function EmployeePortal() {
           setCheckedOut(d.checkedOut || false);
         })
         .catch(err => console.error('Status check failed:', err));
-        
+
       fetchLogs(user.id);
     }
-  }, [user]);
+  }, [user?.id]); // Re-run if ID changes
 
   useEffect(() => {
     const t = setInterval(() => setClock(new Date()), 1000);
@@ -257,24 +280,28 @@ function EmployeePortal() {
   const NAV = [
     {
       id: 'overview', label: 'Overview',
-      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>,
+      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7" /><rect x="14" y="3" width="7" height="7" /><rect x="3" y="14" width="7" height="7" /><rect x="14" y="14" width="7" height="7" /></svg>,
     },
     {
       id: 'attendance', label: 'Attendance',
-      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>,
     },
     {
       id: 'projects', label: 'My Projects',
-      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>,
+      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" /></svg>,
     },
     {
       id: 'performance', label: 'Performance',
-      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>,
+      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></svg>,
+    },
+    {
+      id: 'history', label: 'Work History',
+      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     },
     ...(isAdmin ? [{
       id: 'admin', label: 'Admin Panel',
       admin: true,
-      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
+      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /></svg>,
     }] : []),
   ];
 
@@ -293,8 +320,8 @@ function EmployeePortal() {
           <p style={{ color: '#94a3b8', fontSize: 18, marginBottom: 40, fontWeight: 500, textAlign: 'center' }}>
             Please check in to start your day and access your portal.
           </p>
-          
-          <button 
+
+          <button
             onClick={async () => {
               try {
                 const res = await fetch('/api/attendance/checkin', {
@@ -312,10 +339,10 @@ function EmployeePortal() {
               } catch (err) {
                 alert('Network error during check-in');
               }
-            }} 
+            }}
             style={{
-              background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontSize: 24, fontWeight: 900, 
-              padding: '20px 60px', borderRadius: 100, border: 'none', cursor: 'pointer', 
+              background: 'linear-gradient(135deg, #10b981, #059669)', color: '#fff', fontSize: 24, fontWeight: 900,
+              padding: '20px 60px', borderRadius: 100, border: 'none', cursor: 'pointer',
               boxShadow: '0 0 40px rgba(16,185,129,0.5)', transition: 'all 0.3s ease',
               display: 'flex', alignItems: 'center', gap: 12
             }}
@@ -331,7 +358,7 @@ function EmployeePortal() {
         <div className="sb-top">
           <div className="sb-brand">
             <div className="sb-brand-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><line x1="2" y1="12" x2="22" y2="12" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg>
             </div>
             <div>
               <div className="sb-brand-name">GEO Rankers</div>
@@ -358,7 +385,7 @@ function EmployeePortal() {
 
           <Link to="/" className="sb-item sb-back">
             <span className="sb-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6" /></svg>
             </span>
             <span className="sb-label">Main Dashboard</span>
           </Link>
@@ -375,7 +402,7 @@ function EmployeePortal() {
               <div className="sb-user-id">{user.id}</div>
             </div>
             <button className="sb-logout" onClick={logout} title="Logout">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
             </button>
           </div>
         </div>
@@ -428,7 +455,7 @@ function EmployeePortal() {
 
           {/* ATTENDANCE TAB */}
           {navItem === 'attendance' && (() => {
-            const currentMonth = `${clock.getFullYear()}-${String(clock.getMonth()+1).padStart(2,'0')}`;
+            const currentMonth = `${clock.getFullYear()}-${String(clock.getMonth() + 1).padStart(2, '0')}`;
             const monthlyLogs = logs.filter(l => l.date.startsWith(currentMonth));
             const present = monthlyLogs.filter(l => l.status === 'Present' || l.status === 'Late').length;
             const absent = clock.getDate() - present;
@@ -444,6 +471,11 @@ function EmployeePortal() {
             <ProjectsPage user={user} />
           )}
 
+          {/* HISTORY TAB */}
+          {navItem === 'history' && (
+            <WorkHistoryPage user={user} />
+          )}
+
           {/* PERFORMANCE TAB */}
           {navItem === 'performance' && (
             <div className="overview-grid">
@@ -454,9 +486,9 @@ function EmployeePortal() {
                 </div>
                 <div style={{ padding: 24 }}>
                   {[
-                    { label: 'Target',    value: `$${(user.target || 1100).toLocaleString()}`, color: '#64748b' },
+                    { label: 'Target', value: `$${(user.target || 1100).toLocaleString()}`, color: '#64748b' },
                     { label: 'Delivered', value: `$${(user.deliveredAmt || 0).toLocaleString()}`, color: '#10b981' },
-                    { label: 'WIP',       value: `$${(user.wipAmt || 0).toLocaleString()}`, color: '#f59e0b' },
+                    { label: 'WIP', value: `$${(user.wipAmt || 0).toLocaleString()}`, color: '#f59e0b' },
                     { label: 'Remaining', value: `$${Math.max(0, (user.target || 1100) - (user.deliveredAmt || 0)).toLocaleString()}`, color: '#3b82f6' },
                   ].map(row => (
                     <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
@@ -479,9 +511,9 @@ function EmployeePortal() {
   );
 }
 
-const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setCheckedOut, user, logs = [], fetchLogs = () => {} }) => {
+const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setCheckedOut, user, logs = [], fetchLogs = () => { } }) => {
   const [viewDate, setViewDate] = React.useState(new Date());
-  
+
   const handleAttendance = async () => {
     try {
       const action = checkedIn ? 'checkout' : 'checkin';
@@ -495,7 +527,7 @@ const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setChecked
       if (data.ok) {
         if (checkedIn) { setCheckedOut(true); setCheckedIn(false); }
         else { setCheckedIn(true); }
-        fetchLogs(); 
+        fetchLogs();
       }
     } catch (err) { console.error(err); alert('Network error'); }
   };
@@ -503,19 +535,19 @@ const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setChecked
   const year = viewDate.getFullYear();
   const month = viewDate.getMonth();
   const today = new Date();
-  
+
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const firstDay = new Date(year, month, 1).getDay();
-  
+
   const grid = [];
   for (let i = 0; i < firstDay; i++) grid.push({ empty: true });
-  
+
   let presentCount = 0, lateCount = 0, absentCount = 0, leaveCount = 0;
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
     const log = logs.find(l => l.date === dateStr);
-    
+
     let status = 'future';
     const isPast = new Date(year, month, d) < new Date(today.getFullYear(), today.getMonth(), today.getDate());
     const isToday = year === today.getFullYear() && month === today.getMonth() && d === today.getDate();
@@ -529,7 +561,7 @@ const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setChecked
       status = 'Absent';
       absentCount++;
     }
-    
+
     grid.push({ day: d, status, isToday });
   }
 
@@ -574,7 +606,7 @@ const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setChecked
             d.setMonth(parseInt(e.target.value));
             setViewDate(d);
           }}>
-            {['January','February','March','April','May','June','July','August','September','October','November','December'].map((m, i) => (
+            {['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'].map((m, i) => (
               <option key={m} value={i}>{m}</option>
             ))}
           </select>
@@ -586,7 +618,7 @@ const AttendanceCard = ({ clock, checkedIn, setCheckedIn, checkedOut, setChecked
             {[2024, 2025, 2026].map(y => <option key={y} value={y}>{y}</option>)}
           </select>
           <button className="att-nav-btn" onClick={() => changeMonth(1)}>❯</button>
-          
+
           <button
             className={`wb-checkin-btn ${checkedIn ? 'check-out' : 'check-in'}`}
             onClick={handleAttendance}
@@ -685,13 +717,13 @@ const PerformanceRing = ({ pct, da, ds, user }) => (
 
 const STATUS_COLORS = {
   Delivered: '#10b981',
-  WIP:       '#f59e0b',
-  Revision:  '#a78bfa',
+  WIP: '#f59e0b',
+  Revision: '#a78bfa',
   Cancelled: '#ef4444',
 };
 
 const ProjectsList = ({ user, title, limit }) => {
-  const projects = (user.projects || PROJECTS).slice(0, limit);
+  const projects = (user.projects || []).slice(0, limit);
   return (
     <div className="emp-card">
       <div className="emp-card-header">
@@ -736,9 +768,9 @@ const ProjectsList = ({ user, title, limit }) => {
 
 const STATUS_CONFIG = {
   Delivered: { color: '#10b981', bg: 'rgba(16,185,129,0.12)', border: 'rgba(16,185,129,0.3)', dot: '#10b981' },
-  WIP:       { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)',  dot: '#f59e0b' },
-  Revision:  { color: '#a78bfa', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)', dot: '#a78bfa' },
-  Cancelled: { color: '#f87171', bg: 'rgba(239,68,68,0.12)',  border: 'rgba(239,68,68,0.3)',  dot: '#ef4444' },
+  WIP: { color: '#f59e0b', bg: 'rgba(245,158,11,0.12)', border: 'rgba(245,158,11,0.3)', dot: '#f59e0b' },
+  Revision: { color: '#a78bfa', bg: 'rgba(139,92,246,0.12)', border: 'rgba(139,92,246,0.3)', dot: '#a78bfa' },
+  Cancelled: { color: '#f87171', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', dot: '#ef4444' },
 };
 
 const ProjectCard = ({ p }) => {
@@ -808,14 +840,28 @@ const ProjectCard = ({ p }) => {
 const ProjectsPage = ({ user }) => {
   const [filter, setFilter] = React.useState('All');
   const [searchQ, setSearchQ] = React.useState('');
-  const allProjects = user.projects || PROJECTS;
+  const [viewMonth, setViewMonth] = React.useState(new Date().getMonth());
+  const [viewYear, setViewYear] = React.useState(new Date().getFullYear());
+
+  const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  const allProjects = user.projects || [];
+
+  // Filter projects by selected month
+  const monthlyProjects = allProjects.filter(p => {
+    if (!p.date) return false;
+    const dateLower = p.date.toLowerCase();
+    const monthShort = MONTHS[viewMonth].slice(0, 3).toLowerCase();
+    // Handles formats like "Apr 18", "2024-04-18", "April 18"
+    return dateLower.includes(monthShort) || dateLower.includes(MONTHS[viewMonth].toLowerCase()) || p.date.includes(`-${String(viewMonth + 1).padStart(2, '0')}-`);
+  });
+
   const statuses = ['All', 'Delivered', 'WIP', 'Revision', 'Cancelled'];
   const counts = statuses.reduce((acc, s) => {
-    acc[s] = s === 'All' ? allProjects.length : allProjects.filter(p => p.status === s).length;
+    acc[s] = s === 'All' ? monthlyProjects.length : monthlyProjects.filter(p => p.status === s).length;
     return acc;
   }, {});
-  
-  const visible = allProjects
+
+  const visible = monthlyProjects
     .filter(p => filter === 'All' || p.status === filter)
     .filter(p => {
       if (!searchQ.trim()) return true;
@@ -829,54 +875,217 @@ const ProjectsPage = ({ user }) => {
       );
     });
 
+  // Calculate monthly stats
+  const monthlyStats = {
+    delivered: monthlyProjects.filter(p => p.status === 'Delivered').reduce((sum, p) => sum + (p.share || p.amtX || 0), 0),
+    wip: monthlyProjects.filter(p => p.status === 'WIP').reduce((sum, p) => sum + (p.share || p.amtX || 0), 0),
+    count: monthlyProjects.length,
+    doneCount: monthlyProjects.filter(p => p.status === 'Delivered').length
+  };
+
   return (
-    <div>
+    <div className="projects-page">
+      {/* Monthly Stats Row */}
+      <div className="ovd-kpi-strip" style={{ marginBottom: 24 }}>
+        <div className="ovd-kpi-card" style={{ flex: 1.5 }}>
+          <div className="ovd-kpi-label">VIEWING HISTORY</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5 }}>
+            <button className="att-nav-btn" onClick={() => setViewMonth(m => m === 0 ? 11 : m - 1)}>❮</button>
+            <div style={{ fontSize: 18, fontWeight: 900, color: '#f1f5f9', minWidth: 100, textAlign: 'center' }}>
+              {MONTHS[viewMonth]} {viewYear}
+            </div>
+            <button className="att-nav-btn" onClick={() => setViewMonth(m => m === 11 ? 0 : m + 1)}>❯</button>
+          </div>
+        </div>
+        {[
+          { label: 'MONTHLY DELIVERED', value: fmt(monthlyStats.delivered), color: '#10b981' },
+          { label: 'MONTHLY WIP', value: fmt(monthlyStats.wip), color: '#f59e0b' },
+          { label: 'TOTAL ORDERS', value: monthlyStats.count, color: '#3b82f6' },
+          { label: 'COMPLETED', value: monthlyStats.doneCount, color: '#6366f1' },
+        ].map(k => (
+          <div key={k.label} className="ovd-kpi-card">
+            <div className="ovd-kpi-label">{k.label}</div>
+            <div className="ovd-kpi-value" style={{ color: k.color }}>{k.value}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Search + Filter bar */}
-      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 16, flexWrap: 'wrap' }}>
-        {/* Search */}
-        <div style={{ position: 'relative', flex: '1', minWidth: 200 }}>
-          <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 14 }}>🔍</span>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 24, flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: '1', minWidth: 260 }}>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, opacity: 0.5 }}>🔍</span>
           <input
             value={searchQ}
             onChange={e => setSearchQ(e.target.value)}
             placeholder="Search by client, order, service..."
             style={{
-              width: '100%', padding: '8px 32px 8px 32px', background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#f1f5f9',
-              fontSize: 13, fontFamily: 'Manrope,sans-serif', boxSizing: 'border-box'
+              width: '100%', padding: '12px 14px 12px 42px', background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, color: '#f1f5f9',
+              fontSize: 14, fontFamily: 'Manrope,sans-serif', boxSizing: 'border-box'
             }}
           />
-          {searchQ && (
-            <button onClick={() => setSearchQ('')} style={{
-              position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-              background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: 16, padding: 0
-            }}>×</button>
-          )}
         </div>
-        {/* Filter tabs */}
-        <div className="pfilter-bar" style={{ marginBottom: 0 }}>
+        <div className="pfilter-bar" style={{ marginBottom: 0, padding: 4, background: 'rgba(255,255,255,0.02)', borderRadius: 14, border: '1px solid rgba(255,255,255,0.05)' }}>
           {statuses.map(s => (
             <button
               key={s}
               className={`pfilter-btn ${filter === s ? 'active' : ''}`}
               onClick={() => setFilter(s)}
+              style={{ padding: '8px 16px', borderRadius: 11 }}
             >
               {s}
-              <span className="pfilter-count">{counts[s]}</span>
+              <span className="pfilter-count" style={{ marginLeft: 8, background: filter === s ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.05)' }}>{counts[s]}</span>
             </button>
           ))}
         </div>
       </div>
-
       {/* Cards */}
-      <div className="pcard-list">
+      <div className="pcard-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(400px, 1fr))', gap: 20 }}>
         {visible.length === 0
-          ? <div className="pcard-empty">
-              {searchQ ? `No results for "${searchQ}"` : `No ${filter.toLowerCase()} projects found`}
+          ? <div className="pcard-empty" style={{ gridColumn: '1/-1', padding: 100, background: 'rgba(255,255,255,0.02)', borderRadius: 24, border: '1px dashed rgba(255,255,255,0.1)', textAlign: 'center', color: '#475569' }}>
+              <div style={{ fontSize: 40, marginBottom: 16 }}>📂</div>
+              {searchQ ? `No results for "${searchQ}"` : `No projects found for ${MONTHS[viewMonth]} ${viewYear}`}
             </div>
           : visible.map((p, i) => <ProjectCard key={i} p={p} />)
         }
       </div>
+    </div>
+  );
+};
+
+const WorkHistoryPage = ({ user }) => {
+  const [history, setHistory] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!user.id) return;
+    setLoading(true);
+    fetch(`/api/user/work-history?memberId=${user.id}`)
+      .then(r => r.json())
+      .then(data => {
+        setHistory(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [user.id]);
+
+  // Group by month
+  const monthlyGroups = {};
+  history.forEach(p => {
+    const monthKey = p.month && p.month !== 'Unknown' ? p.month : (p.date || p.deliveredDate || '').slice(0, 7);
+    if (!monthKey || monthKey.length < 7) return;
+
+    if (!monthlyGroups[monthKey]) {
+      monthlyGroups[monthKey] = {
+        month: monthKey,
+        projects: [],
+        totalEarned: 0,
+        deliveredCount: 0
+      };
+    }
+    monthlyGroups[monthKey].projects.push(p);
+    if (p.status === 'Delivered') {
+      monthlyGroups[monthKey].totalEarned += Number(p.amtX || 0);
+      monthlyGroups[monthKey].deliveredCount += 1;
+    }
+  });
+
+  const sortedMonths = Object.values(monthlyGroups).sort((a, b) => b.month.localeCompare(a.month));
+
+  const lifetimeDelivered = history.filter(p => p.status === 'Delivered').length;
+  const lifetimeEarned = history.filter(p => p.status === 'Delivered').reduce((sum, p) => sum + Number(p.amtX || 0), 0);
+  const tenureMonths = sortedMonths.length;
+
+  const fmt = (v) => '$' + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+  return (
+    <div className="work-history-container">
+      {/* LIFETIME KPI STRIP */}
+      <div className="ovd-kpi-strip" style={{ marginBottom: 30 }}>
+        {[
+          { label: 'LIFETIME DELIVERED', value: lifetimeDelivered, color: '#10b981' },
+          { label: 'TOTAL PROJECTS', value: history.length, color: '#3b82f6' },
+          { label: 'TENURE (MONTHS)', value: tenureMonths, color: '#a78bfa' },
+          { label: 'LIFETIME EARNINGS', value: fmt(lifetimeEarned), color: '#f59e0b' },
+        ].map(k => (
+          <div key={k.label} className="ovd-kpi-card" style={{ flex: 1 }}>
+            <div className="ovd-kpi-label">{k.label}</div>
+            <div className="ovd-kpi-value" style={{ color: k.color, fontSize: 22 }}>{k.value}</div>
+          </div>
+        ))}
+      </div>
+
+      {loading ? (
+        <div style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 800 }}>Loading Work History...</div>
+      ) : sortedMonths.length === 0 ? (
+        <div className="emp-card" style={{ padding: 60, textAlign: 'center' }}>
+          <div style={{ fontSize: 40, marginBottom: 16 }}>📁</div>
+          <div className="emp-card-title" style={{ marginBottom: 8 }}>No History Found</div>
+          <div style={{ color: '#64748b', fontSize: 13 }}>Your historical project data will appear here once archived.</div>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {sortedMonths.map((group) => (
+            <div key={group.month} className="emp-card history-month-card">
+              <div className="emp-card-header" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <div style={{ padding: '8px 12px', background: 'rgba(59,130,246,0.1)', borderRadius: 10, color: '#3b82f6', fontWeight: 900, fontSize: 13 }}>
+                    {new Date(group.month + '-01').toLocaleString('default', { month: 'long', year: 'numeric' }).toUpperCase()}
+                  </div>
+                  <div style={{ fontSize: 12, color: '#64748b', fontWeight: 700 }}>
+                    {group.projects.length} PROJECTS
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 20 }}>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 9, color: '#475569', fontWeight: 800, marginBottom: 2 }}>DELIVERED</div>
+                    <div style={{ fontSize: 14, fontWeight: 900, color: '#10b981' }}>{group.deliveredCount}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 9, color: '#475569', fontWeight: 800, marginBottom: 2 }}>EARNED</div>
+                    <div style={{ fontSize: 14, fontWeight: 900, color: '#f59e0b' }}>{fmt(group.totalEarned)}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ padding: '0 20px' }}>
+                <div style={{ maxHeight: 300, overflowY: 'auto', padding: '10px 0' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                    <thead>
+                      <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                        <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800 }}>DATE</th>
+                        <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800 }}>PROJECT NAME</th>
+                        <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800 }}>SERVICE</th>
+                        <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800, textAlign: 'right' }}>STATUS</th>
+                        <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800, textAlign: 'right' }}>EARNED</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.projects.map((p, idx) => (
+                        <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                          <td style={{ padding: '12px 0', color: '#64748b' }}>{p.date || p.deliveredDate || '—'}</td>
+                          <td style={{ padding: '12px 0', fontWeight: 700, color: '#e2e8f0' }}>{p.order}</td>
+                          <td style={{ padding: '12px 0', color: '#94a3b8' }}>{p.service}</td>
+                          <td style={{ padding: '12px 0', textAlign: 'right' }}>
+                            <span style={{ 
+                              fontSize: 9, fontWeight: 900, padding: '2px 8px', borderRadius: 6,
+                              background: p.status === 'Delivered' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                              color: p.status === 'Delivered' ? '#10b981' : '#f59e0b'
+                            }}>{p.status.toUpperCase()}</span>
+                          </td>
+                          <td style={{ padding: '12px 0', textAlign: 'right', fontWeight: 800, color: p.status === 'Delivered' ? '#10b981' : '#475569' }}>
+                            {fmt(p.amtX)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
@@ -945,18 +1154,18 @@ const AdminOverview = ({ members, deptSummary }) => {
     const t = m.team || 'Unknown';
     if (!teamMap[t]) teamMap[t] = { delivered: 0, wip: 0, target: 0, count: 0 };
     teamMap[t].delivered += m.deliveredAmt || 0;
-    teamMap[t].wip       += m.wipAmt || 0;
-    teamMap[t].target    += m.target || 0;
-    teamMap[t].count     += 1;
+    teamMap[t].wip += m.wipAmt || 0;
+    teamMap[t].target += m.target || 0;
+    teamMap[t].count += 1;
   });
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12 }}>
         {[
-          { label: 'TOTAL TARGET', value: '$'+(dept.target||0).toLocaleString(), color: '#64748b' },
-          { label: 'ACHIEVED',     value: '$'+Math.round(dept.achieved||0).toLocaleString(), color: '#10b981' },
-          { label: 'WIP',          value: '$'+Math.round(dept.wipAmt||0).toLocaleString(), color: '#f59e0b' },
-          { label: 'TOTAL ORDERS', value: dept.uniqueProjects||0, color: '#3b82f6' },
+          { label: 'TOTAL TARGET', value: '$' + (dept.target || 0).toLocaleString(), color: '#64748b' },
+          { label: 'ACHIEVED', value: '$' + Math.round(dept.achieved || 0).toLocaleString(), color: '#10b981' },
+          { label: 'WIP', value: '$' + Math.round(dept.wipAmt || 0).toLocaleString(), color: '#f59e0b' },
+          { label: 'TOTAL ORDERS', value: dept.uniqueProjects || 0, color: '#3b82f6' },
         ].map(k => (
           <div key={k.label} className="emp-card" style={{ padding: '16px 20px' }}>
             <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1, color: '#334155', marginBottom: 8 }}>{k.label}</div>
@@ -984,7 +1193,7 @@ const AdminOverview = ({ members, deptSummary }) => {
                 </div>
                 <div><div style={{ fontSize: 9, color: '#334155', marginBottom: 3 }}>DELIVERED</div><div style={{ fontSize: 14, fontWeight: 900, color: '#10b981' }}>${Math.round(t.delivered).toLocaleString()}</div></div>
                 <div><div style={{ fontSize: 9, color: '#334155', marginBottom: 3 }}>WIP</div><div style={{ fontSize: 14, fontWeight: 900, color: '#f59e0b' }}>${Math.round(t.wip).toLocaleString()}</div></div>
-                <div style={{ fontSize: 16, fontWeight: 900, color: p>=70?'#10b981':p>=40?'#f59e0b':'#ef4444', textAlign: 'right' }}>{p}%</div>
+                <div style={{ fontSize: 16, fontWeight: 900, color: p >= 70 ? '#10b981' : p >= 40 ? '#f59e0b' : '#ef4444', textAlign: 'right' }}>{p}%</div>
               </div>
             );
           })}
@@ -1009,14 +1218,14 @@ const AdminMembers = ({ members }) => {
   const showToast = (msg, type = 'ok') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
 
   const OFF_DAYS = [
-    { label: 'Friday',    value: 4 },
-    { label: 'Saturday',  value: 5 },
-    { label: 'Sunday',    value: 6 },
-    { label: 'Monday',    value: 0 },
+    { label: 'Friday', value: 4 },
+    { label: 'Saturday', value: 5 },
+    { label: 'Sunday', value: 6 },
+    { label: 'Monday', value: 0 },
   ];
 
   const openEdit = (m) => { setForm({ ...m, isAdmin: m.isAdmin || false, offDay: m.offDay ?? 4 }); setModal('edit'); };
-  const openAdd  = () => { setForm({ id: '', name: '', fullName: '', team: TEAMS[0], role: ROLES[0], target: 1100, email: '', phone: '', password: 'pass123', isAdmin: false, offDay: 4 }); setModal('add'); };
+  const openAdd = () => { setForm({ id: '', name: '', fullName: '', team: TEAMS[0], role: ROLES[0], target: 1100, email: '', phone: '', password: 'pass123', isAdmin: false, offDay: 4 }); setModal('add'); };
 
   const save = async () => {
     const url = modal === 'add' ? '/api/admin/members/add' : '/api/admin/members/update';
@@ -1052,15 +1261,15 @@ const AdminMembers = ({ members }) => {
       {(modal === 'edit' || modal === 'add') && (
         <Modal title={modal === 'add' ? 'Add Member' : `Edit — ${form.name}`} onClose={() => setModal(null)}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
-            <Field label="Employee ID"><Input value={form.id||''} onChange={f('id')} placeholder="17XXX" /></Field>
-            <Field label="Display Name"><Input value={form.name||''} onChange={f('name')} placeholder="Alamin" /></Field>
-            <Field label="Full Name"><Input value={form.fullName||''} onChange={f('fullName')} placeholder="Alamin Sheikh" /></Field>
-            <Field label="Target ($)"><Input type="number" value={form.target||''} onChange={v => f('target')(Number(v))} placeholder="1100" /></Field>
-            <Field label="Team"><Select value={form.team||TEAMS[0]} onChange={f('team')} options={TEAMS} /></Field>
-            <Field label="Role"><Select value={form.role||ROLES[0]} onChange={f('role')} options={ROLES} /></Field>
-            <Field label="Email"><Input value={form.email||''} onChange={f('email')} placeholder="email@example.com" /></Field>
-            <Field label="Phone"><Input value={form.phone||''} onChange={f('phone')} placeholder="+880..." /></Field>
-            <Field label="Password"><Input value={form.password||''} onChange={f('password')} placeholder="pass123" /></Field>
+            <Field label="Employee ID"><Input value={form.id || ''} onChange={f('id')} placeholder="17XXX" /></Field>
+            <Field label="Display Name"><Input value={form.name || ''} onChange={f('name')} placeholder="Alamin" /></Field>
+            <Field label="Full Name"><Input value={form.fullName || ''} onChange={f('fullName')} placeholder="Alamin Sheikh" /></Field>
+            <Field label="Target ($)"><Input type="number" value={form.target || ''} onChange={v => f('target')(Number(v))} placeholder="1100" /></Field>
+            <Field label="Team"><Select value={form.team || TEAMS[0]} onChange={f('team')} options={TEAMS} /></Field>
+            <Field label="Role"><Select value={form.role || ROLES[0]} onChange={f('role')} options={ROLES} /></Field>
+            <Field label="Email"><Input value={form.email || ''} onChange={f('email')} placeholder="email@example.com" /></Field>
+            <Field label="Phone"><Input value={form.phone || ''} onChange={f('phone')} placeholder="+880..." /></Field>
+            <Field label="Password"><Input value={form.password || ''} onChange={f('password')} placeholder="pass123" /></Field>
             <Field label="Weekly Off Day">
               <select
                 value={form.offDay ?? 4}
@@ -1096,7 +1305,7 @@ const AdminMembers = ({ members }) => {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead><tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-              {['ID','Name','Team','Role','Target','Off Day','Email','Admin','Actions'].map(h => (
+              {['ID', 'Name', 'Team', 'Role', 'Target', 'Off Day', 'Email', 'Admin', 'Actions'].map(h => (
                 <th key={h} style={{ padding: '10px 14px', fontSize: 9, fontWeight: 800, color: '#334155', textAlign: 'left', letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{h}</th>
               ))}
             </tr></thead>
@@ -1110,13 +1319,13 @@ const AdminMembers = ({ members }) => {
                   </td>
                   <td style={{ padding: '10px 14px', fontSize: 11, color: '#64748b' }}>{m.team}</td>
                   <td style={{ padding: '10px 14px', fontSize: 11, color: '#475569' }}>{m.role}</td>
-                  <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 800, color: '#3b82f6' }}>${(m.target||0).toLocaleString()}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 800, color: '#3b82f6' }}>${(m.target || 0).toLocaleString()}</td>
                   <td style={{ padding: '10px 14px' }}>
                     <span style={{ fontSize: 10, fontWeight: 800, color: '#a78bfa', background: 'rgba(167,139,250,0.1)', padding: '2px 8px', borderRadius: 99, border: '1px solid rgba(167,139,250,0.2)' }}>
-                      {['Mon','Tue','Wed','Thu','Fri','Sat','Sun'][m.offDay ?? 4]}
+                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][m.offDay ?? 4]}
                     </span>
                   </td>
-                  <td style={{ padding: '10px 14px', fontSize: 11, color: '#475569' }}>{m.email||'—'}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 11, color: '#475569' }}>{m.email || '—'}</td>
                   <td style={{ padding: '10px 14px' }}>
                     {m.isAdmin ? <span style={{ fontSize: 9, fontWeight: 800, color: '#f59e0b', background: 'rgba(245,158,11,0.12)', padding: '2px 8px', borderRadius: 99, border: '1px solid rgba(245,158,11,0.25)' }}>ADMIN</span>
                       : <span style={{ fontSize: 9, color: '#334155' }}>—</span>}
@@ -1163,9 +1372,9 @@ const AdminAttendance = () => {
       {toast && <Toast msg={toast.msg} type={toast.type} />}
       {editing && (
         <Modal title={`Edit Attendance — ${editing.emp_id}`} onClose={() => setEditing(null)}>
-          <Field label="Status"><Select value={editing.status||'Present'} onChange={v => setEditing(p=>({...p, status: v}))} options={['Present','Late','Absent','Leave']} /></Field>
-          <Field label="Check In"><Input value={editing.in||''} onChange={v => setEditing(p=>({...p, in: v}))} placeholder="09:00 AM" /></Field>
-          <Field label="Check Out"><Input value={editing.out||''} onChange={v => setEditing(p=>({...p, out: v}))} placeholder="06:00 PM" /></Field>
+          <Field label="Status"><Select value={editing.status || 'Present'} onChange={v => setEditing(p => ({ ...p, status: v }))} options={['Present', 'Late', 'Absent', 'Leave']} /></Field>
+          <Field label="Check In"><Input value={editing.in || ''} onChange={v => setEditing(p => ({ ...p, in: v }))} placeholder="09:00 AM" /></Field>
+          <Field label="Check Out"><Input value={editing.out || ''} onChange={v => setEditing(p => ({ ...p, out: v }))} placeholder="06:00 PM" /></Field>
           <div style={{ display: 'flex', gap: 10, marginTop: 6 }}>
             <Btn onClick={saveEdit} color="#10b981">Save</Btn>
             <Btn onClick={() => setEditing(null)}>Cancel</Btn>
@@ -1181,30 +1390,30 @@ const AdminAttendance = () => {
         {records.length === 0
           ? <div style={{ padding: 40, textAlign: 'center', color: '#334155', fontSize: 13 }}>No records for {date}</div>
           : <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead><tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                  {['Employee ID','Status','Check In','Check Out','Duration','Device','IP','Action'].map(h => (
-                    <th key={h} style={{ padding: '10px 14px', fontSize: 9, fontWeight: 800, color: '#334155', textAlign: 'left', letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{h}</th>
-                  ))}
-                </tr></thead>
-                <tbody>
-                  {records.map(r => (
-                    <tr key={r.emp_id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
-                      <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: '#94a3b8', fontFamily: 'monospace' }}>{r.emp_id}</td>
-                      <td style={{ padding: '10px 14px' }}>
-                        <span style={{ fontSize: 11, fontWeight: 800, color: statusColor[r.status]||'#64748b', background: `${statusColor[r.status]||'#64748b'}18`, padding: '3px 10px', borderRadius: 99, border: `1px solid ${statusColor[r.status]||'#64748b'}40` }}>{r.status||'—'}</span>
-                      </td>
-                      <td style={{ padding: '10px 14px', fontSize: 12, color: '#94a3b8' }}>{r.in||'—'}</td>
-                      <td style={{ padding: '10px 14px', fontSize: 12, color: '#94a3b8' }}>{r.out||'—'}</td>
-                      <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748b' }}>{r.duration||'—'}</td>
-                      <td style={{ padding: '10px 14px', fontSize: 11, color: '#64748b' }}>{r.device_out || r.device_in || '—'}</td>
-                      <td style={{ padding: '10px 14px', fontSize: 10, color: '#475569', fontFamily: 'monospace' }}>{r.ip_out || r.ip_in || '—'}</td>
-                      <td style={{ padding: '10px 14px' }}><Btn sm onClick={() => setEditing({...r})}>Edit</Btn></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead><tr style={{ background: 'rgba(255,255,255,0.02)' }}>
+                {['Employee ID', 'Status', 'Check In', 'Check Out', 'Duration', 'Device', 'IP', 'Action'].map(h => (
+                  <th key={h} style={{ padding: '10px 14px', fontSize: 9, fontWeight: 800, color: '#334155', textAlign: 'left', letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{h}</th>
+                ))}
+              </tr></thead>
+              <tbody>
+                {records.map(r => (
+                  <tr key={r.emp_id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                    <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: '#94a3b8', fontFamily: 'monospace' }}>{r.emp_id}</td>
+                    <td style={{ padding: '10px 14px' }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, color: statusColor[r.status] || '#64748b', background: `${statusColor[r.status] || '#64748b'}18`, padding: '3px 10px', borderRadius: 99, border: `1px solid ${statusColor[r.status] || '#64748b'}40` }}>{r.status || '—'}</span>
+                    </td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#94a3b8' }}>{r.in || '—'}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#94a3b8' }}>{r.out || '—'}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 12, color: '#64748b' }}>{r.duration || '—'}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 11, color: '#64748b' }}>{r.device_out || r.device_in || '—'}</td>
+                    <td style={{ padding: '10px 14px', fontSize: 10, color: '#475569', fontFamily: 'monospace' }}>{r.ip_out || r.ip_in || '—'}</td>
+                    <td style={{ padding: '10px 14px' }}><Btn sm onClick={() => setEditing({ ...r })}>Edit</Btn></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         }
       </div>
     </div>
@@ -1218,28 +1427,28 @@ const AdminAnnouncements = ({ members }) => {
   const [toast, setToast] = React.useState(null);
   const [history, setHistory] = React.useState([]);
 
-  const showToast = (m, type='ok') => { setToast({msg:m,type}); setTimeout(()=>setToast(null),3000); };
+  const showToast = (m, type = 'ok') => { setToast({ msg: m, type }); setTimeout(() => setToast(null), 3000); };
 
   const fetchHistory = () => fetch('/api/admin/announcements/history').then(r => r.json()).then(d => setHistory(Array.isArray(d) ? d : []));
   React.useEffect(() => { fetchHistory(); }, []);
 
   const send = async () => {
     if (!msg.trim()) return showToast('Please enter a message', 'error');
-    const r = await fetch('/api/admin/announcements', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ title, message: msg, target }) });
+    const r = await fetch('/api/admin/announcements', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, message: msg, target }) });
     const d = await r.json();
-    if (d.ok) { 
-      showToast('Announcement sent!'); 
-      setTitle(''); 
-      setMsg(''); 
+    if (d.ok) {
+      showToast('Announcement sent!');
+      setTitle('');
+      setMsg('');
       fetchHistory();
     }
-    else showToast(d.error||'Error','error');
+    else showToast(d.error || 'Error', 'error');
   };
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr', gap: 24 }}>
       {toast && <Toast msg={toast.msg} type={toast.type} />}
-      
+
       {/* Sender Form */}
       <div className="emp-card">
         <div className="emp-card-header"><div className="emp-card-title">Send Announcement</div></div>
@@ -1261,17 +1470,17 @@ const AdminAnnouncements = ({ members }) => {
         <div className="emp-card-header"><div className="emp-card-title">Announcement History</div></div>
         <div style={{ padding: '0 20px 20px', flex: 1, overflowY: 'auto', maxHeight: '500px' }}>
           {history.length === 0 ? (
-             <div style={{ padding: 40, textAlign: 'center', color: '#475569', fontSize: 13 }}>No announcements sent yet.</div>
+            <div style={{ padding: 40, textAlign: 'center', color: '#475569', fontSize: 13 }}>No announcements sent yet.</div>
           ) : history.map((h, i) => (
             <div key={i} style={{ padding: '14px 0', borderBottom: i < history.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                 <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9' }}>{h.title}</div>
-                 <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>{new Date(h.timestamp * 1000).toLocaleString()}</div>
-               </div>
-               <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5, marginBottom: 8 }}>{h.text}</div>
-               <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, background: h.target === 'all' ? 'rgba(59,130,246,0.1)' : 'rgba(245,158,11,0.1)', color: h.target === 'all' ? '#60a5fa' : '#f59e0b', border: `1px solid ${h.target === 'all' ? 'rgba(59,130,246,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
-                 Sent to: {h.target}
-               </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9' }}>{h.title}</div>
+                <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>{new Date(h.timestamp * 1000).toLocaleString()}</div>
+              </div>
+              <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5, marginBottom: 8 }}>{h.text}</div>
+              <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, background: h.target === 'all' ? 'rgba(59,130,246,0.1)' : 'rgba(245,158,11,0.1)', color: h.target === 'all' ? '#60a5fa' : '#f59e0b', border: `1px solid ${h.target === 'all' ? 'rgba(59,130,246,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
+                Sent to: {h.target}
+              </div>
             </div>
           ))}
         </div>
@@ -1288,13 +1497,13 @@ const AdminLeaveRequests = () => {
   const load = (s) => fetch(`/api/admin/leave-requests?status=${s}`).then(r => r.json()).then(d => setRequests(Array.isArray(d) ? d : []));
   React.useEffect(() => { load(filter); }, [filter]);
 
-  const showToast = (m, type='ok') => { setToast({msg:m,type}); setTimeout(()=>setToast(null),3000); };
+  const showToast = (m, type = 'ok') => { setToast({ msg: m, type }); setTimeout(() => setToast(null), 3000); };
 
   const update = async (key, status) => {
-    const r = await fetch('/api/admin/leave-requests/update', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ key, status }) });
+    const r = await fetch('/api/admin/leave-requests/update', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key, status }) });
     const d = await r.json();
     if (d.ok) { showToast(`${status}!`); load(filter); }
-    else showToast(d.error||'Error','error');
+    else showToast(d.error || 'Error', 'error');
   };
 
   const statusColor = { Pending: '#f59e0b', Approved: '#10b981', Rejected: '#ef4444' };
@@ -1306,28 +1515,28 @@ const AdminLeaveRequests = () => {
         <div className="emp-card-header">
           <div className="emp-card-title">Leave Requests</div>
           <div style={{ display: 'flex', gap: 6 }}>
-            {['Pending','Approved','Rejected'].map(s => (
-              <button key={s} onClick={() => setFilter(s)} style={{ padding: '5px 14px', borderRadius: 99, border: '1px solid', borderColor: filter===s ? statusColor[s]+'66' : 'rgba(255,255,255,0.07)', background: filter===s ? statusColor[s]+'18' : 'transparent', color: filter===s ? statusColor[s] : '#475569', fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'Manrope,sans-serif' }}>{s}</button>
+            {['Pending', 'Approved', 'Rejected'].map(s => (
+              <button key={s} onClick={() => setFilter(s)} style={{ padding: '5px 14px', borderRadius: 99, border: '1px solid', borderColor: filter === s ? statusColor[s] + '66' : 'rgba(255,255,255,0.07)', background: filter === s ? statusColor[s] + '18' : 'transparent', color: filter === s ? statusColor[s] : '#475569', fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'Manrope,sans-serif' }}>{s}</button>
             ))}
           </div>
         </div>
         {requests.length === 0
           ? <div style={{ padding: 40, textAlign: 'center', color: '#334155', fontSize: 13 }}>No {filter.toLowerCase()} requests</div>
           : <div>
-              {requests.map(r => (
-                <div key={r.key} style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: 16, alignItems: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{r.emp_id}</div>
-                    <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>{r.from} → {r.to} · {r.reason}</div>
-                  </div>
-                  <span style={{ fontSize: 11, fontWeight: 800, color: statusColor[r.status], background: statusColor[r.status]+'18', padding: '3px 10px', borderRadius: 99 }}>{r.status}</span>
-                  {filter === 'Pending' && <>
-                    <Btn sm color="#10b981" onClick={() => update(r.key, 'Approved')}>Approve</Btn>
-                    <Btn sm danger onClick={() => update(r.key, 'Rejected')}>Reject</Btn>
-                  </>}
+            {requests.map(r => (
+              <div key={r.key} style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: 16, alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{r.emp_id}</div>
+                  <div style={{ fontSize: 11, color: '#475569', marginTop: 2 }}>{r.from} → {r.to} · {r.reason}</div>
                 </div>
-              ))}
-            </div>
+                <span style={{ fontSize: 11, fontWeight: 800, color: statusColor[r.status], background: statusColor[r.status] + '18', padding: '3px 10px', borderRadius: 99 }}>{r.status}</span>
+                {filter === 'Pending' && <>
+                  <Btn sm color="#10b981" onClick={() => update(r.key, 'Approved')}>Approve</Btn>
+                  <Btn sm danger onClick={() => update(r.key, 'Rejected')}>Reject</Btn>
+                </>}
+              </div>
+            ))}
+          </div>
         }
       </div>
     </div>
@@ -1343,15 +1552,15 @@ const AdminSettings = () => {
 
   React.useEffect(() => {
     fetch('/api/admin/config').then(r => r.json()).then(d => {
-      if(!d.error) setConfig({ dept_target: d.dept_target || 36000, team_targets: d.team_targets || {} });
+      if (!d.error) setConfig({ dept_target: d.dept_target || 36000, team_targets: d.team_targets || {} });
     }).catch(e => console.error(e));
-    
+
     fetch('/api/admin/shifts').then(r => r.json()).then(d => {
-      if(!d.error && Object.keys(d).length > 0) setShifts(d);
+      if (!d.error && Object.keys(d).length > 0) setShifts(d);
     }).catch(e => console.error(e));
   }, []);
 
-  const showToast = (m, type='ok') => { setToast({msg:m,type}); setTimeout(()=>setToast(null),3000); };
+  const showToast = (m, type = 'ok') => { setToast({ msg: m, type }); setTimeout(() => setToast(null), 3000); };
 
   const sync = async () => {
     setSyncing(true);
@@ -1369,17 +1578,17 @@ const AdminSettings = () => {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(config)
       });
-      
+
       // Save Shifts
       const r2 = await fetch('/api/admin/shifts', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(shifts)
       });
-      
+
       const d1 = await r1.json();
       const d2 = await r2.json();
-      
-      if(d1.ok && d2.ok) {
+
+      if (d1.ok && d2.ok) {
         showToast('Settings saved! Triggering dashboard sync...', 'ok');
         // Auto-sync after save so dashboard reflects changes
         await sync();
@@ -1395,11 +1604,11 @@ const AdminSettings = () => {
   };
 
   const updateTeamTarget = (team, val) => {
-    setConfig(c => ({...c, team_targets: {...c.team_targets, [team]: Number(val) || 0}}));
+    setConfig(c => ({ ...c, team_targets: { ...c.team_targets, [team]: Number(val) || 0 } }));
   };
-  
+
   const updateTeamShift = (team, val) => {
-    setShifts(s => ({...s, [team]: val}));
+    setShifts(s => ({ ...s, [team]: val }));
   };
 
   return (
@@ -1421,11 +1630,11 @@ const AdminSettings = () => {
           <div className="card-title">Monthly Revenue Target</div>
           <div className="input-group">
             <span className="input-prefix">$</span>
-            <input 
-              type="number" 
-              value={config.dept_target} 
-              onChange={e => setConfig({...config, dept_target: Number(e.target.value) || 0})} 
-              className="settings-input" 
+            <input
+              type="number"
+              value={config.dept_target}
+              onChange={e => setConfig({ ...config, dept_target: Number(e.target.value) || 0 })}
+              className="settings-input"
             />
           </div>
           <div className="card-info">This sets the overall progress goal for the GEO Rankers department.</div>
@@ -1456,11 +1665,11 @@ const AdminSettings = () => {
                 </div>
                 <div className="input-group">
                   <span className="input-prefix">$</span>
-                  <input 
-                    type="number" 
-                    value={config.team_targets[team] || 0} 
-                    onChange={e => updateTeamTarget(team, e.target.value)} 
-                    className="settings-input" 
+                  <input
+                    type="number"
+                    value={config.team_targets[team] || 0}
+                    onChange={e => updateTeamTarget(team, e.target.value)}
+                    className="settings-input"
                   />
                 </div>
               </div>
@@ -1479,11 +1688,11 @@ const AdminSettings = () => {
                   <div className="team-dot" style={{ background: TEAM_COLORS[i % 5] }}></div>
                   {team}
                 </div>
-                <input 
-                  type="time" 
-                  value={shifts[team] || ''} 
-                  onChange={e => updateTeamShift(team, e.target.value)} 
-                  className="settings-input no-prefix" 
+                <input
+                  type="time"
+                  value={shifts[team] || ''}
+                  onChange={e => updateTeamShift(team, e.target.value)}
+                  className="settings-input no-prefix"
                 />
               </div>
             ))}
@@ -1501,7 +1710,7 @@ const AdminSettings = () => {
         <div className="emp-card" style={{ padding: 24 }}>
           <div style={{ fontSize: 14, fontWeight: 800, color: '#e2e8f0', marginBottom: 8 }}>Admin IDs</div>
           <div style={{ fontSize: 12, color: '#475569', marginBottom: 12, lineHeight: 1.6 }}>These IDs have full admin access to the panel:</div>
-          {['17149 — Gazi Fahim','17137 — Jahidul','17248 — Tihim','17238 — Istiak ishq'].map(s => (
+          {['17149 — Gazi Fahim', '17137 — Jahidul', '17248 — Tihim', '17238 — Istiak ishq'].map(s => (
             <div key={s} style={{ padding: '7px 12px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.15)', borderRadius: 8, marginBottom: 6, fontSize: 12, fontWeight: 700, color: '#f59e0b', fontFamily: 'monospace' }}>{s}</div>
           ))}
         </div>
@@ -1526,27 +1735,29 @@ const AdminSettings = () => {
 const AdminPanel = ({ members, deptSummary }) => {
   const [section, setSection] = React.useState('overview');
   const SECTIONS = [
-    { id: 'overview',      label: 'Overview' },
-    { id: 'members',       label: 'Members' },
-    { id: 'attendance',    label: 'Attendance' },
+    { id: 'overview', label: 'Overview' },
+    { id: 'members', label: 'Members' },
+    { id: 'attendance', label: 'Attendance' },
+    { id: 'projects', label: 'All Projects' },
     { id: 'announcements', label: 'Announcements' },
-    { id: 'leave',         label: 'Leave Requests' },
-    { id: 'settings',      label: 'Settings' },
+    { id: 'leave', label: 'Leave Requests' },
+    { id: 'settings', label: 'Settings' },
   ];
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Sub-nav */}
       <div style={{ display: 'flex', gap: 4, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 12, padding: 4, alignSelf: 'flex-start' }}>
         {SECTIONS.map(s => (
-          <button key={s.id} onClick={() => setSection(s.id)} style={{ padding: '7px 16px', borderRadius: 9, border: 'none', cursor: 'pointer', background: section===s.id ? 'rgba(245,158,11,0.15)' : 'transparent', color: section===s.id ? '#fbbf24' : '#475569', fontSize: 12, fontWeight: 800, fontFamily: 'Manrope,sans-serif', transition: 'all 0.15s' }}>{s.label}</button>
+          <button key={s.id} onClick={() => setSection(s.id)} style={{ padding: '7px 16px', borderRadius: 9, border: 'none', cursor: 'pointer', background: section === s.id ? 'rgba(245,158,11,0.15)' : 'transparent', color: section === s.id ? '#fbbf24' : '#475569', fontSize: 12, fontWeight: 800, fontFamily: 'Manrope,sans-serif', transition: 'all 0.15s' }}>{s.label}</button>
         ))}
       </div>
-      {section === 'overview'      && <AdminOverview members={members} deptSummary={deptSummary} />}
-      {section === 'members'       && <AdminMembers members={members} />}
-      {section === 'attendance'    && <AdminAttendance />}
+      {section === 'overview' && <AdminOverview members={members} deptSummary={deptSummary} />}
+      {section === 'members' && <AdminMembers members={members} />}
+      {section === 'attendance' && <AdminAttendance />}
+      {section === 'projects' && <AdminProjects />}
       {section === 'announcements' && <AdminAnnouncements members={members} />}
-      {section === 'leave'         && <AdminLeaveRequests />}
-      {section === 'settings'      && <AdminSettings />}
+      {section === 'leave' && <AdminLeaveRequests />}
+      {section === 'settings' && <AdminSettings />}
     </div>
   );
 };
@@ -1562,7 +1773,7 @@ const MiniBar = ({ value, color }) => (
 );
 
 // ─── CheckInWidget (for Dashboard) ──────────────────────────────
-const CheckInWidget = ({ checkedIn, setCheckedIn, checkedOut, setCheckedOut, user, logs = [], fetchLogs = () => {} }) => {
+const CheckInWidget = ({ checkedIn, setCheckedIn, checkedOut, setCheckedOut, user, logs = [], fetchLogs = () => { } }) => {
   const handleAttendance = async () => {
     try {
       const action = checkedIn ? 'checkout' : 'checkin';
@@ -1576,7 +1787,7 @@ const CheckInWidget = ({ checkedIn, setCheckedIn, checkedOut, setCheckedOut, use
       if (data.ok) {
         if (checkedIn) { setCheckedOut(true); setCheckedIn(false); }
         else { setCheckedIn(true); }
-        fetchLogs(); 
+        fetchLogs();
       }
     } catch (err) { console.error(err); alert('Network error'); }
   };
@@ -1632,11 +1843,11 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
   });
 
   const dept = deptSummary?.dept || {};
-  const deptTarget    = dept.target || 35000;
-  const deptAchieved  = dept.achieved || 0;
-  const deptWip       = dept.wipAmt || 0;
-  const deptPct       = pctOf(deptAchieved, deptTarget);
-  const platforms     = dept.platformStats || {};
+  const deptTarget = dept.target || 35000;
+  const deptAchieved = dept.achieved || 0;
+  const deptWip = dept.wipAmt || 0;
+  const deptPct = pctOf(deptAchieved, deptTarget);
+  const platforms = dept.platformStats || {};
 
   // team stats computed from members
   const teamMap = {};
@@ -1644,9 +1855,9 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
     const t = m.team || 'Unknown';
     if (!teamMap[t]) teamMap[t] = { delivered: 0, wip: 0, target: 0, count: 0, members: [] };
     teamMap[t].delivered += m.deliveredAmt || 0;
-    teamMap[t].wip       += m.wipAmt || 0;
-    teamMap[t].target    += m.target || 0;
-    teamMap[t].count     += 1;
+    teamMap[t].wip += m.wipAmt || 0;
+    teamMap[t].target += m.target || 0;
+    teamMap[t].count += 1;
     teamMap[t].members.push(m);
   });
   const teams = Object.entries(teamMap)
@@ -1665,11 +1876,11 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
       {/* ── Row 1: Dept KPI strip ── */}
       <div className="ovd-kpi-strip">
         {[
-          { label: 'DEPT TARGET',   value: fmt(deptTarget),  color: '#64748b' },
-          { label: 'ACHIEVED',      value: fmt(deptAchieved), color: '#10b981' },
-          { label: 'IN PROGRESS',   value: fmt(deptWip),     color: '#f59e0b' },
-          { label: 'TOTAL ORDERS',  value: dept.uniqueProjects || 0, color: '#3b82f6' },
-          { label: 'DEPT PROGRESS', value: `${deptPct}%`,    color: deptPct >= 70 ? '#10b981' : deptPct >= 40 ? '#f59e0b' : '#ef4444' },
+          { label: 'DEPT TARGET', value: fmt(deptTarget), color: '#64748b' },
+          { label: 'ACHIEVED', value: fmt(deptAchieved), color: '#10b981' },
+          { label: 'IN PROGRESS', value: fmt(deptWip), color: '#f59e0b' },
+          { label: 'TOTAL ORDERS', value: dept.uniqueProjects || 0, color: '#3b82f6' },
+          { label: 'DEPT PROGRESS', value: `${deptPct}%`, color: deptPct >= 70 ? '#10b981' : deptPct >= 40 ? '#f59e0b' : '#ef4444' },
         ].map(k => (
           <div key={k.label} className="ovd-kpi-card">
             <div className="ovd-kpi-label">{k.label}</div>
@@ -1706,9 +1917,9 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
             <div className="ovd-my-stats">
               {[
                 { label: 'Delivered', value: fmt(user.deliveredAmt), color: '#10b981' },
-                { label: 'WIP',       value: fmt(user.wipAmt),       color: '#f59e0b' },
-                { label: 'Target',    value: fmt(user.target),        color: '#64748b' },
-                { label: 'Orders',    value: user.delivered || 0,     color: '#3b82f6' },
+                { label: 'WIP', value: fmt(user.wipAmt), color: '#f59e0b' },
+                { label: 'Target', value: fmt(user.target), color: '#64748b' },
+                { label: 'Orders', value: user.delivered || 0, color: '#3b82f6' },
               ].map(s => (
                 <div key={s.label} className="ovd-my-stat">
                   <div style={{ fontSize: 16, fontWeight: 900, color: s.color }}>{s.value}</div>
@@ -1725,9 +1936,9 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
             <div className="emp-card-title">Platform Breakdown</div>
           </div>
           <div style={{ padding: '12px 20px 16px' }}>
-            {Object.entries(platforms).filter(([,v]) => v > 0).map(([name, val], i) => {
+            {Object.entries(platforms).filter(([, v]) => v > 0).map(([name, val], i) => {
               const pf = pctOf(val, deptAchieved);
-              const colors = ['#3b82f6','#10b981','#f59e0b','#a78bfa'];
+              const colors = ['#3b82f6', '#10b981', '#f59e0b', '#a78bfa'];
               return (
                 <div key={name} style={{ marginBottom: 14 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -1808,13 +2019,145 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
       {/* ── Row 4: Recent Projects + Quick Attendance ── */}
       <div className="ovd-row4">
         <ProjectsList user={user} title="📁 My Projects — Recent" limit={5} />
-        <CheckInWidget 
-          checkedIn={checkedIn} setCheckedIn={setCheckedIn} 
-          checkedOut={checkedOut} setCheckedOut={setCheckedOut} 
-          user={user} logs={logs} fetchLogs={fetchLogs} 
+        <CheckInWidget
+          checkedIn={checkedIn} setCheckedIn={setCheckedIn}
+          checkedOut={checkedOut} setCheckedOut={setCheckedOut}
+          user={user} logs={logs} fetchLogs={fetchLogs}
         />
       </div>
 
+    </div>
+  );
+};
+
+const AdminProjects = () => {
+  const [projects, setProjects] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [search, setSearch] = React.useState('');
+  const [month, setMonth] = React.useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
+  const [availableMonths, setAvailableMonths] = React.useState([]);
+
+  React.useEffect(() => {
+    fetch('/api/months').then(r => r.json()).then(d => setAvailableMonths(Array.isArray(d) ? d : []));
+  }, []);
+
+  React.useEffect(() => {
+    setLoading(true);
+    fetch(`/api/admin/all-projects?month=${month}&q=${search}`)
+      .then(r => r.json())
+      .then(data => {
+        setProjects(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [month, search]);
+
+  const fmt = (v) => '$' + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+  return (
+    <div className="admin-projects">
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 300 }}>
+          <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+          <input
+            placeholder="Search all projects (Order, Client, Team, Member...)"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            style={{
+              width: '100%', padding: '12px 14px 12px 42px', background: 'rgba(255,255,255,0.03)',
+              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#fff',
+              fontSize: 13, fontFamily: 'Manrope, sans-serif'
+            }}
+          />
+        </div>
+        <select
+          value={month}
+          onChange={e => setMonth(e.target.value)}
+          style={{
+            padding: '12px 20px', background: '#0c1424', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 13, fontFamily: 'Manrope, sans-serif'
+          }}
+        >
+          <option value="">All Time</option>
+          {availableMonths.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </div>
+
+      <div className="emp-card" style={{ padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="emp-card-title">📦 Master Project Archive</div>
+          <div style={{ fontSize: 12, fontWeight: 900, color: '#3b82f6', background: 'rgba(59,130,246,0.1)', padding: '6px 14px', borderRadius: 10 }}>
+            {projects.length} RECORDS
+          </div>
+        </div>
+        
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+            <thead>
+              <tr style={{ background: 'rgba(255,255,255,0.02)', textAlign: 'left' }}>
+                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>DATE</th>
+                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>ORDER & INSTRUCTION</th>
+                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>CLIENT</th>
+                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>ASSIGNED TO</th>
+                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>STATUS</th>
+                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, textAlign: 'right' }}>AMOUNT</th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                <tr><td colSpan="6" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>Loading archives...</td></tr>
+              ) : projects.length === 0 ? (
+                <tr><td colSpan="6" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>No archived projects found for this period.</td></tr>
+              ) : projects.map((p, i) => (
+                <tr key={i} style={{ 
+                  borderBottom: '1px solid rgba(255,255,255,0.03)', 
+                  transition: 'background 0.2s, transform 0.1s',
+                  cursor: 'default'
+                }} 
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                >
+                  <td style={{ padding: '16px 24px', color: '#94a3b8', fontWeight: 600 }}>{p.date}</td>
+                  <td style={{ padding: '16px 24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div>
+                        <div style={{ fontWeight: 800, color: '#f1f5f9' }}>{p.order}</div>
+                        <div style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>{p.service}</div>
+                      </div>
+                      {(p.instruction || p.link) && (
+                        <a href={p.instruction || p.link} target="_blank" rel="noreferrer" style={{ 
+                          width: 28, height: 28, borderRadius: 8, background: 'rgba(59,130,246,0.1)', 
+                          display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                          textDecoration: 'none', color: '#3b82f6', fontSize: 12, border: '1px solid rgba(59,130,246,0.2)',
+                          transition: 'all 0.2s'
+                        }} 
+                        onMouseEnter={e => { e.currentTarget.style.background = '#3b82f6'; e.currentTarget.style.color = '#fff'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.1)'; e.currentTarget.style.color = '#3b82f6'; }}
+                        title={p.instruction ? "Open Instruction Sheet" : "Open Order Link"}>📄</a>
+                      )}
+                    </div>
+                  </td>
+                  <td style={{ padding: '16px 24px', color: '#e2e8f0', fontWeight: 800 }}>{p.client}</td>
+                  <td style={{ padding: '16px 24px' }}>
+                    <div style={{ color: '#f1f5f9', fontWeight: 700 }}>{p.assign}</div>
+                  </td>
+                  <td style={{ padding: '16px 24px' }}>
+                    <span style={{ 
+                      padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 900,
+                      background: p.status === 'Delivered' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
+                      color: p.status === 'Delivered' ? '#10b981' : '#f59e0b',
+                      border: `1px solid ${p.status === 'Delivered' ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`
+                    }}>{p.status}</span>
+                  </td>
+                  <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: 900, color: p.status === 'Delivered' ? '#10b981' : '#f1f5f9' }}>
+                    {fmt(p.amtX)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 };
