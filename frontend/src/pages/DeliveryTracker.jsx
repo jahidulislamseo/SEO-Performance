@@ -122,7 +122,7 @@ function DeliveryTracker() {
 
   const filtered = data.filter(d => {
     const q = search.toLowerCase();
-    const matchSearch = !search || d.client.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.member.toLowerCase().includes(q);
+    const matchSearch = !search || d.client.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || (d.assign && d.assign.toLowerCase().includes(q));
     const matchFu = fuFilter === '' ? true : fuFilter === '6' ? d.sold : fuCount(d.followups) === parseInt(fuFilter);
     return matchSearch && matchFu;
   });
