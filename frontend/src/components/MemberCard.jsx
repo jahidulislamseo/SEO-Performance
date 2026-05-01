@@ -42,11 +42,12 @@ const MemberCard = ({ member, onClick, att }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
         <div style={{ display: 'flex', gap: '12px' }}>
           <div style={{ 
-            width: '44px', height: '44px', background: 'linear-gradient(135deg, #3b82f6, #8b5cf6)', 
+            width: '44px', height: '44px', background: avatarGradient(member.name || ''), 
             borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-            fontSize: '18px', fontWeight: 900, boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)'
+            fontSize: '18px', fontWeight: 900, boxShadow: '0 0 15px rgba(59, 130, 246, 0.3)',
+            overflow: 'hidden'
           }}>
-            {member.name?.charAt(0)}
+            {member.avatar ? <img src={member.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : member.name?.charAt(0)}
           </div>
           <div>
             <div style={{ fontSize: '15px', fontWeight: 900, color: '#f1f5f9' }}>{member.name}</div>

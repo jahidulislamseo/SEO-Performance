@@ -86,11 +86,15 @@ function EmployeePortal() {
   const [clock, setClock] = useState(new Date());
   const [logs, setLogs] = useState([]);
 
-  useEffect(() => {
+  const fetchMembers = () => {
     fetch('/api/data')
       .then(res => res.json())
       .then(data => { setMembers(data.data || []); setDeptSummary(data.summary || null); setMembersLoaded(true); })
       .catch(() => setMembersLoaded(true));
+  };
+
+  useEffect(() => {
+    fetchMembers();
   }, []);
 
   const fetchLogs = (id) => {
@@ -298,6 +302,10 @@ function EmployeePortal() {
       id: 'history', label: 'Work History',
       icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
     },
+    {
+      id: 'settings', label: 'Settings',
+      icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>,
+    },
     ...(isAdmin ? [{
       id: 'admin', label: 'Admin Panel',
       admin: true,
@@ -393,7 +401,9 @@ function EmployeePortal() {
 
         <div className="sb-bottom">
           <div className="sb-user-mini">
-            <div className="sb-user-av" style={{ background: avatarGradient(user.name) }}>{getInitials(user.name)}</div>
+            <div className="sb-user-av" style={{ background: avatarGradient(user.name), overflow: 'hidden' }}>
+              {user.avatar ? <img src={user.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : getInitials(user.name)}
+            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
                 <div className="sb-user-name">{user.name}</div>
@@ -422,25 +432,27 @@ function EmployeePortal() {
         </header>
 
         <div className="emp-content">
-          {/* Stat cards — always visible */}
-          <div className="stat-cards">
-            <div className="stat-card" style={{ '--sc-color': '#10b981' }}>
-              <div className="sc-value">${(user.deliveredAmt || 0).toLocaleString()}</div>
-              <div className="sc-label">Delivered</div>
+          {/* Stat cards — visible everywhere except history, admin and settings */}
+          {navItem !== 'history' && navItem !== 'admin' && navItem !== 'settings' && (
+            <div className="stat-cards">
+              <div className="stat-card" style={{ '--sc-color': '#10b981' }}>
+                <div className="sc-value">${(user.deliveredAmt || 0).toLocaleString()}</div>
+                <div className="sc-label">Delivered</div>
+              </div>
+              <div className="stat-card" style={{ '--sc-color': '#f59e0b' }}>
+                <div className="sc-value">${(user.wipAmt || 0).toLocaleString()}</div>
+                <div className="sc-label">WIP</div>
+              </div>
+              <div className="stat-card" style={{ '--sc-color': '#3b82f6' }}>
+                <div className="sc-value">{pct}%</div>
+                <div className="sc-label">Target Hit</div>
+              </div>
+              <div className="stat-card" style={{ '--sc-color': '#6366f1' }}>
+                <div className="sc-value">{user.delivered || 0}</div>
+                <div className="sc-label">Orders Done</div>
+              </div>
             </div>
-            <div className="stat-card" style={{ '--sc-color': '#f59e0b' }}>
-              <div className="sc-value">${(user.wipAmt || 0).toLocaleString()}</div>
-              <div className="sc-label">WIP</div>
-            </div>
-            <div className="stat-card" style={{ '--sc-color': '#3b82f6' }}>
-              <div className="sc-value">{pct}%</div>
-              <div className="sc-label">Target Hit</div>
-            </div>
-            <div className="stat-card" style={{ '--sc-color': '#6366f1' }}>
-              <div className="sc-value">{user.delivered || 0}</div>
-              <div className="sc-label">Orders Done</div>
-            </div>
-          </div>
+          )}
 
           {/* OVERVIEW TAB */}
           {navItem === 'overview' && (
@@ -499,6 +511,11 @@ function EmployeePortal() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* SETTINGS TAB */}
+          {navItem === 'settings' && (
+            <UserSettingsPage user={user} setUser={setUser} />
           )}
 
           {/* ADMIN TAB */}
@@ -887,16 +904,6 @@ const ProjectsPage = ({ user }) => {
     <div className="projects-page">
       {/* Monthly Stats Row */}
       <div className="ovd-kpi-strip" style={{ marginBottom: 24 }}>
-        <div className="ovd-kpi-card" style={{ flex: 1.5 }}>
-          <div className="ovd-kpi-label">VIEWING HISTORY</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 5 }}>
-            <button className="att-nav-btn" onClick={() => setViewMonth(m => m === 0 ? 11 : m - 1)}>❮</button>
-            <div style={{ fontSize: 18, fontWeight: 900, color: '#f1f5f9', minWidth: 100, textAlign: 'center' }}>
-              {MONTHS[viewMonth]} {viewYear}
-            </div>
-            <button className="att-nav-btn" onClick={() => setViewMonth(m => m === 11 ? 0 : m + 1)}>❯</button>
-          </div>
-        </div>
         {[
           { label: 'MONTHLY DELIVERED', value: fmt(monthlyStats.delivered), color: '#10b981' },
           { label: 'MONTHLY WIP', value: fmt(monthlyStats.wip), color: '#f59e0b' },
@@ -912,6 +919,13 @@ const ProjectsPage = ({ user }) => {
 
       {/* Search + Filter bar */}
       <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 24, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14 }}>
+          <button className="att-nav-btn" onClick={() => setViewMonth(m => m === 0 ? 11 : m - 1)}>❮</button>
+          <div style={{ fontSize: 15, fontWeight: 900, color: '#f1f5f9', width: 110, textAlign: 'center' }}>
+            {MONTHS[viewMonth]} {viewYear}
+          </div>
+          <button className="att-nav-btn" onClick={() => setViewMonth(m => m === 11 ? 0 : m + 1)}>❯</button>
+        </div>
         <div style={{ position: 'relative', flex: '1', minWidth: 260 }}>
           <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', fontSize: 16, opacity: 0.5 }}>🔍</span>
           <input
@@ -956,6 +970,7 @@ const ProjectsPage = ({ user }) => {
 const WorkHistoryPage = ({ user }) => {
   const [history, setHistory] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
+  const [searchQ, setSearchQ] = React.useState('');
 
   React.useEffect(() => {
     if (!user.id) return;
@@ -971,9 +986,20 @@ const WorkHistoryPage = ({ user }) => {
 
   // Group by month
   const monthlyGroups = {};
-  history.forEach(p => {
-    const monthKey = p.month && p.month !== 'Unknown' ? p.month : (p.date || p.deliveredDate || '').slice(0, 7);
-    if (!monthKey || monthKey.length < 7) return;
+  history
+    .filter(p => {
+      if (!searchQ.trim()) return true;
+      const q = searchQ.toLowerCase();
+      return (
+        (p.order || '').toLowerCase().includes(q) ||
+        (p.client || '').toLowerCase().includes(q) ||
+        (p.service || '').toLowerCase().includes(q) ||
+        (p.assign || '').toLowerCase().includes(q)
+      );
+    })
+    .forEach(p => {
+    let monthKey = p.month && p.month !== 'Unknown' ? p.month : (p.date || p.deliveredDate || '').slice(0, 7);
+    if (!monthKey || monthKey.length < 7) monthKey = 'Archive / Legacy';
 
     if (!monthlyGroups[monthKey]) {
       monthlyGroups[monthKey] = {
@@ -1000,6 +1026,21 @@ const WorkHistoryPage = ({ user }) => {
 
   return (
     <div className="work-history-container">
+      {/* Search Bar */}
+      <div style={{ marginBottom: 24, position: 'relative' }}>
+        <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+        <input
+          value={searchQ}
+          onChange={e => setSearchQ(e.target.value)}
+          placeholder="Search all historical projects (Order, Client, Service)..."
+          style={{
+            width: '100%', padding: '12px 14px 12px 42px', background: 'rgba(255,255,255,0.03)',
+            border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, color: '#f1f5f9',
+            fontSize: 14, fontFamily: 'Manrope,sans-serif', boxSizing: 'border-box'
+          }}
+        />
+      </div>
+
       {/* LIFETIME KPI STRIP */}
       <div className="ovd-kpi-strip" style={{ marginBottom: 30 }}>
         {[
@@ -1049,13 +1090,15 @@ const WorkHistoryPage = ({ user }) => {
               </div>
 
               <div style={{ padding: '0 20px' }}>
-                <div style={{ maxHeight: 300, overflowY: 'auto', padding: '10px 0' }}>
+                <div style={{ maxHeight: 500, overflowY: 'auto', padding: '10px 0' }}>
                   <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
                     <thead>
                       <tr style={{ textAlign: 'left', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                         <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800 }}>DATE</th>
                         <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800 }}>PROJECT NAME</th>
+                        <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800 }}>CLIENT</th>
                         <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800 }}>SERVICE</th>
+                        <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800 }}>ASSIGNED</th>
                         <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800, textAlign: 'right' }}>STATUS</th>
                         <th style={{ padding: '10px 0', color: '#475569', fontWeight: 800, textAlign: 'right' }}>EARNED</th>
                       </tr>
@@ -1065,7 +1108,9 @@ const WorkHistoryPage = ({ user }) => {
                         <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
                           <td style={{ padding: '12px 0', color: '#64748b' }}>{p.date || p.deliveredDate || '—'}</td>
                           <td style={{ padding: '12px 0', fontWeight: 700, color: '#e2e8f0' }}>{p.order}</td>
+                          <td style={{ padding: '12px 0', color: '#94a3b8' }}>{p.client || '—'}</td>
                           <td style={{ padding: '12px 0', color: '#94a3b8' }}>{p.service}</td>
+                          <td style={{ padding: '12px 0', color: '#94a3b8' }}>{p.assign || '—'}</td>
                           <td style={{ padding: '12px 0', textAlign: 'right' }}>
                             <span style={{ 
                               fontSize: 9, fontWeight: 900, padding: '2px 8px', borderRadius: 6,
@@ -1094,7 +1139,7 @@ const WorkHistoryPage = ({ user }) => {
 // ── shared admin UI helpers ─────────────────────────────────────
 const TEAMS = ['GEO Rankers', 'Rank Riser', 'Search Apex', 'Dark Rankers'];
 const ROLES = ['SEO Executive', 'Team Leader', 'Team Member', 'Manager', 'Dark Rankers Executive'];
-const TEAM_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#a78bfa'];
+const TEAM_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#a78bfa', '#ec4899'];
 
 const Btn = ({ children, onClick, color = '#3b82f6', sm, danger, disabled }) => (
   <button onClick={onClick} disabled={disabled} style={{
@@ -1832,7 +1877,172 @@ const CheckInWidget = ({ checkedIn, setCheckedIn, checkedOut, setCheckedOut, use
   );
 };
 
+const UserSettingsPage = ({ user, setUser }) => {
+  const [form, setForm] = React.useState({
+    fullName: user.fullName || '',
+    email: user.email || '',
+    phone: user.phone || '',
+    avatar: user.avatar || ''
+  });
+  const [loading, setLoading] = React.useState(false);
+  const [msg, setMsg] = React.useState(null);
+
+  const handleFile = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 200 * 1024) {
+      setMsg({ text: 'Image too large (Max 200KB)', type: 'error' });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setForm({ ...form, avatar: reader.result });
+      setMsg({ text: 'Image ready to save', type: 'success' });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const save = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/user/profile/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: user.id, ...form })
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setMsg({ text: 'Profile updated successfully!', type: 'success' });
+        const newUser = { ...user, ...form };
+        setUser(newUser);
+        localStorage.setItem('user', JSON.stringify(newUser));
+        if (typeof fetchMembers === 'function') fetchMembers();
+      } else {
+        setMsg({ text: data.error || 'Failed to update profile', type: 'error' });
+      }
+    } catch (e) {
+      setMsg({ text: 'Network error', type: 'error' });
+    }
+    setLoading(false);
+    setTimeout(() => setMsg(null), 3000);
+  };
+
+  return (
+    <div style={{ maxWidth: 600, margin: '0 auto' }}>
+      <div className="emp-card" style={{ padding: 32 }}>
+        <div className="emp-card-header" style={{ marginBottom: 32 }}>
+          <div className="emp-card-title">Profile Settings</div>
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+          {/* Avatar Preview & Upload */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginBottom: 8 }}>
+            <div style={{ width: 80, height: 80, borderRadius: 20, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, overflow: 'hidden' }}>
+              {form.avatar ? <img src={form.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="Avatar" /> : user.name?.[0]}
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 800, color: '#f1f5f9', marginBottom: 8 }}>Profile Picture</div>
+              <input type="file" accept="image/*" onChange={handleFile} style={{ display: 'none' }} id="avatar-upload" />
+              <label htmlFor="avatar-upload" style={{ background: 'rgba(59,130,246,0.1)', color: '#3b82f6', padding: '8px 16px', borderRadius: 8, fontSize: 12, fontWeight: 800, cursor: 'pointer', border: '1px solid rgba(59,130,246,0.2)' }}>
+                Upload New Image
+              </label>
+              <div style={{ fontSize: 11, color: '#475569', marginTop: 8 }}>Max size: 200KB</div>
+            </div>
+          </div>
+
+          <Field label="Full Name">
+            <Input value={form.fullName} onChange={v => setForm({ ...form, fullName: v })} placeholder="Enter your full name" />
+          </Field>
+
+          <Field label="Email Address">
+            <Input value={form.email} onChange={v => setForm({ ...form, email: v })} placeholder="email@example.com" />
+          </Field>
+
+          <Field label="Phone Number">
+            <Input value={form.phone} onChange={v => setForm({ ...form, phone: v })} placeholder="+880 1XXX-XXXXXX" />
+          </Field>
+
+          <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 16 }}>
+            <Btn onClick={save} disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Btn>
+            {msg && <span style={{ fontSize: 13, fontWeight: 700, color: msg.type === 'success' ? '#10b981' : '#ef4444' }}>{msg.text}</span>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── OverviewDashboard ──────────────────────────────────────────
+const TeamReportCard = ({ teamData }) => {
+  if (!teamData) return null;
+  const { name, leader, deliveredAmt, target, wipAmt, remaining, progress, delivered, wip, revision, cancelled, projects } = teamData;
+  const fmtK = (val) => '$' + (val / 1000).toFixed(1) + 'K';
+  
+  return (
+    <div className="team-report-card">
+      <div className="trc-header">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div className="trc-icon">📱</div>
+          <div>
+            <div className="trc-team-name">{name}</div>
+            <div className="trc-leader">👤 {leader || 'N/A'}</div>
+          </div>
+        </div>
+        <div className="trc-badge">7 members</div>
+      </div>
+
+      <div className="trc-status-row">
+        <span className="trc-status-pill">ON TRACK</span>
+      </div>
+
+      <div className="trc-hero-amt">
+        <div className="trc-main-val">${(deliveredAmt / 1000).toFixed(1)}K</div>
+        <div className="trc-hero-sub">
+          Achieved <b>${(deliveredAmt / 1000).toFixed(1)}K</b> · Target <b>${(target / 1000).toFixed(1)}K</b> · WIP <b>${(wipAmt / 1000).toFixed(1)}K</b>
+        </div>
+      </div>
+
+      <div className="trc-main-stats">
+        <div className="trc-stat-box">
+          <div className="trc-stat-label">ACHIEVED</div>
+          <div className="trc-stat-val">${(deliveredAmt / 1000).toFixed(1)}K</div>
+        </div>
+        <div className="trc-stat-box">
+          <div className="trc-stat-label">TARGET</div>
+          <div className="trc-stat-val">${(target / 1000).toFixed(1)}K</div>
+        </div>
+        <div className="trc-stat-box">
+          <div className="trc-stat-label">REMAINING</div>
+          <div className="trc-stat-val">${(remaining / 1000).toFixed(1)}K</div>
+        </div>
+      </div>
+
+      <div className="trc-progress-wrap">
+        <div className="trc-progress-bg">
+          <div className="trc-progress-fill" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      <div className="trc-grid-stats">
+        {[
+          { label: 'Delivery', val: delivered, icon: '✅', color: '#10b981' },
+          { label: 'WIP', val: wip, icon: '⏳', color: '#3b82f6' },
+          { label: 'Revision', val: revision, icon: '🔄', color: '#6366f1' },
+          { label: 'Cancel', val: cancelled, icon: '❌', color: '#ef4444' },
+          { label: 'Total', val: projects, icon: '📦', color: '#f59e0b' },
+          { label: 'Complete', val: `${Math.round(progress)}%`, icon: '🎯', color: '#a78bfa' },
+        ].map(s => (
+          <div key={s.label} className="trc-grid-item">
+            <div className="trc-grid-val" style={{ color: s.color }}>{s.val}</div>
+            <div className="trc-grid-label">{s.icon} {s.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+
 const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds, clock, checkedIn, setCheckedIn, checkedOut, setCheckedOut, logs, fetchLogs }) => {
   // Deduplicate members by ID on the frontend (safety net)
   const seenIds = new Set();
@@ -1848,6 +2058,7 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
   const deptWip = dept.wipAmt || 0;
   const deptPct = pctOf(deptAchieved, deptTarget);
   const platforms = dept.platformStats || {};
+  const teamSummaries = deptSummary?.teams || {};
 
   // team stats computed from members
   const teamMap = {};
@@ -1868,34 +2079,40 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
   const leaderboard = [...members].sort((a, b) => (b.deliveredAmt || 0) - (a.deliveredAmt || 0)).slice(0, 5);
   const myRank = [...members].sort((a, b) => (b.deliveredAmt || 0) - (a.deliveredAmt || 0)).findIndex(m => m.id === user.id) + 1;
 
-  const TEAM_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#a78bfa', '#ec4899'];
+  const myTeamName = user.team || 'GEO Rankers';
+  const myTeamData = teamSummaries[myTeamName];
 
   return (
     <div className="ovd-root">
+      {/* ── NEW: Team Report Card (Requested View) ── */}
+      <TeamReportCard teamData={myTeamData} />
 
-      {/* ── Row 1: Dept KPI strip ── */}
-      <div className="ovd-kpi-strip">
-        {[
-          { label: 'DEPT TARGET', value: fmt(deptTarget), color: '#64748b' },
-          { label: 'ACHIEVED', value: fmt(deptAchieved), color: '#10b981' },
-          { label: 'IN PROGRESS', value: fmt(deptWip), color: '#f59e0b' },
-          { label: 'TOTAL ORDERS', value: dept.uniqueProjects || 0, color: '#3b82f6' },
-          { label: 'DEPT PROGRESS', value: `${deptPct}%`, color: deptPct >= 70 ? '#10b981' : deptPct >= 40 ? '#f59e0b' : '#ef4444' },
-        ].map(k => (
-          <div key={k.label} className="ovd-kpi-card">
-            <div className="ovd-kpi-label">{k.label}</div>
-            <div className="ovd-kpi-value" style={{ color: k.color }}>{k.value}</div>
-          </div>
-        ))}
-      </div>
 
-      {/* ── Row 2: My Stats + Team Breakdown ── */}
-      <div className="ovd-row2">
+      {/* ── Row 1: Dept KPI strip (Admins Only) ── */}
+      {user.isAdmin && (
+        <div className="ovd-kpi-strip">
+          {[
+            { label: 'DEPT TARGET', value: fmt(deptTarget), color: '#64748b' },
+            { label: 'ACHIEVED', value: fmt(deptAchieved), color: '#10b981' },
+            { label: 'IN PROGRESS', value: fmt(deptWip), color: '#f59e0b' },
+            { label: 'TOTAL ORDERS', value: dept.uniqueProjects || 0, color: '#3b82f6' },
+            { label: 'DEPT PROGRESS', value: `${deptPct}%`, color: deptPct >= 70 ? '#10b981' : deptPct >= 40 ? '#f59e0b' : '#ef4444' },
+          ].map(k => (
+            <div key={k.label} className="ovd-kpi-card">
+              <div className="ovd-kpi-label">{k.label}</div>
+              <div className="ovd-kpi-value" style={{ color: k.color }}>{k.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Row 2: My Stats + Platform Breakdown (Platform for Admins Only) ── */}
+      <div className="ovd-row2" style={{ gridTemplateColumns: user.isAdmin ? '1.5fr 1fr' : '1fr' }}>
 
         {/* My Performance card */}
         <div className="emp-card ovd-my-perf">
           <div className="emp-card-header">
-            <div className="emp-card-title">My Performance</div>
+            <div className="emp-card-title">My Performance Overview</div>
             {myRank > 0 && <span className="ovd-rank-badge">#{myRank} of {members.length}</span>}
           </div>
           <div className="ovd-my-body">
@@ -1930,22 +2147,84 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
           </div>
         </div>
 
-        {/* Platform breakdown */}
+        {/* Platform breakdown (Admins Only) */}
+        {user.isAdmin && (
+          <div className="emp-card">
+            <div className="emp-card-header">
+              <div className="emp-card-title">Platform Breakdown</div>
+            </div>
+            <div style={{ padding: '12px 20px 16px' }}>
+              {Object.entries(platforms).filter(([, v]) => v > 0).map(([name, val], i) => {
+                const pf = pctOf(val, deptAchieved);
+                const colors = ['#3b82f6', '#10b981', '#f59e0b', '#a78bfa'];
+                return (
+                  <div key={name} style={{ marginBottom: 14 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8' }}>{name}</span>
+                      <span style={{ fontSize: 12, fontWeight: 900, color: colors[i % 4] }}>{fmt(val)}</span>
+                    </div>
+                    <MiniBar value={pf} color={colors[i % 4]} />
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Row 3: Team Breakdown (Admin) / My Team Performance (Everyone) ── */}
+      <div className="ovd-row3" style={{ gridTemplateColumns: user.isAdmin ? '1fr 1fr' : '1fr' }}>
+        {/* Team table (Admins Only) */}
+        {user.isAdmin && (
+          <div className="emp-card">
+            <div className="emp-card-header">
+              <div className="emp-card-title">All Teams Breakdown</div>
+            </div>
+            <div style={{ padding: '4px 0 8px' }}>
+              {teams.map((t, i) => (
+                <div key={t.name} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: 16, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: TEAM_COLORS[i % 5], flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{t.name}</span>
+                      <span style={{ fontSize: 10, color: '#334155', fontWeight: 600 }}>{t.count} members</span>
+                    </div>
+                    <MiniBar value={t.pct} color={TEAM_COLORS[i % 5]} />
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: 14, fontWeight: 900, color: TEAM_COLORS[i % 5] }}>{fmt(t.delivered)}</div>
+                    <div style={{ fontSize: 10, color: '#334155' }}>of {fmt(t.target)}</div>
+                  </div>
+                  <div style={{ minWidth: 44, textAlign: 'right' }}>
+                    <span style={{ fontSize: 12, fontWeight: 800, color: t.pct >= 70 ? '#10b981' : t.pct >= 40 ? '#f59e0b' : '#ef4444' }}>{t.pct}%</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* My Team Performance */}
         <div className="emp-card">
           <div className="emp-card-header">
-            <div className="emp-card-title">Platform Breakdown</div>
+            <div className="emp-card-title">My Team: {user.team || 'GEO Rankers'}</div>
+            <span style={{ fontSize: 10, fontWeight: 800, color: '#3b82f6', background: 'rgba(59,130,246,0.1)', padding: '4px 8px', borderRadius: 6 }}>TEAM VIEW</span>
           </div>
-          <div style={{ padding: '12px 20px 16px' }}>
-            {Object.entries(platforms).filter(([, v]) => v > 0).map(([name, val], i) => {
-              const pf = pctOf(val, deptAchieved);
-              const colors = ['#3b82f6', '#10b981', '#f59e0b', '#a78bfa'];
+          <div style={{ padding: '4px 0 8px' }}>
+            {members.filter(m => m.team === (user.team || 'GEO Rankers')).sort((a,b) => (b.deliveredAmt||0) - (a.deliveredAmt||0)).map((m, i) => {
+              const mp = pctOf(m.deliveredAmt, m.target);
               return (
-                <div key={name} style={{ marginBottom: 14 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8' }}>{name}</span>
-                    <span style={{ fontSize: 12, fontWeight: 900, color: colors[i % 4] }}>{fmt(val)}</span>
+                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', background: m.id === user.id ? 'rgba(59,130,246,0.05)' : 'transparent' }}>
+                  <div style={{ width: 32, height: 32, borderRadius: 10, background: avatarGradient(m.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}>
+                    {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : getInitials(m.name)}
                   </div>
-                  <MiniBar value={pf} color={colors[i % 4]} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: m.id === user.id ? '#3b82f6' : '#e2e8f0' }}>{m.name} {m.id === user.id && '(Me)'}</span>
+                      <span style={{ fontSize: 12, fontWeight: 900, color: mp >= 70 ? '#10b981' : mp >= 40 ? '#f59e0b' : '#ef4444' }}>{fmt(m.deliveredAmt)}</span>
+                    </div>
+                    <MiniBar value={mp} color={mp >= 70 ? '#10b981' : mp >= 40 ? '#f59e0b' : '#ef4444'} />
+                  </div>
                 </div>
               );
             })}
@@ -1953,69 +2232,32 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
         </div>
       </div>
 
-      {/* ── Row 3: Team leaderboard + Top performers ── */}
-      <div className="ovd-row3">
-
-        {/* Team table */}
+      {/* ── Row 4: Top performers ── */}
+      <div className="ovd-row3" style={{ marginTop: 20, gridTemplateColumns: '1fr' }}>
         <div className="emp-card">
           <div className="emp-card-header">
-            <div className="emp-card-title">Team Breakdown</div>
+            <div className="emp-card-title">Global Top Performers</div>
           </div>
-          <div style={{ padding: '4px 0 8px' }}>
-            {teams.map((t, i) => (
-              <div key={t.name} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', alignItems: 'center', gap: 16, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: TEAM_COLORS[i % 5], flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{t.name}</span>
-                    <span style={{ fontSize: 10, color: '#334155', fontWeight: 600 }}>{t.count} members</span>
-                  </div>
-                  <MiniBar value={t.pct} color={TEAM_COLORS[i % 5]} />
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 14, fontWeight: 900, color: TEAM_COLORS[i % 5] }}>{fmt(t.delivered)}</div>
-                  <div style={{ fontSize: 10, color: '#334155' }}>of {fmt(t.target)}</div>
-                </div>
-                <div style={{ minWidth: 44, textAlign: 'right' }}>
-                  <span style={{ fontSize: 12, fontWeight: 800, color: t.pct >= 70 ? '#10b981' : t.pct >= 40 ? '#f59e0b' : '#ef4444' }}>{t.pct}%</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Top performers */}
-        <div className="emp-card">
-          <div className="emp-card-header">
-            <div className="emp-card-title">Top Performers</div>
-          </div>
-          <div style={{ padding: '4px 0 8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 12, padding: '12px 20px 20px' }}>
             {leaderboard.map((m, i) => {
               const isMe = m.id === user.id;
               const mp = pctOf(m.deliveredAmt, m.target);
               return (
-                <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', background: isMe ? 'rgba(37,99,235,0.06)' : 'transparent' }}>
-                  <div style={{ width: 24, height: 24, borderRadius: 8, background: i === 0 ? 'rgba(251,191,36,0.15)' : 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 900, color: i === 0 ? '#fbbf24' : '#475569', flexShrink: 0 }}>
-                    {i + 1}
+                <div key={m.id} style={{ textAlign: 'center', padding: '16px 12px', background: isMe ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.02)', borderRadius: 12, border: isMe ? '1px solid #3b82f6' : '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)', fontSize: 20 }}>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : ''}</div>
+                  <div style={{ width: 48, height: 48, borderRadius: 16, background: avatarGradient(m.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 auto 12px', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)' }}>
+                    {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : getInitials(m.name)}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: isMe ? '#93c5fd' : '#e2e8f0' }}>{m.name}</span>
-                      {isMe && <span style={{ fontSize: 9, fontWeight: 800, color: '#3b82f6', background: 'rgba(37,99,235,0.15)', padding: '1px 6px', borderRadius: 99 }}>YOU</span>}
-                    </div>
-                    <div style={{ fontSize: 10, color: '#334155' }}>{m.team}</div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: 14, fontWeight: 900, color: '#10b981' }}>{fmt(m.deliveredAmt)}</div>
-                    <div style={{ fontSize: 10, color: '#334155' }}>{mp}% target</div>
-                  </div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</div>
+                  <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>{m.team}</div>
+                  <div style={{ fontSize: 16, fontWeight: 900, color: '#10b981' }}>{fmt(m.deliveredAmt)}</div>
+                  <div style={{ fontSize: 10, fontWeight: 800, color: mp >= 70 ? '#10b981' : mp >= 40 ? '#f59e0b' : '#ef4444', marginTop: 4 }}>{mp}%</div>
                 </div>
               );
             })}
           </div>
         </div>
       </div>
-
       {/* ── Row 4: Recent Projects + Quick Attendance ── */}
       <div className="ovd-row4">
         <ProjectsList user={user} title="📁 My Projects — Recent" limit={5} />

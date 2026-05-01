@@ -149,15 +149,24 @@ def api_data():
                 s = str(raw) if raw is not None else ""
                 return s[:-2] if s.endswith(".0") else s
 
-            members_profiles = {clean_id(m["id"]): m for m in db["members"].find({}, {"_id": 0}) if m.get("id")}
+            # Build a more robust profile map using both string and int keys if possible
+            profiles_by_id = {}
+            for prof in db["members"].find({}, {"_id": 0}):
+                pid = prof.get("id")
+                if pid:
+                    clean = clean_id(pid)
+                    profiles_by_id[clean] = prof
+
             for m in member_docs:
-                m["id"] = clean_id(m.get("id", ""))
-                prof = members_profiles.get(m["id"])
+                m_id = clean_id(m.get("id", ""))
+                m["id"] = m_id
+                prof = profiles_by_id.get(m_id)
                 if prof:
                     if "target" in prof: m["target"] = prof["target"]
                     if "name" in prof: m["name"] = prof["name"]
                     if "role" in prof: m["role"] = prof["role"]
                     if "team" in prof: m["team"] = prof["team"]
+                    if "avatar" in prof: m["avatar"] = prof["avatar"]
                 m["isAdmin"] = m["id"] in ADMIN_IDS or "Manager" in m.get("role", "") or "Leader" in m.get("role", "")
 
             if team_sum_doc and "teams" in team_sum_doc:
@@ -167,9 +176,12 @@ def api_data():
                     
                     team_target = 0
                     for tm in team_data.get("members", []):
-                        prof = members_profiles.get(tm.get("id"))
-                        if prof and "target" in prof: tm["target"] = prof["target"]
-                        if prof and "name" in prof: tm["name"] = prof["name"]
+                        tm_id = clean_id(tm.get("id"))
+                        prof = profiles_by_id.get(tm_id)
+                        if prof:
+                            if "target" in prof: tm["target"] = prof["target"]
+                            if "name" in prof: tm["name"] = prof["name"]
+                            if "avatar" in prof: tm["avatar"] = prof["avatar"]
                         team_target += tm.get("target", 1100)
                     
                     # If agent_engine provided a non-zero target, use it; otherwise fallback to sum of members
@@ -216,24 +228,35 @@ def api_data_live():
         
         # Merge target/name/role from 'members' collection
         def _cid(v): s=str(v) if v else ""; return s[:-2] if s.endswith(".0") else s
-        members_profiles = {_cid(m["id"]): m for m in db["members"].find() if m.get("id")}
+        # Robust profiles map
+        profiles_by_id = {}
+        for prof in db["members"].find():
+            pid = prof.get("id")
+            if pid:
+                profiles_by_id[_cid(pid)] = prof
+
         for m in member_docs:
-            m["id"] = _cid(m.get("id", ""))
-            prof = members_profiles.get(m["id"])
+            m_id = _cid(m.get("id", ""))
+            m["id"] = m_id
+            prof = profiles_by_id.get(m_id)
             if prof:
                 if "target" in prof: m["target"] = prof["target"]
                 if "name" in prof: m["name"] = prof["name"]
                 if "role" in prof: m["role"] = prof["role"]
                 if "team" in prof: m["team"] = prof["team"]
+                if "avatar" in prof: m["avatar"] = prof["avatar"]
         
         # Recalculate team targets based on updated members
         if team_sum_doc and "teams" in team_sum_doc:
             for team_name, team_data in team_sum_doc["teams"].items():
                 team_target = 0
                 for tm in team_data.get("members", []):
-                    prof = members_profiles.get(tm.get("id"))
-                    if prof and "target" in prof: tm["target"] = prof["target"]
-                    if prof and "name" in prof: tm["name"] = prof["name"]
+                    tm_id = _cid(tm.get("id"))
+                    prof = profiles_by_id.get(tm_id)
+                    if prof:
+                        if "target" in prof: tm["target"] = prof["target"]
+                        if "name" in prof: tm["name"] = prof["name"]
+                        if "avatar" in prof: tm["avatar"] = prof["avatar"]
                     team_target += tm.get("target", 1100)
                 team_data["target"] = team_target
                 team_data["progress"] = min(100, round((team_data.get("stats",{}).get("deliveredAmt",0) / team_target * 100))) if team_target > 0 else 0
@@ -711,16 +734,46 @@ def team_leaderboard():
     rows.sort(key=lambda x: x.get("deliveredAmt", 0), reverse=True)
     return jsonify({"team": team, "members": rows})
 
-@app.route("/api/user/update", methods=["POST"])
+@app.route("/api/user/profile/update", methods=["POST"])
 def update_user_profile():
     data = request.get_json(force=True)
     emp_id = data.get("id")
     if not emp_id: return jsonify({"error": "missing id"}), 400
     db = get_db()
-    allowed_fields = ["phone", "email", "fullName", "password"]
+    allowed_fields = ["phone", "email", "fullName", "password", "avatar"]
     update_data = {k: v for k, v in data.items() if k in allowed_fields}
     if update_data:
+        old_doc = db["members"].find_one({"id": emp_id})
+        old_name = old_doc.get("name") if old_doc else None
+        new_name = update_data.get("fullName") or update_data.get("name")
+        
         db["members"].update_one({"id": emp_id}, {"$set": update_data})
+        db["member_summaries"].update_one({"id": emp_id}, {"$set": update_data})
+        
+        # If name changed, update it everywhere it appears as a string
+        if new_name and old_name and new_name != old_name:
+            # Update projects (active)
+            db["projects"].update_many(
+                {"assign": {"$regex": old_name, "$options": "i"}},
+                [{"$set": {"assign": {"$replaceAll": {"input": "$assign", "find": old_name, "replacement": new_name}}}}]
+            )
+            # Update projects archive
+            db["projects_archive"].update_many(
+                {"assign": {"$regex": old_name, "$options": "i"}},
+                [{"$set": {"assign": {"$replaceAll": {"input": "$assign", "find": old_name, "replacement": new_name}}}}]
+            )
+            # Update team leaders
+            doc = db["team_summaries"].find_one({"_id": "current_stats"})
+            if doc and "teams" in doc:
+                changed = False
+                for t in doc["teams"].values():
+                    if t.get("leader") == old_name:
+                        t["leader"] = new_name
+                        changed = True
+                if changed:
+                    db["team_summaries"].replace_one({"_id": "current_stats"}, doc)
+
+        clear_api_cache()
         return jsonify({"ok": True})
     return jsonify({"error": "no valid fields to update"}), 400
 
@@ -737,9 +790,26 @@ def admin_update_member():
     if not emp_id: return jsonify({"error": "missing id"}), 400
     db = get_db()
     # Allow updating more fields in admin mode
-    allowed_fields = ["name", "fullName", "role", "team", "target", "email", "phone", "password", "isAdmin", "offDay"]
+    allowed_fields = ["name", "fullName", "role", "team", "target", "email", "phone", "password", "isAdmin", "offDay", "avatar"]
     update_data = {k: v for k, v in data.items() if k in allowed_fields}
+    
+    old_doc = db["members"].find_one({"id": emp_id})
+    old_name = old_doc.get("name") if old_doc else None
+    new_name = update_data.get("fullName") or update_data.get("name")
+
     db["members"].update_one({"id": emp_id}, {"$set": update_data})
+    db["member_summaries"].update_one({"id": emp_id}, {"$set": update_data})
+    
+    if new_name and old_name and new_name != old_name:
+        db["projects"].update_many(
+            {"assign": {"$regex": old_name, "$options": "i"}},
+            [{"$set": {"assign": {"$replaceAll": {"input": "$assign", "find": old_name, "replacement": new_name}}}}]
+        )
+        db["projects_archive"].update_many(
+            {"assign": {"$regex": old_name, "$options": "i"}},
+            [{"$set": {"assign": {"$replaceAll": {"input": "$assign", "find": old_name, "replacement": new_name}}}}]
+        )
+    
     clear_api_cache()
     audit_log(db, "member_updated", f"Updated member {emp_id}")
     return jsonify({"ok": True})

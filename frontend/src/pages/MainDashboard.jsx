@@ -456,9 +456,10 @@ function MainDashboard() {
                           <div style={{
                             width: '56px', height: '56px', background: `linear-gradient(135deg, ${c.accent}, #000)`,
                             borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            fontSize: '22px', fontWeight: 900, boxShadow: `0 0 15px ${c.glow}`
+                            fontSize: '22px', fontWeight: 900, boxShadow: `0 0 15px ${c.glow}`,
+                            overflow: 'hidden'
                           }}>
-                            {m.name?.charAt(0)}
+                            {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : m.name?.charAt(0)}
                           </div>
                           <div>
                             <div style={{ fontSize: '18px', fontWeight: 900, color: '#f1f5f9' }}>{m.name}</div>

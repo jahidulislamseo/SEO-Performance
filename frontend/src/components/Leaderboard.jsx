@@ -43,8 +43,10 @@ const Leaderboard = ({ members = [], target = 1100 }) => {
                 <td>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <div
-                      style={{ width: 28, height: 28, borderRadius: 8, background: avatarGradient(m.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0 }}
-                    >{getInitials(m.name)}</div>
+                      style={{ width: 28, height: 28, borderRadius: 8, background: avatarGradient(m.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, color: '#fff', flexShrink: 0, overflow: 'hidden' }}
+                    >
+                      {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : getInitials(m.name)}
+                    </div>
                     <span style={{ fontWeight: 700, fontSize: 13 }}>{m.name}</span>
                   </div>
                 </td>

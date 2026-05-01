@@ -253,10 +253,23 @@ def process_and_save(df, db):
         "date": {"$regex": f"^{cur_month_prefix}"}
     }))
     
+    def _cid(v):
+        s = str(v) if v is not None else ""
+        return s[:-2] if s.endswith(".0") else s
+
     member_summaries = []
+    members_coll = db["members"]
+    # Robust profile map
+    profiles_by_id = {}
+    for p in members_coll.find({}, {"_id": 0, "id": 1, "avatar": 1, "fullName": 1}):
+        if p.get("id"):
+            profiles_by_id[_cid(p["id"])] = p
+
     for m in members_list:
         name = m["name"]
         emp_id = m.get("id", "")
+        # Fetch profile for extra fields (avatar, fullName)
+        prof = profiles_by_id.get(_cid(emp_id)) or {}
         m_df = edf[edf['matched_name'] == name] if not edf.empty else pd.DataFrame()
         
         # Filter attendance for this member
@@ -331,6 +344,12 @@ def process_and_save(df, db):
                 "presentCount": checked_in_count,
                 "projects": []
             }
+        
+        # Merge avatar and fullName if exists in profile
+        if prof.get("avatar"):
+            s["avatar"] = prof["avatar"]
+        if prof.get("fullName"):
+            s["fullName"] = prof["fullName"]
         
         # ─── Performance Scoring Logic ───
         # Factors: 

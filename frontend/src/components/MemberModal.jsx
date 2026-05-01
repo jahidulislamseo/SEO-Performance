@@ -44,9 +44,10 @@ const MemberModal = ({ member, onClose }) => {
               <div style={{ 
                 width: '64px', height: '64px', background: 'linear-gradient(135deg, #ec4899, #db2777)', 
                 borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                fontSize: '24px', fontWeight: 900, boxShadow: '0 0 20px rgba(236, 72, 153, 0.3)'
+                fontSize: '24px', fontWeight: 900, boxShadow: '0 0 20px rgba(236, 72, 153, 0.3)',
+                overflow: 'hidden'
               }}>
-                {member.name?.slice(0,2).toUpperCase() || '?'}
+                {member.avatar ? <img src={member.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (member.name?.slice(0,2).toUpperCase() || '?')}
               </div>
               <div>
                 <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '4px' }}>{member.name}</h2>
