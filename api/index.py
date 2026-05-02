@@ -873,6 +873,49 @@ def team_leaderboard():
     rows.sort(key=lambda x: x.get("deliveredAmt", 0), reverse=True)
     return jsonify({"team": team, "members": rows})
 
+@app.route("/api/user/profile", methods=["GET"])
+def api_user_profile():
+    try:
+        emp_id = request.args.get("id")
+        if not emp_id: return jsonify({"error": "missing id"}), 400
+        
+        db = get_db()
+        member = db["members"].find_one({"id": {"$in": [emp_id, f"{emp_id}.0"]}})
+        if not member: return jsonify({"status": "error", "message": "User not found"}), 404
+        
+        emp_id = member["id"]
+        sum_doc = db["member_summaries"].find_one({"id": emp_id}, {"_id": 0})
+        if not sum_doc: sum_doc = {**member, "deliveredAmt": 0, "wipAmt": 0, "projects": [], "progress": 0}
+        
+        admin_ids = ["17149", "17137", "17248", "17238"]
+        current_id_str = str(member.get("id")).split('.')[0]
+        is_admin = "Manager" in member.get("role", "") or "Leader" in member.get("role", "") or member.get("isAdmin", False) or current_id_str in admin_ids
+        tot_days, elap_days = get_month_working_stats(db)
+        
+        res = {
+            "password": member.get("password", "pass123"),
+            "profile": {
+                "id": member["id"], "name": member.get("name", ""), "fullName": member.get("fullName", ""),
+                "role": member.get("role", "Member"), "department": member.get("team", ""),
+                "email": member.get("email", ""), "phone": member.get("phone", ""),
+                "joinDate": member.get("joinDate", ""), "manager": member.get("manager", ""),
+                "avatar": member.get("name", "?")[0], "avatarColor": "linear-gradient(135deg,#0f766e,#0d9488)",
+                "employmentType": "Full-Time", "target": sum_doc.get("target", 1100),
+                "isAdmin": is_admin
+            },
+            "stats": {
+                "workingDays": tot_days, "elapsedDays": elap_days, "deliveredAmt": sum_doc.get("deliveredAmt", 0),
+                "wipAmt": sum_doc.get("wipAmt", 0), "present": sum_doc.get("delivered", 0)
+            },
+            "projects": sum_doc.get("projects", []),
+            "performance": [
+                {"label": "Target Progress", "value": sum_doc.get("progress", 0), "target": 100, "unit": "%", "color": "#0f766e"}
+            ]
+        }
+        return jsonify({"status": "ok", "user": res})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/user/profile/update", methods=["POST"])
 def update_user_profile():
     data = request.get_json(force=True)
