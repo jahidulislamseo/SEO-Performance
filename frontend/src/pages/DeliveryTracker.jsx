@@ -147,6 +147,7 @@ function DeliveryTracker() {
           <Link to="/" className="page-nav-btn">← Back to Dashboard</Link>
           <button className="page-nav-btn active">📦 Repeat Order</button>
           <Link to="/query-tracker" className="page-nav-btn">🚀 Query Tracker</Link>
+          <Link to="/kpi-reports" className="page-nav-btn" style={{ background: 'rgba(236,72,153,.12)', borderColor: 'rgba(236,72,153,.3)', color: '#f472b6' }}>📊 KPI Reports</Link>
           <Link to="/employee" className="page-nav-btn">👤 Employee Portal</Link>
         </div>
       </div>

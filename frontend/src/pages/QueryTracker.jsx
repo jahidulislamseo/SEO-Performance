@@ -150,6 +150,7 @@ function QueryTracker() {
           <Link to="/" className="page-nav-btn">← Back to Dashboard</Link>
           <Link to="/delivery-tracker" className="page-nav-btn">📦 Repeat Order</Link>
           <button className="page-nav-btn active">🚀 Query Tracker</button>
+          <Link to="/kpi-reports" className="page-nav-btn" style={{ background: 'rgba(236,72,153,.12)', borderColor: 'rgba(236,72,153,.3)', color: '#f472b6' }}>📊 KPI Reports</Link>
           <Link to="/employee" className="page-nav-btn">👤 Employee Portal</Link>
           <button className="page-nav-btn" onClick={openAdd} style={{ background: 'linear-gradient(135deg,#4f46e5,#7c3aed)', border: 'none', color: 'white', marginLeft: 'auto', padding: '10px 20px' }}>+ Add Query</button>
         </div>

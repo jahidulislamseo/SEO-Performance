@@ -27,6 +27,7 @@ function WorkExamples() {
         <div className="page-nav-inner">
           <Link to="/" className="page-nav-btn">← Back to Dashboard</Link>
           <div className="page-nav-btn active">📂 Work Examples</div>
+          <Link to="/kpi-reports" className="page-nav-btn" style={{ background: 'rgba(236,72,153,.12)', borderColor: 'rgba(236,72,153,.3)', color: '#f472b6' }}>📊 KPI Reports</Link>
         </div>
       </div>
 

@@ -77,6 +77,7 @@ const FinanceHub = () => {
         </div>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
           <div style={{ padding: '8px 16px', border: '1px solid #f59e0b', borderRadius: '8px', color: '#f59e0b', fontSize: '10px', fontWeight: 800 }}>⚡ Live Dashboard</div>
+          <Link to="/kpi-reports" style={{ padding: '8px 16px', border: '1px solid rgba(236,72,153,0.3)', background: 'rgba(236,72,153,0.1)', borderRadius: '8px', color: '#f472b6', fontSize: '10px', fontWeight: 800, textDecoration: 'none' }}>📊 KPI Reports</Link>
           <Link to="/" style={{ padding: '8px 16px', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '8px', color: '#64748b', fontSize: '10px', fontWeight: 800, textDecoration: 'none' }}>← Dashboard</Link>
         </div>
       </header>
