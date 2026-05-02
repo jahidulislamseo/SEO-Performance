@@ -317,6 +317,7 @@ function MainDashboard() {
             {isAdmin && <Link to="/finance" className="page-nav-btn" style={{ background: 'rgba(245,158,11,.12)', borderColor: 'rgba(245,158,11,.3)', color: '#fbbf24' }}>💰 Finance Hub ↗</Link>}
             <Link to="/employee" className="page-nav-btn" style={{ background: 'rgba(37,99,235,.12)', borderColor: 'rgba(37,99,235,.3)', color: '#93c5fd' }}>👤 Employee Portal ↗</Link>
             <Link to="/work-examples" className="page-nav-btn" style={{ background: 'rgba(139,92,246,.12)', borderColor: 'rgba(139,92,246,.3)', color: '#c4b5fd' }}>📂 Work Examples ↗</Link>
+            <a href="https://docs.google.com/presentation/d/1JvySy1kYDttbP32xyib5tkw7Wr0aYEyZBcW8-TsS5v8/edit?slide=id.p1#slide=id.p1" target="_blank" rel="noopener noreferrer" className="page-nav-btn" style={{ background: 'rgba(236,72,153,.12)', borderColor: 'rgba(236,72,153,.3)', color: '#f472b6' }}>📊 25/26 KPI Reports ↗</a>
           </div>
         </div>
 
