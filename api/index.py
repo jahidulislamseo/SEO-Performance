@@ -169,6 +169,7 @@ def _build_current_payload():
             if "name" in prof: m["name"] = prof["name"]
             if "role" in prof: m["role"] = prof["role"]
             if "team" in prof: m["team"] = prof["team"]
+            if "avatar" in prof: m["avatar"] = prof["avatar"]
         m["isAdmin"] = m["id"] in ADMIN_IDS or "Manager" in m.get("role", "") or "Leader" in m.get("role", "")
 
     if team_sum_doc and "teams" in team_sum_doc:
@@ -179,6 +180,7 @@ def _build_current_payload():
                 prof = members_profiles.get(tm.get("id"))
                 if prof and "target" in prof: tm["target"] = prof["target"]
                 if prof and "name" in prof: tm["name"] = prof["name"]
+                if prof and "avatar" in prof: tm["avatar"] = prof["avatar"]
                 team_target += tm.get("target", 1100)
             final_target = configured_target if configured_target > 0 else team_target
             team_data["target"] = final_target
