@@ -49,21 +49,22 @@ function MainDashboard() {
   const [userName, setUserName] = useState('Admin');
   const [isAdmin, setIsAdmin] = useState(false);
   const [notifs, setNotifs] = useState([]);
+  const [selectedMonth, setSelectedMonth] = useState('');
+  const [availableMonths, setAvailableMonths] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch('/api/data');
-        if (!response.ok) throw new Error('Failed to fetch data');
-        const result = await response.json();
-        setData(result);
-        setLoading(false);
-      } catch (err) {
-        setError(err.message);
-        setLoading(false);
-      }
-    };
-    fetchData();
+    // Load available months first, then default to latest
+    fetch('/api/data-months')
+      .then(r => r.json())
+      .then(months => {
+        if (months && months.length > 0) {
+          setAvailableMonths(months);
+          setSelectedMonth(months[0]); // latest month (most data)
+        } else {
+          setSelectedMonth('current');
+        }
+      })
+      .catch(() => setSelectedMonth('current'));
 
     fetch('/api/finance-stats')
       .then(res => res.json())
@@ -88,14 +89,24 @@ function MainDashboard() {
       .then(r => r.json())
       .then(d => setNotifs(d || []))
       .catch(() => { });
-
-    // Poll every 30 seconds for live updates
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
   }, []);
+
+  // Re-fetch data whenever selectedMonth changes
+  useEffect(() => {
+    if (!selectedMonth) return;
+    setLoading(true);
+    setError(null);
+    const url = selectedMonth === 'current' ? '/api/data' : `/api/data?month=${selectedMonth}`;
+    fetch(url)
+      .then(r => { if (!r.ok) throw new Error('Failed to fetch'); return r.json(); })
+      .then(result => { setData(result); setLoading(false); })
+      .catch(err => { setError(err.message); setLoading(false); });
+  }, [selectedMonth]);
+
 
   if (loading) return <div className="loading" style={{ padding: 40, textAlign: 'center', color: '#94a3b8' }}>Loading Dashboard...</div>;
   if (error) return <div className="error" style={{ padding: 40, textAlign: 'center', color: '#ef4444' }}>Error: {error}</div>;
+  if (!data) return null;
 
   try {
     // Normalize SMM to Dark Rankers in data
@@ -206,11 +217,38 @@ function MainDashboard() {
             </h2>
             <p style={{ fontSize: '13px', color: '#94a3b8', marginTop: '6px', fontWeight: 500 }}>Here's what's happening in the <strong style={{ color: '#cbd5e1' }}>{deptSummary.name || "GEO Rankers"}</strong> department today.</p>
           </div>
-          <div style={{ textAlign: 'right', background: 'rgba(255,255,255,0.03)', padding: '8px 16px', borderRadius: '12px', border: '1px solid rgba(148,163,184,0.1)' }}>
-            <div style={{ fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Last Live Sync</div>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: '#10b981', textShadow: '0 0 10px rgba(16,185,129,0.4)' }}>{new Date().toLocaleTimeString()}</div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
+            {/* Month Selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: '12px', padding: '8px 14px' }}>
+              <span style={{ fontSize: '14px' }}>📅</span>
+              <div>
+                <div style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px', marginBottom: '3px' }}>Viewing Month</div>
+                <select
+                  id="month-selector"
+                  value={selectedMonth}
+                  onChange={e => setSelectedMonth(e.target.value)}
+                  style={{
+                    background: 'transparent', border: 'none', color: '#93c5fd',
+                    fontSize: '13px', fontWeight: 800, cursor: 'pointer', outline: 'none',
+                    appearance: 'none', paddingRight: '16px'
+                  }}
+                >
+                  {availableMonths.map(m => (
+                    <option key={m} value={m} style={{ background: '#0f172a', color: '#f1f5f9' }}>
+                      {new Date(m + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <span style={{ fontSize: '11px', color: '#64748b' }}>▼</span>
+            </div>
+            <div style={{ textAlign: 'right', background: 'rgba(255,255,255,0.03)', padding: '6px 14px', borderRadius: '10px', border: '1px solid rgba(148,163,184,0.1)' }}>
+              <div style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', color: '#64748b', letterSpacing: '1px' }}>Last Sync</div>
+              <div style={{ fontSize: '12px', fontWeight: 800, color: '#10b981', textShadow: '0 0 10px rgba(16,185,129,0.4)' }}>{new Date().toLocaleTimeString()}</div>
+            </div>
           </div>
         </div>
+
 
         {/* Countdown Bar */}
         <div className="countdown-bar" style={{ margin: '10px 32px', borderRadius: '16px', border: '1px solid rgba(148,163,184,0.1)', background: 'rgba(59, 130, 246, 0.03)' }}>

@@ -103,7 +103,15 @@ def backup_to_db(df, db):
             order_date = str(p.get("date") or "").strip()
             # We still need a date for the month bucket, fallback to del_date if order_date is missing
             bucket_date = order_date if order_date else str(p.get("del_date") or "")
-            month_bucket = bucket_date[:7] if len(bucket_date) >= 7 else "Unknown"
+            
+            # Roll over last day of month to next month
+            try:
+                dt = pd.to_datetime(bucket_date, errors='coerce')
+                if pd.notna(dt) and dt.is_month_end:
+                    dt += pd.Timedelta(days=1)
+                month_bucket = dt.strftime("%Y-%m") if pd.notna(dt) else "Unknown"
+            except:
+                month_bucket = bucket_date[:7] if len(bucket_date) >= 7 else "Unknown"
 
             doc = {
                 "order": order_num, "client": p.get("client"), "service": p.get("service"),
@@ -153,9 +161,13 @@ def process_and_save(df, db):
     cur_y = time.strftime("%Y")
     cur_m_padded = time.strftime("%m")
 
-    # Helper to clean date strings and prioritize delivery date for delivered items
-    df['calc_date_str'] = df.apply(lambda r: str(r.get('del_date', '')) if str(r.get('status')).strip() == 'Delivered' else str(r.get('date', '')), axis=1)
-    df['calc_date'] = pd.to_datetime(df['calc_date_str'], errors='coerce')
+    # Use order date (col D) for all rows — delivery dates can be future months
+    # so filtering by del_date would exclude May orders still in WIP/pending delivery
+    df['calc_date'] = pd.to_datetime(df['date'].astype(str), errors='coerce')
+    
+    # Roll over last day of month to the 1st of the next month
+    mask_last_day = df['calc_date'].dt.is_month_end
+    df.loc[mask_last_day, 'calc_date'] = df.loc[mask_last_day, 'calc_date'] + pd.Timedelta(days=1)
     
     # Filter only for the current month
     current_start = pd.Timestamp(f"{cur_y}-{cur_m_padded}-01")

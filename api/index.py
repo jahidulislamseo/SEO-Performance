@@ -124,98 +124,235 @@ def cleanup_duplicate_members():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ── Shared helper ─────────────────────────────────────────────────────────────
+def _clean_id(raw):
+    s = str(raw) if raw is not None else ""
+    return s[:-2] if s.endswith(".0") else s
+
+
 @app.route("/api/data")
 def api_data():
-    """Main Dashboard: Instant load from MongoDB summaries only, merged with member profiles."""
+    """Main Dashboard: supports ?month=YYYY-MM for historical view."""
     try:
-        def build_payload():
-            db = get_db()
-            dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
-            team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
-            member_docs = list(db["member_summaries"].find({}, {"_id": 0}))
+        req_month = request.args.get("month", "").strip()
+        cur_month = datetime.now(timezone(timedelta(hours=6))).strftime("%Y-%m")
 
-            # ── Deduplicate by employee ID (keep latest record per ID) ──
-            seen_ids = {}
-            for m in member_docs:
-                raw_id = str(m.get("id", "")).strip()
-                if raw_id.endswith(".0"):
-                    raw_id = raw_id[:-2]
-                seen_ids[raw_id] = m   # later entry overwrites earlier duplicate
-            member_docs = list(seen_ids.values())
+        if req_month and req_month != cur_month:
+            return jsonify(_build_month_payload(req_month))
 
-            ADMIN_IDS = {"17149", "17137", "17248", "17238"}
-
-            def clean_id(raw):
-                s = str(raw) if raw is not None else ""
-                return s[:-2] if s.endswith(".0") else s
-
-            # Build a more robust profile map using both string and int keys if possible
-            profiles_by_id = {}
-            for prof in db["members"].find({}, {"_id": 0}):
-                pid = prof.get("id")
-                if pid:
-                    clean = clean_id(pid)
-                    profiles_by_id[clean] = prof
-
-            for m in member_docs:
-                m_id = clean_id(m.get("id", ""))
-                m["id"] = m_id
-                prof = profiles_by_id.get(m_id)
-                if prof:
-                    if "target" in prof: m["target"] = prof["target"]
-                    if "name" in prof: m["name"] = prof["name"]
-                    if "role" in prof: m["role"] = prof["role"]
-                    if "team" in prof: m["team"] = prof["team"]
-                    if "avatar" in prof: m["avatar"] = prof["avatar"]
-                m["isAdmin"] = m["id"] in ADMIN_IDS or "Manager" in m.get("role", "") or "Leader" in m.get("role", "")
-
-            if team_sum_doc and "teams" in team_sum_doc:
-                for team_name, team_data in team_sum_doc["teams"].items():
-                    # Preserve target calculated by agent_engine (from config)
-                    configured_target = team_data.get("target", 0)
-                    
-                    team_target = 0
-                    for tm in team_data.get("members", []):
-                        tm_id = clean_id(tm.get("id"))
-                        prof = profiles_by_id.get(tm_id)
-                        if prof:
-                            if "target" in prof: tm["target"] = prof["target"]
-                            if "name" in prof: tm["name"] = prof["name"]
-                            if "avatar" in prof: tm["avatar"] = prof["avatar"]
-                        team_target += tm.get("target", 1100)
-                    
-                    # If agent_engine provided a non-zero target, use it; otherwise fallback to sum of members
-                    final_target = configured_target if configured_target > 0 else team_target
-                    
-                    team_data["target"] = final_target
-                    team_data["progress"] = min(100, round((team_data.get("deliveredAmt", 0) / final_target * 100))) if final_target > 0 else 0
-
-            if not dept_sum_doc:
-                return {"status": "syncing", "message": "Database initializing..."}
-
-            summary = {
-                "dept": dept_sum_doc or {},
-                "teams": team_sum_doc.get("teams", {}) if team_sum_doc else {},
-                "totalAchieved": dept_sum_doc.get("achieved", 0),
-                "totaleOrders": dept_sum_doc.get("uniqueProjects", 0),
-                "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0),
-                "audit": {
-                    "seoSmmRows": dept_sum_doc.get("seoSmmRows", 0),
-                    "matchedRows": dept_sum_doc.get("matchedRows", 0),
-                    "unmatchedRows": dept_sum_doc.get("unmatchedRows", 0),
-                    "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0),
-                    "unmatchedItems": []
-                }
-            }
-            return {
-                "status": "ok", "data": member_docs, "summary": summary, "audit": summary["audit"],
-                "projectCount": summary["uniqueOrders"], "memberCount": len(member_docs),
-                "lastSync": dept_sum_doc.get("last_updated", 0)
-            }
-
-        return cached_json("api_data", API_CACHE_TTL, build_payload)
+        cache_key = f"api_data_{cur_month}"
+        return cached_json(cache_key, API_CACHE_TTL, _build_current_payload)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+def _build_current_payload():
+    """Return current-month pre-calculated summaries from MongoDB."""
+    db = get_db()
+    dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
+    team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
+    member_docs = list(db["member_summaries"].find({}, {"_id": 0}))
+
+    seen_ids = {}
+    for m in member_docs:
+        seen_ids[_clean_id(m.get("id", ""))] = m
+    member_docs = list(seen_ids.values())
+
+    ADMIN_IDS = {"17149", "17137", "17248", "17238"}
+    members_profiles = {_clean_id(m["id"]): m for m in db["members"].find({}, {"_id": 0}) if m.get("id")}
+
+    for m in member_docs:
+        m["id"] = _clean_id(m.get("id", ""))
+        prof = members_profiles.get(m["id"])
+        if prof:
+            if "target" in prof: m["target"] = prof["target"]
+            if "name" in prof: m["name"] = prof["name"]
+            if "role" in prof: m["role"] = prof["role"]
+            if "team" in prof: m["team"] = prof["team"]
+        m["isAdmin"] = m["id"] in ADMIN_IDS or "Manager" in m.get("role", "") or "Leader" in m.get("role", "")
+
+    if team_sum_doc and "teams" in team_sum_doc:
+        for team_name, team_data in team_sum_doc["teams"].items():
+            configured_target = team_data.get("target", 0)
+            team_target = 0
+            for tm in team_data.get("members", []):
+                prof = members_profiles.get(tm.get("id"))
+                if prof and "target" in prof: tm["target"] = prof["target"]
+                if prof and "name" in prof: tm["name"] = prof["name"]
+                team_target += tm.get("target", 1100)
+            final_target = configured_target if configured_target > 0 else team_target
+            team_data["target"] = final_target
+            team_data["progress"] = min(100, round((team_data.get("deliveredAmt", 0) / final_target * 100))) if final_target > 0 else 0
+
+    if not dept_sum_doc:
+        return {"status": "syncing", "message": "Database initializing..."}
+
+    summary = {
+        "dept": dept_sum_doc or {},
+        "teams": team_sum_doc.get("teams", {}) if team_sum_doc else {},
+        "totalAchieved": dept_sum_doc.get("achieved", 0),
+        "totaleOrders": dept_sum_doc.get("uniqueProjects", 0),
+        "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0),
+        "audit": {
+            "seoSmmRows": dept_sum_doc.get("seoSmmRows", 0),
+            "matchedRows": dept_sum_doc.get("matchedRows", 0),
+            "unmatchedRows": dept_sum_doc.get("unmatchedRows", 0),
+            "uniqueOrders": dept_sum_doc.get("uniqueProjects", 0),
+            "unmatchedItems": []
+        }
+    }
+    return {
+        "status": "ok", "data": member_docs, "summary": summary, "audit": summary["audit"],
+        "projectCount": summary["uniqueOrders"], "memberCount": len(member_docs),
+        "lastSync": dept_sum_doc.get("last_updated", 0)
+    }
+
+
+def _build_month_payload(month_str):
+    """Calculate member/team stats from projects_archive for any historical month."""
+    import re as _re
+    db = get_db()
+    from shared_utils import DEPT_TARGET, MEM_TARGET, TEAM_TARGETS, MANAGEMENT
+
+    raw_projects = list(db["projects_archive"].find({"month": month_str}, {"_id": 0}))
+    # Filter only SEO and SMM projects
+    projects = [p for p in raw_projects if "SEO" in str(p.get("service", "")).upper() or "SMM" in str(p.get("service", "")).upper()]
+    
+    members_list = list(db["members"].find({"isOfficial": True}, {"_id": 0}))
+    ADMIN_IDS = {"17149", "17137", "17248", "17238"}
+
+    platform_stats = {"Fiverr": 0.0, "Upwork": 0.0, "B2B": 0.0, "PPH": 0.0}
+    total_delivered_amt = 0.0
+    total_wip_amt = 0.0
+    total_cancelled_amt = 0.0
+    delivered_count = wip_count = cancelled_count = 0
+
+    for p in projects:
+        status = str(p.get("status", "")).strip()
+        amt = float(p.get("amtX", 0) or 0)
+        prof = str(p.get("profile", "")).lower()
+        if status == "Delivered":
+            total_delivered_amt += amt
+            delivered_count += 1
+            if "fiverr" in prof: platform_stats["Fiverr"] += amt
+            elif "upwork" in prof: platform_stats["Upwork"] += amt
+            elif "pph" in prof: platform_stats["PPH"] += amt
+            else: platform_stats["B2B"] += amt
+        elif status in ("WIP", "Revision"):
+            total_wip_amt += amt
+            wip_count += 1
+        elif status == "Cancelled":
+            total_cancelled_amt += amt
+            cancelled_count += 1
+
+    platform_stats = {k: round(v, 2) for k, v in platform_stats.items()}
+
+    member_summaries = []
+    for m in members_list:
+        name = m["name"]
+        emp_id = _clean_id(m.get("id", ""))
+        m_projects = []
+        for p in projects:
+            assign_str = str(p.get("assign", ""))
+            parts = [x.strip().lower() for x in _re.split(r"[/,]", assign_str) if x.strip()]
+            num_assigned = max(len(parts), 1)
+            if name.strip().lower() in parts:
+                share = round(float(p.get("amtX", 0) or 0) / num_assigned, 2)
+                m_projects.append({**p, "share": share})
+
+        delivered_projects = [p for p in m_projects if p.get("status") == "Delivered"]
+        wip_projects = [p for p in m_projects if p.get("status") in ("WIP", "Revision")]
+        team_name = m.get("team", "GEO Rankers")
+        if team_name == "SMM": team_name = "Dark Rankers"
+        delivered_amt = round(sum(p["share"] for p in delivered_projects), 2)
+        wip_amt = round(sum(p["share"] for p in wip_projects), 2)
+        target = m.get("target", MEM_TARGET())
+
+        s = {
+            "name": name, "fullName": m.get("fullName", name), "team": team_name, "id": emp_id,
+            "role": m.get("role", "Member"), "email": m.get("email", ""), "phone": m.get("phone", ""),
+            "target": target, "total": len(m_projects),
+            "delivered": len(delivered_projects),
+            "wip": len([p for p in m_projects if p.get("status") == "WIP"]),
+            "revision": len([p for p in m_projects if p.get("status") == "Revision"]),
+            "cancelled": len([p for p in m_projects if p.get("status") == "Cancelled"]),
+            "deliveredAmt": delivered_amt, "wipAmt": wip_amt,
+            "lateCount": 0, "absentCount": 0, "inTimeCount": 0, "presentCount": 0,
+            "projects": [{"order": p.get("order"), "status": p.get("status"), "amtX": p.get("amtX"),
+                          "share": p.get("share"), "client": p.get("client"), "date": p.get("date"),
+                          "assign": p.get("assign"), "service": p.get("service"),
+                          "deliveredDate": p.get("deliveredDate"), "profile": p.get("profile")} for p in m_projects],
+            "isAdmin": emp_id in ADMIN_IDS or "Manager" in m.get("role", "") or "Leader" in m.get("role", "")
+        }
+        s["performanceScore"] = round((delivered_amt / target) * 50, 1) if target else 0
+        s["remaining"] = round(delivered_amt - target, 2)
+        s["progress"] = round((delivered_amt / target) * 100, 1) if target else 0
+        member_summaries.append(s)
+
+    targets = TEAM_TARGETS()
+    mgmt = MANAGEMENT()
+    TEAM_TAG_MAP = {
+        "GEO Rankers": "Geo_Rankers", "Rank Riser": "Rank_Riser",
+        "Search Apex": "Search_Apex", "Dark Rankers": "Dark_Rankers"
+    }
+    team_data = {}
+    for team in targets.keys():
+        tag = TEAM_TAG_MAP.get(team, team.replace(" ", "_"))
+        t_projects = [p for p in projects if str(p.get("team", "")).strip().lower() == tag.lower()]
+        t_delivered = [p for p in t_projects if p.get("status") == "Delivered"]
+        t_wip = [p for p in t_projects if p.get("status") in ("WIP", "Revision")]
+        t_delivered_amt = round(sum(float(p.get("amtX", 0) or 0) for p in t_delivered), 2)
+        t_wip_amt = round(sum(float(p.get("amtX", 0) or 0) for p in t_wip), 2)
+        team_target = targets.get(team, 0)
+        team_data[team] = {
+            "name": team,
+            "leader": mgmt.get("leaders", {}).get(team, {}).get("name", "N/A"),
+            "amt": t_delivered_amt, "deliveredAmt": t_delivered_amt, "wipAmt": t_wip_amt,
+            "projects": len(t_projects), "delivered": len(t_delivered),
+            "wip": len([p for p in t_projects if p.get("status") == "WIP"]),
+            "revision": len([p for p in t_projects if p.get("status") == "Revision"]),
+            "cancelled": len([p for p in t_projects if p.get("status") == "Cancelled"]),
+            "target": team_target,
+            "remaining": round(team_target - t_delivered_amt, 2),
+            "progress": round((t_delivered_amt / team_target) * 100, 1) if team_target else 0
+        }
+
+    dept_doc = {
+        "target": DEPT_TARGET(), "achieved": round(total_delivered_amt, 2),
+        "wipAmt": round(total_wip_amt, 2), "cancelledAmt": round(total_cancelled_amt, 2),
+        "uniqueProjects": len(set(p.get("order", "") for p in projects)),
+        "deliveredRows": delivered_count, "wipRows": wip_count, "cancelledRows": cancelled_count,
+        "seoSmmRows": len(projects), "platformStats": platform_stats,
+        "presentToday": 0, "lateToday": 0, "absentToday": 0, "name": "GEO Rankers",
+        "bestPerformer": sorted(member_summaries, key=lambda x: x["deliveredAmt"], reverse=True)[0] if member_summaries else None,
+        "bestTeam": sorted(team_data.values(), key=lambda x: x["deliveredAmt"], reverse=True)[0] if team_data else None,
+    }
+    summary = {
+        "dept": dept_doc, "teams": team_data,
+        "totalAchieved": round(total_delivered_amt, 2),
+        "uniqueOrders": dept_doc["uniqueProjects"], "totaleOrders": dept_doc["uniqueProjects"],
+        "audit": {"seoSmmRows": len(projects), "matchedRows": len(projects), "unmatchedRows": 0,
+                  "uniqueOrders": dept_doc["uniqueProjects"], "unmatchedItems": []}
+    }
+    return {
+        "status": "ok", "data": member_summaries, "summary": summary,
+        "audit": summary["audit"], "projectCount": dept_doc["uniqueProjects"],
+        "memberCount": len(member_summaries), "lastSync": time.time(), "month": month_str
+    }
+
+
+@app.route("/api/data-months")
+def api_data_months():
+    """Return list of available months in projects_archive."""
+    try:
+        import re
+        db = get_db()
+        months = db["projects_archive"].distinct("month")
+        # Only keep strictly YYYY-MM strings
+        valid = sorted([m for m in months if m and isinstance(m, str) and re.match(r"^\d{4}-\d{2}$", m)], reverse=True)
+        return jsonify(valid)
+    except Exception as e:
+        return jsonify([])
 
 @app.route("/api/data-live")
 def api_data_live():
@@ -1517,6 +1654,7 @@ def start_background_sync():
 
     # Only start the thread in the main process (avoids duplicates in debug mode)
     if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
+        print("[SYNC] Background sync starting...")
         t = threading.Thread(target=run_sync_loop, daemon=True)
         t.start()
 

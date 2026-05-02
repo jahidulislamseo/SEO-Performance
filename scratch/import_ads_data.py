@@ -14,17 +14,11 @@ file_path = r'c:\Users\Jahidul Islam\Downloads\jahidul\data_legacy\All Google Ad
 
 def parse_date(d):
     if not d or pd.isna(d): return None
-    s = str(d).strip().replace(' ,', ',').replace('_', ' ')
-    # Handle "Aug 25, 2023, AT 03:09:00 PM"
-    if ', AT' in s: s = s.split(', AT')[0]
-    
-    formats = ['%B %d, %Y', '%b %d, %Y', '%Y-%m-%d']
-    for fmt in formats:
-        try:
-            return datetime.strptime(s, fmt).strftime('%Y-%m-%d')
-        except:
-            continue
-    return s
+    try:
+        # August 13, 2023
+        return datetime.strptime(str(d).strip(), '%B %d, %Y').strftime('%Y-%m-%d')
+    except:
+        return str(d)
 
 def import_data():
     print("Reading CSV...")
