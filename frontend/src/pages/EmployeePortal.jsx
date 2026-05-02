@@ -1039,7 +1039,14 @@ const WorkHistoryPage = ({ user }) => {
       );
     })
     .forEach(p => {
-    let monthKey = p.month && p.month !== 'Unknown' ? p.month : (p.date || p.deliveredDate || '').slice(0, 7);
+    let monthKey;
+    if (p.status === 'Delivered' && p.deliveredDate && p.deliveredDate.length >= 7) {
+      // If delivered, attribute the earnings to the month it was actually delivered!
+      monthKey = p.deliveredDate.slice(0, 7);
+    } else {
+      // If WIP/Cancelled etc, attribute to the order month
+      monthKey = p.month && p.month !== 'Unknown' ? p.month : (p.date || '').slice(0, 7);
+    }
     if (!monthKey || monthKey.length < 7) monthKey = 'Archive / Legacy';
 
     if (!monthlyGroups[monthKey]) {
