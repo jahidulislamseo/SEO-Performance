@@ -152,9 +152,18 @@ def _build_current_payload():
     dept_sum_doc = db["dept_summary"].find_one({"_id": "current_stats"})
     team_sum_doc = db["team_summaries"].find_one({"_id": "current_stats"})
     member_docs = list(db["member_summaries"].find({}, {"_id": 0}))
+    
+    # Fetch ALL project remarks to join in real-time
+    all_remarks = {r["order"]: r.get("logs", []) for r in db["project_remarks"].find({}, {"order": 1, "logs": 1})}
 
     seen_ids = {}
     for m in member_docs:
+        # Join remarks to each project in real-time
+        if "projects" in m:
+            for p in m["projects"]:
+                order_num = p.get("order")
+                p["userRemarks"] = all_remarks.get(order_num, [])
+        
         seen_ids[_clean_id(m.get("id", ""))] = m
     member_docs = list(seen_ids.values())
 
@@ -217,8 +226,16 @@ def _build_month_payload(month_str):
     from shared_utils import DEPT_TARGET, MEM_TARGET, TEAM_TARGETS, MANAGEMENT
 
     raw_projects = list(db["projects_archive"].find({"month": month_str}, {"_id": 0}))
+    # Fetch ALL project remarks to join in real-time
+    all_remarks = {r["order"]: r.get("logs", []) for r in db["project_remarks"].find({}, {"order": 1, "logs": 1})}
+    
     # Filter only SEO and SMM projects
-    projects = [p for p in raw_projects if "SEO" in str(p.get("service", "")).upper() or "SMM" in str(p.get("service", "")).upper()]
+    projects = []
+    for p in raw_projects:
+        if "SEO" in str(p.get("service", "")).upper() or "SMM" in str(p.get("service", "")).upper():
+            order_num = p.get("order")
+            p["userRemarks"] = all_remarks.get(order_num, [])
+            projects.append(p)
     
     members_list = list(db["members"].find({"isOfficial": True}, {"_id": 0}))
     ADMIN_IDS = {"17149", "17137", "17248", "17238"}
@@ -1367,10 +1384,50 @@ def admin_all_projects():
             query["$and"] = conditions
             
         projects = list(db["projects_archive"].find(query, {"_id": 0}).sort("date", -1).limit(1000))
+        
+        # Join remarks in real-time
+        all_remarks = {r["order"]: r.get("logs", []) for r in db["project_remarks"].find({}, {"order": 1, "logs": 1})}
+        for p in projects:
+            p["userRemarks"] = all_remarks.get(p.get("order"), [])
+            
         return jsonify(projects)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/api/user/project-remark", methods=["POST"])
+def update_project_remark():
+    """Allows an employee to append a daily remark for a project in a separate collection for safety."""
+    try:
+        db = get_db()
+        data = request.json
+        order_num = data.get("order")
+        remark_text = data.get("remark", "").strip()
+        
+        if not order_num or not remark_text:
+            return jsonify({"error": "order number and remark required"}), 400
+            
+        import datetime
+        now = datetime.datetime.now()
+        date_str = now.strftime("%d %b %Y")
+        
+        new_remark = {
+            "date": date_str,
+            "text": remark_text,
+            "timestamp": now.timestamp()
+        }
+        
+        # Save to a dedicated remarks collection
+        db["project_remarks"].update_one(
+            {"order": order_num},
+            {"$push": {"logs": {"$each": [new_remark], "$position": 0}}},
+            upsert=True
+        )
+        
+        clear_api_cache()
+        return jsonify({"status": "ok", "message": "Remark added", "remark": new_remark})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/user/work-history")
 def get_user_work_history():

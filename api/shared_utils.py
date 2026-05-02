@@ -82,6 +82,8 @@ COL = {
     "date": 3,        # D
     "profile": 6,     # G
     "instruction": 15,# P
+    "del_last_time": 24,# Y
+    "deadline": 25,   # Z
     "op_dept": 21,    # V — Team Tag (Op. Department in some views)
 }
 

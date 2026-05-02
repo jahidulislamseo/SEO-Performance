@@ -790,6 +790,129 @@ const STATUS_CONFIG = {
   Cancelled: { color: '#f87171', bg: 'rgba(239,68,68,0.12)', border: 'rgba(239,68,68,0.3)', dot: '#ef4444' },
 };
 
+const Countdown = ({ target }) => {
+  const [timeLeft, setTimeLeft] = React.useState('');
+
+  React.useEffect(() => {
+    const calculate = () => {
+      if (!target) return '—';
+      try {
+        const str = String(target);
+        // Handle "7 May 2026 at 07:32:00 PM", "2026-05-14", or "May 10, 2026"
+        const clean = str.replace(' at ', ' ').replace(/-/g, '/');
+        let targetDate = new Date(clean);
+        
+        // Fallback for some browsers or formats like "May 10, 2026"
+        if (isNaN(targetDate.getTime())) {
+          targetDate = new Date(str);
+        }
+
+        // If still invalid, try cleaning up common Sheet formats
+        if (isNaN(targetDate.getTime())) {
+           const parts = str.split(',')[0].split(' '); // "May 10"
+           if (parts.length === 2) {
+             const year = new Date().getFullYear();
+             targetDate = new Date(`${str} ${year}`);
+           }
+        }
+
+        if (isNaN(targetDate.getTime())) return '—';
+
+        const now = new Date();
+        const diff = targetDate - now;
+
+        if (diff <= 0) return <span style={{ color: '#ef4444' }}>Deadline Passed</span>;
+
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+        if (days > 0) return `${days}d ${hours}h left`;
+        return `${hours}h ${mins}m left`;
+      } catch (e) {
+        return '—';
+      }
+    };
+
+    setTimeLeft(calculate());
+    const timer = setInterval(() => setTimeLeft(calculate()), 60000);
+    return () => clearInterval(timer);
+  }, [target]);
+
+  return <span>{timeLeft}</span>;
+};
+
+const DailyWorkLog = ({ order, initialRemarks }) => {
+  const [remarks, setRemarks] = React.useState(Array.isArray(initialRemarks) ? initialRemarks : []);
+  const [newRemark, setNewRemark] = React.useState('');
+  const [saving, setSaving] = React.useState(false);
+
+  const addLog = async () => {
+    if (!newRemark.trim()) return;
+    setSaving(true);
+    try {
+      const res = await fetch('/api/user/project-remark', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order, remark: newRemark })
+      });
+      const data = await res.json();
+      if (data.status === 'ok') {
+        setRemarks([data.remark, ...remarks]);
+        setNewRemark('');
+      }
+    } catch (e) {
+      alert('Failed to save log');
+    }
+    setSaving(false);
+  };
+
+  return (
+    <div style={{ marginTop: 8 }}>
+      {/* History */}
+      {remarks.length > 0 && (
+        <div style={{ 
+          maxHeight: 120, overflowY: 'auto', background: 'rgba(0,0,0,0.15)', 
+          borderRadius: 8, padding: '8px 12px', marginBottom: 10, border: '1px solid rgba(255,255,255,0.03)' 
+        }}>
+          {remarks.map((r, i) => (
+            <div key={i} style={{ marginBottom: 8, borderBottom: i < remarks.length - 1 ? '1px solid rgba(255,255,255,0.02)' : 'none', paddingBottom: 6 }}>
+              <div style={{ fontSize: 10, fontWeight: 800, color: '#3b82f6', marginBottom: 2, display: 'flex', justifyContent: 'space-between' }}>
+                <span>{r.date}</span>
+                {i === 0 && <span style={{ color: '#10b981', background: 'rgba(16,185,129,0.1)', padding: '1px 5px', borderRadius: 4 }}>LATEST</span>}
+              </div>
+              <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.4 }}>{r.text}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Input */}
+      <div style={{ display: 'flex', gap: 8 }}>
+        <textarea
+          value={newRemark}
+          onChange={e => setNewRemark(e.target.value)}
+          placeholder="What did you do on this project today?"
+          style={{
+            flex: 1, minHeight: 40, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 8, padding: '8px 12px', color: '#e2e8f0', fontSize: 12, fontFamily: 'inherit', resize: 'none'
+          }}
+        />
+        <button
+          onClick={addLog}
+          disabled={saving || !newRemark.trim()}
+          style={{
+            padding: '0 16px', background: '#3b82f6', color: '#fff', border: 'none', 
+            borderRadius: 8, fontSize: 11, fontWeight: 800, cursor: 'pointer', opacity: (saving || !newRemark.trim()) ? 0.5 : 1
+          }}
+        >
+          {saving ? '...' : 'ADD LOG'}
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const ProjectCard = ({ p }) => {
   const cfg = STATUS_CONFIG[p.status] || STATUS_CONFIG.WIP;
   const persons = (p.amtX && p.share && p.amtX !== p.share)
@@ -801,6 +924,20 @@ const ProjectCard = ({ p }) => {
       {/* Header row */}
       <div className="pcard-header">
         <span className="pcard-order">{p.order || p.title || '—'}</span>
+        
+        {/* Prominent Time Left */}
+        {p.status !== 'Delivered' && (
+          <div style={{ 
+            background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)', 
+            padding: '4px 12px', borderRadius: 8, color: '#f59e0b', fontWeight: 800, 
+            fontSize: 13, display: 'flex', alignItems: 'center', gap: 6,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+          }}>
+            <span style={{ fontSize: 16 }}>⏳</span>
+            <Countdown target={p.delLastTime} />
+          </div>
+        )}
+
         <span className="pcard-status" style={{ color: cfg.color, background: cfg.bg, border: `1px solid ${cfg.border}` }}>
           <span className="pcard-dot" style={{ background: cfg.dot }} />
           {(p.status || 'WIP').toUpperCase()}
@@ -830,13 +967,17 @@ const ProjectCard = ({ p }) => {
           <div className="pcard-field-value">{p.deliveredDate || (p.status === 'Delivered' ? '—' : <span style={{ color: '#475569' }}>Pending</span>)}</div>
         </div>
         <div className="pcard-field">
-          <div className="pcard-field-label">ORDER LINK</div>
+          <div className="pcard-field-label">INSTRUCTION SHEET</div>
           <div className="pcard-field-value">
-            {p.link
-              ? <a href={p.link} target="_blank" rel="noreferrer" className="pcard-link">Open Order ↗</a>
+            {p.instruction
+              ? <a href={p.instruction} target="_blank" rel="noreferrer" className="pcard-link">Open Sheet ↗</a>
               : <span style={{ color: '#334155' }}>—</span>
             }
           </div>
+        </div>
+        <div className="pcard-field" style={{ gridColumn: 'span 3' }}>
+          <div className="pcard-field-label">DAILY WORK LOG (HISTORY)</div>
+          <DailyWorkLog order={p.order} initialRemarks={p.userRemarks} />
         </div>
       </div>
 
@@ -2390,14 +2531,15 @@ const AdminProjects = () => {
                 <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>CLIENT</th>
                 <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>ASSIGNED TO</th>
                 <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>STATUS</th>
+                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>MEMBER REMARK</th>
                 <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, textAlign: 'right' }}>AMOUNT</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="6" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>Loading archives...</td></tr>
+                <tr><td colSpan="7" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>Loading archives...</td></tr>
               ) : projects.length === 0 ? (
-                <tr><td colSpan="6" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>No archived projects found for this period.</td></tr>
+                <tr><td colSpan="7" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>No archived projects found for this period.</td></tr>
               ) : projects.map((p, i) => (
                 <tr key={i} style={{ 
                   borderBottom: '1px solid rgba(255,255,255,0.03)', 
@@ -2438,6 +2580,17 @@ const AdminProjects = () => {
                       color: p.status === 'Delivered' ? '#10b981' : '#f59e0b',
                       border: `1px solid ${p.status === 'Delivered' ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`
                     }}>{p.status}</span>
+                  </td>
+                  <td style={{ padding: '16px 24px' }}>
+                    <div style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {Array.isArray(p.userRemarks) && p.userRemarks.length > 0 ? (
+                        <span title={p.userRemarks.map(r => `[${r.date}] ${r.text}`).join('\n')}>
+                          <strong style={{ color: '#3b82f6', fontStyle: 'normal' }}>{p.userRemarks[0].date}:</strong> {p.userRemarks[0].text}
+                        </span>
+                      ) : (
+                        p.userRemarks || '—'
+                      )}
+                    </div>
                   </td>
                   <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: 900, color: p.status === 'Delivered' ? '#10b981' : '#f1f5f9' }}>
                     {fmt(p.amtX)}

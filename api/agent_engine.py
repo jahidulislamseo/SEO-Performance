@@ -118,7 +118,10 @@ def backup_to_db(df, db):
                 "status": p.get("status"), "amtX": safe_float(p.get("amount_x")),
                 "date": order_date, "month": month_bucket, "deliveredDate": p.get("del_date"),
                 "assign": p.get("assign"), "team": p.get("op_dept"), "link": p.get("order_link"),
-                "instruction": p.get("instruction"), "profile": p.get("profile"), "last_seen": time.time()
+                "instruction": p.get("instruction"), "profile": p.get("profile"), 
+                "deadline": p.get("deadline"), 
+                "delLastTime": p.get("del_last_time") if p.get("del_last_time") else p.get("del_date"),
+                "last_seen": time.time()
             }
             operations.append(UpdateOne({"order": order_num}, {"$set": doc}, upsert=True))
         
@@ -335,14 +338,17 @@ def process_and_save(df, db):
             }
             
             for _, p in m_df.iterrows():
+                order_num = p.get("order_num")
                 s["projects"].append({
-                    "order": p.get("order_num"), "status": p.get("status"), 
+                    "order": order_num, "status": p.get("status"), 
                     "amtX": p.get("amount_x"), "share": p.get("share"),
                     "client": p.get("client"), "date": p.get("date"),
                     "deliveredBy": p.get("del_by"), "deliveredDate": p.get("del_date"),
                     "assign": p.get("assign"), "service": p.get("service"),
                     "link": p.get("order_link"),
                     "instruction": p.get("instruction"),
+                    "deadline": p.get("deadline"),
+                    "delLastTime": p.get("del_date"), # Prioritize DELIVERED column for countdown
                     "profile": p.get("profile")
                 })
         else:
