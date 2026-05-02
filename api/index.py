@@ -1342,17 +1342,29 @@ def admin_all_projects():
         search_q = request.args.get("q", "").strip().lower()
         
         query = {}
+        conditions = []
+
         if month_filter:
-            query["month"] = month_filter
+            conditions.append({
+                "$or": [
+                    {"month": month_filter},
+                    {"deliveredDate": {"$regex": f"^{month_filter}"}}
+                ]
+            })
             
         if search_q:
-            query["$or"] = [
-                {"order": {"$regex": search_q, "$options": "i"}},
-                {"client": {"$regex": search_q, "$options": "i"}},
-                {"assign": {"$regex": search_q, "$options": "i"}},
-                {"service": {"$regex": search_q, "$options": "i"}},
-                {"status": {"$regex": search_q, "$options": "i"}}
-            ]
+            conditions.append({
+                "$or": [
+                    {"order": {"$regex": search_q, "$options": "i"}},
+                    {"client": {"$regex": search_q, "$options": "i"}},
+                    {"assign": {"$regex": search_q, "$options": "i"}},
+                    {"service": {"$regex": search_q, "$options": "i"}},
+                    {"status": {"$regex": search_q, "$options": "i"}}
+                ]
+            })
+            
+        if conditions:
+            query["$and"] = conditions
             
         projects = list(db["projects_archive"].find(query, {"_id": 0}).sort("date", -1).limit(1000))
         return jsonify(projects)
