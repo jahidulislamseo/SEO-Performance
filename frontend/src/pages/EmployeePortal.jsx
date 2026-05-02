@@ -865,6 +865,12 @@ const ProjectsPage = ({ user }) => {
 
   // Filter projects by selected month
   const monthlyProjects = allProjects.filter(p => {
+    // Bypass string matching for the current real-world month, 
+    // since user.projects is already pre-filtered by the backend for the current month!
+    if (viewMonth === new Date().getMonth() && viewYear === new Date().getFullYear()) {
+      return true;
+    }
+
     if (!p.date) return false;
     const dateLower = p.date.toLowerCase();
     const monthShort = MONTHS[viewMonth].slice(0, 3).toLowerCase();
