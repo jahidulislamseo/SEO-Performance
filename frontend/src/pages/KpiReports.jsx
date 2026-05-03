@@ -87,7 +87,7 @@ function KpiReports() {
     try {
       const u = JSON.parse(localStorage.getItem('user'));
       if (u && u.isAdmin) setIsAdmin(true);
-    } catch (e) {}
+    } catch (e) { }
     setAuthChecked(true);
   }, []);
 
@@ -215,14 +215,6 @@ function KpiReports() {
               <div className="kpi-val"><CountUp end={cancellationRate} suffix="%" decimals={2} /></div>
               <div className="kpi-lbl">Cancellation Rate</div>
             </div>
-            <div className="kpi-card-v4 purple">
-              <div className="kpi-val"><CountUp end={82} suffix="%" /></div>
-              <div className="kpi-lbl">Reduction in Cancel $</div>
-            </div>
-            <div className="kpi-card-v4 blue">
-              <div className="kpi-val">14 Days</div>
-              <div className="kpi-lbl">Sales Training Plan</div>
-            </div>
           </div>
         </section>
 
@@ -233,7 +225,7 @@ function KpiReports() {
           <p className="section-desc">An honest evaluation of leadership missteps and foundational achievements during this period.</p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'stretch' }}>
-            
+
             {/* Mistakes Column */}
             <div style={{ background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', padding: '40px', position: 'relative', overflow: 'hidden' }}>
               <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--red)' }}></div>
@@ -244,11 +236,11 @@ function KpiReports() {
                 {[
                   "The sales team was weak, but I did not take any proper action. I should have taken the initiative to hire better sales members or improve the team.",
                   "The SEO team was also not strong most of the time, but I did not raise this issue or take steps to fix it.",
-                  "When sales started to drop continuously, I should have planned alternative services (like Paid Ads, CRO, etc.) along with SEO—but I did not do that.",
+                  "When sales started to drop continuously, I should have planned alternative services.",
                   "I failed to take quick action when I first saw early warning signs of the problem."
                 ].map((mistake, i) => (
                   <li key={i} style={{ display: 'flex', gap: '15px', color: 'var(--gray)', fontSize: '15px', lineHeight: '1.6' }}>
-                    <span style={{ color: 'var(--red)', fontWeight: '800', fontFamily: 'var(--font-display)', fontSize: '18px' }}>0{i+1}.</span>
+                    <span style={{ color: 'var(--red)', fontWeight: '800', fontFamily: 'var(--font-display)', fontSize: '18px' }}>0{i + 1}.</span>
                     <span>{mistake}</span>
                   </li>
                 ))}
@@ -431,8 +423,7 @@ function KpiReports() {
             {[
               { n: "01", t: "Dedicated Repeat Team", d: "Specialized team created exclusively to manage and nurture existing client relationships." },
               { n: "02", t: "Tracking Sheet System", d: "Structured client tracking sheet to monitor renewal dates, satisfaction, and upsells." },
-              { n: "03", t: "Lifetime Value Focus", d: "Strategic shift from acquisition-only to maximizing LTV and reducing monthly churn." },
-              { n: "04", t: "Cross-Service Expansion", d: "Repeating clients are cross-sold into adjacent services (Meta/Google Ads)." }
+              { n: "03", t: "Cross-Service Expansion", d: "Repeating clients are cross-sold into adjacent services (Meta/Google Ads)." }
             ].map((r, i) => (
               <div key={i} className="repeat-card-v4">
                 <div className="repeat-num-v4">{r.n}</div>
@@ -491,88 +482,43 @@ function KpiReports() {
           </div>
         </section>
 
-        {/* SLIDE 7: FINANCIALS */}
-        <section className="section-v4 reveal" id="financials" ref={el => scrollRef.current[6] = el}>
-          <div className="section-tag"><span></span> 06 — Financial Overview</div>
-          <h2>Monthly Delivery Detail</h2>
-
-          <div className="fin-table-wrap-v4">
-            <table className="fin-table-v4">
-              <thead>
-                <tr>
-                  <th>Month</th>
-                  <th>Members</th>
-                  <th>Delivery ($)</th>
-                  <th>Cost ($)</th>
-                  <th>Profit ($)</th>
-                  <th>Profit %</th>
-                </tr>
-              </thead>
-              <tbody>
-                {processedData.map((r, i) => (
-                  <tr key={i}>
-                    <td>{r.m}</td>
-                    <td className="bold">{r.members}</td>
-                    <td className="money">${r.d.toLocaleString()}</td>
-                    <td className="money red">${r.cost.toLocaleString()}</td>
-                    <td className="money teal">${r.profit.toLocaleString()}</td>
-                    <td className="bold">{r.profitPct.toFixed(1)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
         {/* SLIDE 8: 26-27 PLAN */}
-        <section className="section-v4 reveal" id="strategic-plan" ref={el => scrollRef.current[7] = el}>
-          <div className="section-tag"><span></span> 07 — Future Roadmap</div>
+        <section className="section-v4 reveal" id="strategic-plan" ref={el => scrollRef.current[6] = el}>
+          <div className="section-tag"><span></span> 06 — Future Roadmap</div>
           <h2>2026–2027 Financial Plan</h2>
           <p className="section-desc">Our financial and strategic roadmap for the Jul 2026 – Jun 2027 fiscal year, balancing Operational capacity with aggressive Sales targets.</p>
 
           <div style={{ height: '300px', marginBottom: '40px', background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', padding: '20px' }}>
-            <Bar 
-              data={futureChartData} 
+            <Bar
+              data={futureChartData}
               options={{
-                ...chartOptions, 
+                ...chartOptions,
                 plugins: { legend: { display: true, position: 'top', labels: { color: '#94a3b8', font: { size: 11, family: 'Manrope' } } } },
                 scales: {
                   x: { stacked: true, grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
                   y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
                 }
-              }} 
+              }}
             />
           </div>
 
           <div className="repeat-grid-v4">
-            <div className="repeat-card-v4">
-              <div className="repeat-num-v4" style={{fontSize: "48px", color: "rgba(16, 185, 129, 0.2)"}}>01</div>
-              <div>
-                <h4 style={{color: "#10b981"}}>$1.05M Annual Target</h4>
-                <p>Scaling combined revenue to <strong>$1,056,000</strong> for the fiscal year. This requires an average monthly pipeline of $88,000 across all channels.</p>
+            {[
+              { n: "01", t: "Sales Improvement", c: "#3b82f6", cBg: "rgba(59, 130, 246, 0.2)", d: "Overhauling our sales funnel and outreach strategies to ensure consistent lead generation and higher conversion rates." },
+              { n: "02", t: "Repeat Order ↗", c: "#10b981", cBg: "rgba(16, 185, 129, 0.2)", d: "Implementing a dedicated retention system to maximize Lifetime Value (LTV) and encourage continuous renewals." },
+              { n: "03", t: "Query Tracker ↗", c: "#f59e0b", cBg: "rgba(245, 158, 11, 0.2)", d: "Enforcing strict adherence to the Query Tracker for real-time problem resolution and zero-delay communication." },
+              { n: "04", t: "B2B Expansion", c: "#9b5de5", cBg: "rgba(155, 93, 229, 0.2)", d: "Pivoting focus towards high-ticket B2B clients and agency partnerships to stabilize monthly recurring revenue." },
+              { n: "05", t: "SMM Integration", c: "#e5534b", cBg: "rgba(229, 83, 75, 0.2)", d: "Expanding our service catalog with data-driven Social Media Marketing to offer comprehensive digital solutions." },
+              { n: "06", t: "CMS Management", c: "#06b6d4", cBg: "rgba(6, 182, 212, 0.2)", d: "Offering end-to-end CMS handling (WordPress, Shopify) to provide seamless website management alongside SEO efforts." }
+            ].map((item, i) => (
+              <div key={i} className="repeat-card-v4">
+                <div className="repeat-num-v4" style={{ fontSize: "48px", color: item.cBg }}>{item.n}</div>
+                <div>
+                  <h4 style={{ color: item.c }}>{item.t}</h4>
+                  <p>{item.d}</p>
+                </div>
               </div>
-            </div>
-            <div className="repeat-card-v4">
-              <div className="repeat-num-v4" style={{fontSize: "48px", color: "rgba(6, 182, 212, 0.2)"}}>02</div>
-              <div>
-                <h4 style={{color: "#06b6d4"}}>$456k Operations Target</h4>
-                <p>Scaling our internal operational delivery capacity to handle <strong>$456,000</strong> annually ($38,000/mo avg) with strict quality control.</p>
-              </div>
-            </div>
-            <div className="repeat-card-v4">
-              <div className="repeat-num-v4" style={{fontSize: "48px", color: "rgba(245, 158, 11, 0.2)"}}>03</div>
-              <div>
-                <h4 style={{color: "#f59e0b"}}>$600k Sales Target</h4>
-                <p>Aggressive expansion in the Sales team to bring in <strong>$600,000</strong> annually ($50,000/mo avg) via Fiverr, Upwork, and high-ticket B2B clients.</p>
-              </div>
-            </div>
-            <div className="repeat-card-v4">
-              <div className="repeat-num-v4" style={{fontSize: "48px", color: "rgba(59, 130, 246, 0.2)"}}>04</div>
-              <div>
-                <h4 style={{color: "#3b82f6"}}>B2B & Repeat Expansion</h4>
-                <p>Shifting focus heavily towards Repeat buyers and B2B contracts to stabilize monthly revenue and reduce dependency on new marketplace leads.</p>
-              </div>
-            </div>
+            ))}
           </div>
         </section>
 
