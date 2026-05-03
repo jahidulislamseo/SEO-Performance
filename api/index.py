@@ -60,6 +60,10 @@ def add_perf_headers(response):
 @app.route("/delivery-tracker")
 @app.route("/employee")
 @app.route("/query-tracker")
+@app.route("/finance")
+@app.route("/work-examples")
+@app.route("/admin/work-examples")
+@app.route("/kpi-reports")
 def index():
     return render_template("index.html")
 
