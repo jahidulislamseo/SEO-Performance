@@ -132,10 +132,11 @@ function KpiReports() {
       });
     }, { threshold: 0.1 });
 
-    const currentRefs = scrollRef.current;
-    currentRefs.forEach(el => el && observer.observe(el));
-    return () => currentRefs.forEach(el => el && observer.unobserve(el));
-  }, [isAdmin]);
+    const revealElements = document.querySelectorAll('.reveal');
+    revealElements.forEach(el => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [isAdmin, authChecked]);
 
   const chartOptions = {
     responsive: true,
@@ -148,8 +149,8 @@ function KpiReports() {
   };
 
   const futureMonths = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
-  const futureOp = [32000, 32000, 33000, 35000, 36000, 38000, 40000, 40000, 40000, 42000, 43000, 45000];
-  const futureSales = futureOp.map(v => Math.round(v * (600000 / 456000)));
+  const futureOp = [35000, 35000, 38000, 40000, 42000, 45000, 48000, 48000, 50000, 52000, 54000, 55000];
+  const futureSales = [48000, 48000, 52000, 55000, 58000, 62000, 65000, 65000, 68000, 71000, 73000, 75000];
 
   const futureChartData = {
     labels: futureMonths,
@@ -167,6 +168,46 @@ function KpiReports() {
         borderRadius: 4
       }
     ]
+  };
+
+  const serviceMixData = {
+    labels: ['SEO', 'SMM', 'CMS'],
+    datasets: [{
+      data: [60, 30, 10],
+      backgroundColor: ['#17c3a0', '#e5534b', '#3a86e8'],
+      borderColor: 'rgba(255,255,255,0.1)',
+      borderWidth: 2,
+      hoverOffset: 15
+    }]
+  };
+
+  const repeatTargetData = {
+    labels: ['Current', 'Q2 Target', 'Year-End Target'],
+    datasets: [{
+      label: 'Repeat Rate (%)',
+      data: [25, 40, 60],
+      borderColor: '#17c3a0',
+      backgroundColor: 'rgba(23, 195, 160, 0.1)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 6,
+      pointBackgroundColor: '#17c3a0'
+    }]
+  };
+
+  const cancellationTrendData = {
+    labels: ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+    datasets: [{
+      label: 'Cancellation ($)',
+      data: [868, 1628, 2116, 1420, 4000, 2029, 816, 508, 1824],
+      borderColor: '#e5534b',
+      backgroundColor: 'rgba(229, 83, 75, 0.1)',
+      fill: true,
+      tension: 0.4,
+      pointRadius: 4,
+      pointBackgroundColor: '#e5534b',
+      borderWidth: 3
+    }]
   };
 
   if (!authChecked) return <div style={{ background: '#09111f', minHeight: '100vh' }}></div>;
@@ -235,7 +276,7 @@ function KpiReports() {
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {[
                   "The sales team was weak, but I did not take any proper action. I should have taken the initiative to hire better sales members or improve the team.",
-                  "The SEO team was also not strong most of the time, but I did not raise this issue or take steps to fix it.",
+                  "SEO team consistency was an operational bottleneck that required more immediate strategic intervention and oversight.",
                   "When sales started to drop continuously, I should have planned alternative services.",
                   "I failed to take quick action when I first saw early warning signs of the problem."
                 ].map((mistake, i) => (
@@ -419,13 +460,45 @@ function KpiReports() {
           <div className="section-tag"><span></span> 04 — Repeat Business & Retention</div>
           <h2>Keeping Clients, Not Just Getting Them</h2>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '50px', marginBottom: '60px', alignItems: 'center' }}>
+            <div style={{ background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', padding: '30px' }}>
+              <h4 style={{ fontFamily: 'var(--font-display)', color: 'var(--teal)', marginBottom: '15px' }}>Retention Roadmap</h4>
+              <p style={{ fontSize: '13px', color: 'var(--gray)', lineHeight: '1.6', marginBottom: '20px' }}>
+                We are transitioning from a reactive approach to a dedicated retention system. Our goal is to double our repeat rate by the end of the fiscal year through structured tracking and proactive outreach.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border)', paddingTop: '15px' }}>
+                <div>
+                  <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--teal)' }}>60%</div>
+                  <div style={{ fontSize: '9px', color: 'var(--gray)', textTransform: 'uppercase' }}>Target Rate</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: '18px', fontWeight: '800', color: 'var(--white)' }}>Q4</div>
+                  <div style={{ fontSize: '9px', color: 'var(--gray)', textTransform: 'uppercase' }}>Deadline</div>
+                </div>
+              </div>
+            </div>
+            <div style={{ height: '220px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', borderRadius: '4px', padding: '20px' }}>
+              <Line 
+                data={repeatTargetData} 
+                options={{
+                  ...chartOptions,
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                  }
+                }} 
+              />
+            </div>
+          </div>
+
           <div className="repeat-grid-v4">
             {[
               { n: "01", t: "Dedicated Repeat Team", d: "Specialized team created exclusively to manage and nurture existing client relationships." },
               { n: "02", t: "Tracking Sheet System", d: "Structured client tracking sheet to monitor renewal dates, satisfaction, and upsells." },
-              { n: "03", t: "Cross-Service Expansion", d: "Repeating clients are cross-sold into adjacent services (Meta/Google Ads)." }
+              { n: "03", t: "Cross-Service Expansion", d: "Combining our dedicated repeat team, structured tracking system, and cross-sell strategy — repeating clients are guided into adjacent services (SMM, Meta/Google Ads, CMS). Together, these three pillars form a complete client retention engine designed to maximize LTV, reduce churn, and hit our 50–60% repeat order target." }
             ].map((r, i) => (
-              <div key={i} className="repeat-card-v4">
+              <div key={i} className="repeat-card-v4" style={i === 2 ? { gridColumn: 'span 2', background: 'linear-gradient(135deg, rgba(23,195,160,0.08), rgba(14,24,38,0.95))', borderColor: 'rgba(23,195,160,0.25)' } : {}}>
                 <div className="repeat-num-v4">{r.n}</div>
                 <div>
                   <h4>{r.t}</h4>
@@ -440,6 +513,23 @@ function KpiReports() {
         <section className="section-v4 reveal" id="cancellations" ref={el => scrollRef.current[5] = el}>
           <div className="section-tag"><span></span> 05 — Cancellation Performance</div>
           <h2>Reducing Cancellations</h2>
+
+          <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', borderRadius: '4px', padding: '30px', marginBottom: '30px' }}>
+            <h4 style={{ fontFamily: 'var(--font-display)', color: 'var(--red)', marginBottom: '20px', fontSize: '14px', letterSpacing: '1px', textTransform: 'uppercase' }}>Monthly Cancellation Trend</h4>
+            <div style={{ height: '220px' }}>
+              <Line 
+                data={cancellationTrendData} 
+                options={{
+                  ...chartOptions,
+                  plugins: { legend: { display: false } },
+                  scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                  }
+                }} 
+              />
+            </div>
+          </div>
 
           <div className="cancel-layout-v4">
             <div className="cancel-stats-col">
@@ -504,12 +594,12 @@ function KpiReports() {
 
           <div className="repeat-grid-v4">
             {[
-              { n: "01", t: "Sales Improvement", c: "#3b82f6", cBg: "rgba(59, 130, 246, 0.2)", d: "Overhauling our sales funnel and outreach strategies to ensure consistent lead generation and higher conversion rates." },
-              { n: "02", t: "Repeat Order ↗", c: "#10b981", cBg: "rgba(16, 185, 129, 0.2)", d: "Implementing a dedicated retention system to maximize Lifetime Value (LTV) and encourage continuous renewals." },
-              { n: "03", t: "Query Tracker ↗", c: "#f59e0b", cBg: "rgba(245, 158, 11, 0.2)", d: "Enforcing strict adherence to the Query Tracker for real-time problem resolution and zero-delay communication." },
-              { n: "04", t: "B2B Expansion", c: "#9b5de5", cBg: "rgba(155, 93, 229, 0.2)", d: "Pivoting focus towards high-ticket B2B clients and agency partnerships to stabilize monthly recurring revenue." },
-              { n: "05", t: "SMM Integration", c: "#e5534b", cBg: "rgba(229, 83, 75, 0.2)", d: "Expanding our service catalog with data-driven Social Media Marketing to offer comprehensive digital solutions." },
-              { n: "06", t: "CMS Management", c: "#06b6d4", cBg: "rgba(6, 182, 212, 0.2)", d: "Offering end-to-end CMS handling (WordPress, Shopify) to provide seamless website management alongside SEO efforts." }
+              { n: "01", t: "Sales Improvement", c: "#3b82f6", cBg: "rgba(59, 130, 246, 0.2)", d: "Hiring qualified, skilled sales members and providing intensive SEO & SMM training to build a high-performing team capable of consistent lead generation and higher conversion rates." },
+              { n: "02", t: "Repeat Order ↗", c: "#10b981", cBg: "rgba(16, 185, 129, 0.2)", d: "A dedicated team will focus entirely on client retention and repeat orders. Our primary target is to achieve 50–60% repeat order rate, maximizing Lifetime Value (LTV) and ensuring consistent recurring revenue." },
+              { n: "03", t: "Query Tracker ↗", c: "#f59e0b", cBg: "rgba(245, 158, 11, 0.2)", d: "Our custom-built Query Tracker system gives full visibility into every client query — identifying why orders are slowing down, what issues are unresolved, and providing clear solutions. Sales members can use this data directly to address concerns and confidently close more orders." },
+              { n: "04", t: "B2B Expansion", c: "#9b5de5", cBg: "rgba(155, 93, 229, 0.2)", d: "Actively converting high-potential clients into long-term B2B partnerships. We are consistently working to grow our B2B client base, ensuring more stable, high-value accounts and increasing the total number of clients month over month." },
+              { n: "05", t: "SMM Integration", c: "#e5534b", cBg: "rgba(229, 83, 75, 0.2)", d: "To achieve our monthly targets, we have launched a dedicated SMM service line. This addition allows us to capture new client segments and is projected to contribute 30–45% towards hitting our overall delivery targets each month." },
+              { n: "06", t: "CMS Management", c: "#06b6d4", cBg: "rgba(6, 182, 212, 0.2)", d: "Offering end-to-end CMS handling (WordPress, Shopify) alongside SEO efforts. This service is expected to contribute 5–7% towards our monthly delivery targets." }
             ].map((item, i) => (
               <div key={i} className="repeat-card-v4">
                 <div className="repeat-num-v4" style={{ fontSize: "48px", color: item.cBg }}>{item.n}</div>
@@ -517,6 +607,309 @@ function KpiReports() {
                   <h4 style={{ color: item.c }}>{item.t}</h4>
                   <p>{item.d}</p>
                 </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION: HIRING & TEAM GROWTH PLAN */}
+        <section className="section-v4" id="hiring-plan">
+          <div className="section-tag"><span></span> 07 — Hiring & Team Growth</div>
+          <h2>Building the Right Team</h2>
+          <p className="section-desc">Strategic hiring plan for 2026–27 to strengthen our Sales, SEO, and SMM capabilities.</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+            {[
+              {
+                dept: 'Sales Team', icon: '🎯', color: 'var(--blue)',
+                hires: [
+                  { role: 'Senior Sales Executive', q: 'Q1', note: 'SEO + SMM product expertise' },
+                  { role: 'Junior Sales Member', q: 'Q1–Q2', note: 'With full 14-day training' },
+                  { role: 'Repeat Order Specialist', q: 'Q2', note: 'Dedicated retention focus' },
+                ]
+              },
+              {
+                dept: 'SEO Team', icon: '🔍', color: 'var(--teal)',
+                hires: [
+                  { role: 'Local SEO Specialist', q: 'Q1', note: 'Scaling operations & Map ranking' },
+                  { role: 'AEO / GEO & Guestpost Expert', q: 'Q2', note: 'AI Optimization & High-DA outreach' },
+                  { role: 'On-Page, Technical Pro', q: 'Q3', note: 'Technical health & Authority' },
+                ]
+              },
+              {
+                dept: 'SMM Team', icon: '📱', color: 'var(--red)',
+                hires: [
+                  { role: 'SMM Manager', q: 'Q1', note: 'Lead the SMM service line' },
+                  { role: 'Content Creator', q: 'Q1–Q2', note: 'Graphics + copy' },
+                  { role: 'Social Media Manager', q: 'Q2', note: 'All-platform management & Buffer' },
+                ]
+              },
+              {
+                dept: 'CMS Team', icon: '🛠️', color: 'var(--gold)',
+                hires: [
+                  { role: 'WordPress Expert', q: 'Q1', note: 'Theme & Plugin management' },
+                  { role: 'Shopify Specialist', q: 'Q2', note: 'E-commerce optimization' },
+                  { role: 'Wix & Others', q: 'Q3', note: 'Multi-platform support' },
+                ]
+              }
+            ].map((team, ti) => (
+              <div key={ti} style={{ background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ padding: '20px 25px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '22px' }}>{team.icon}</span>
+                  <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '18px', color: team.color, margin: 0 }}>{team.dept}</h4>
+                </div>
+                <div style={{ padding: '20px 25px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  {team.hires.map((h, hi) => (
+                    <div key={hi} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: '700', color: 'var(--white)', marginBottom: '3px' }}>{h.role}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--gray)' }}>{h.note}</div>
+                      </div>
+                      <span style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '10px', fontWeight: '800', background: `rgba(255,255,255,0.05)`, color: team.color, whiteSpace: 'nowrap', flexShrink: 0 }}>{h.q}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION: MONTHLY TARGET BREAKDOWN */}
+        <section className="section-v4" id="monthly-targets">
+          <div className="section-tag"><span></span> 08 — Financial Targets</div>
+          <h2>Monthly Target Breakdown 2026–27</h2>
+          <p className="section-desc">Full-year delivery and sales targets broken down month by month — Jul 2026 to Jun 2027.</p>
+
+          <div style={{ overflowX: 'auto', background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr>
+                  {['Month', 'Op. Target ($)', 'Sales Target ($)', 'SMM ($)', 'CMS ($)', 'Total ($)', 'Members'].map(h => (
+                    <th key={h} style={{ textAlign: 'left', padding: '14px 18px', borderBottom: '2px solid var(--teal)', color: 'var(--teal)', fontFamily: 'var(--font-display)', fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { m: "Jul '26", op: 35000, sales: 48000, smm: 4000, cms: 1000, members: 38 },
+                  { m: "Aug '26", op: 35000, sales: 48000, smm: 4500, cms: 1200, members: 38 },
+                  { m: "Sep '26", op: 38000, sales: 52000, smm: 5000, cms: 1200, members: 40 },
+                  { m: "Oct '26", op: 40000, sales: 55000, smm: 6000, cms: 1500, members: 42 },
+                  { m: "Nov '26", op: 42000, sales: 58000, smm: 6500, cms: 1800, members: 43 },
+                  { m: "Dec '26", op: 45000, sales: 62000, smm: 7500, cms: 2000, members: 44 },
+                  { m: "Jan '27", op: 48000, sales: 65000, smm: 8500, cms: 2200, members: 45 },
+                  { m: "Feb '27", op: 48000, sales: 65000, smm: 8500, cms: 2200, members: 45 },
+                  { m: "Mar '27", op: 50000, sales: 68000, smm: 9000, cms: 2500, members: 46 },
+                  { m: "Apr '27", op: 52000, sales: 71000, smm: 10000, cms: 2800, members: 48 },
+                  { m: "May '27", op: 54000, sales: 73000, smm: 11000, cms: 3000, members: 50 },
+                  { m: "Jun '27", op: 55000, sales: 75000, smm: 12000, cms: 3000, members: 50 },
+                ].map((row, i) => {
+                  const total = row.op + row.smm + row.cms;
+                  return (
+                    <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                      <td style={{ padding: '13px 18px', fontFamily: 'var(--font-display)', fontSize: '13px', color: 'var(--white)', borderBottom: '1px solid var(--border)' }}>{row.m}</td>
+                      <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--teal)', fontWeight: '700', borderBottom: '1px solid var(--border)' }}>${row.op.toLocaleString()}</td>
+                      <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--gold)', fontWeight: '700', borderBottom: '1px solid var(--border)' }}>${row.sales.toLocaleString()}</td>
+                      <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--red)', borderBottom: '1px solid var(--border)' }}>${row.smm.toLocaleString()}</td>
+                      <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--blue)', borderBottom: '1px solid var(--border)' }}>${row.cms.toLocaleString()}</td>
+                      <td style={{ padding: '13px 18px', fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)', borderBottom: '1px solid var(--border)' }}>${total.toLocaleString()}</td>
+                      <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--gray)', borderBottom: '1px solid var(--border)' }}>{row.members}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* SECTION: STRATEGIC EXECUTION FRAMEWORK (PLAN A, B, C) */}
+        <section className="section-v4" id="execution-framework" ref={el => scrollRef.current[9] = el}>
+          <div className="section-tag"><span></span> 09 — Strategic Execution Framework</div>
+          <h2>Operational Contingency & Scaling</h2>
+          <p className="section-desc">Our 2026-27 tactical roadmap designed to ensure stability and maximize revenue through data-driven scaling.</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '25px', marginBottom: '40px' }}>
+            {/* PLAN A: VISUAL INFOGRAPHIC */}
+            <div style={{ gridRow: 'span 2', background: 'linear-gradient(145deg, var(--navy2), var(--navy))', border: '1px solid var(--border)', borderRadius: '8px', padding: '45px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
+               <div style={{ position: 'absolute', top: 0, left: 0, width: '6px', height: '100%', background: 'var(--teal)', boxShadow: '0 0 20px var(--teal)' }}></div>
+               <div style={{ fontSize: '11px', color: 'var(--teal)', letterSpacing: '3px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '25px' }}>Plan A: Service Mix</div>
+               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '32px', marginBottom: '35px', lineHeight: '1.1' }}>Target Revenue Distribution</h3>
+               
+               <div style={{ height: '260px', position: 'relative', marginBottom: '40px' }}>
+                <Doughnut 
+                  data={serviceMixData} 
+                  options={{ 
+                    plugins: { legend: { display: false } },
+                    cutout: '56%', // THICKER CIRCLE
+                    spacing: 8,
+                    borderRadius: 2
+                  }} 
+                />
+                <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-58%, -42%)', textAlign: 'center', width: '100%', pointerEvents: 'none' }}>
+                  <div style={{ fontSize: '48px', fontWeight: '900', color: 'var(--white)', fontFamily: 'var(--font-display)', lineHeight: '0.8', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                    60<span style={{ fontSize: '22px', color: 'var(--white)', marginTop: '4px', marginLeft: '2px', opacity: 0.9 }}>%</span>
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '2px', fontWeight: '800', marginTop: '8px' }}>SEO Anchor</div>
+                </div>
+               </div>
+
+               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {[
+                    { l: 'Search Engine Optimization', v: '60%', c: 'var(--teal)', b: 'rgba(23,195,160,0.1)' },
+                    { l: 'Social Media Marketing', v: '30%', c: 'var(--red)', b: 'rgba(229,83,75,0.1)' },
+                    { l: 'CMS & Web Management', v: '10%', c: 'var(--blue)', b: 'rgba(58,134,232,0.1)' }
+                  ].map((s, i) => (
+                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: s.c, boxShadow: `0 0 10px ${s.c}` }}></div>
+                        <span style={{ fontSize: '13px', color: 'var(--gray)', fontWeight: '500' }}>{s.l}</span>
+                      </div>
+                      <span style={{ fontSize: '16px', fontWeight: '900', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                    </div>
+                  ))}
+               </div>
+            </div>
+
+            {/* PLAN B: CARD */}
+            <div style={{ background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '40px', position: 'relative', transition: '0.3s' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: 'var(--gold)', boxShadow: '0 0 15px var(--gold)' }}></div>
+              <div style={{ fontSize: '10px', color: 'var(--gold)', letterSpacing: '2px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '20px' }}>Plan B: Adaptive Growth</div>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '20px' }}>Dynamic Priority Scaling</h3>
+              <p style={{ fontSize: '14px', color: 'var(--gray)', lineHeight: '1.7', marginBottom: '25px' }}>
+                If a service line underperforms, we pivot resources immediately to the highest-performing assets, ensuring maximum ROI.
+              </p>
+              <div style={{ background: 'rgba(245,158,11,0.08)', padding: '20px', borderRadius: '4px', border: '1px solid rgba(245,158,11,0.2)' }}>
+                <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)', marginBottom: '5px' }}>Real-time Pivot</div>
+                <div style={{ fontSize: '10px', color: 'var(--gold)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>Top Talent Reallocation</div>
+              </div>
+            </div>
+
+            {/* PLAN C: CARD */}
+            <div style={{ background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '8px', padding: '40px', position: 'relative' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: 'var(--blue)', boxShadow: '0 0 15px var(--blue)' }}></div>
+              <div style={{ fontSize: '10px', color: 'var(--blue)', letterSpacing: '2px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '20px' }}>Plan C: Market Capture</div>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '20px' }}>Data-Driven Acquisition</h3>
+              <p style={{ fontSize: '14px', color: 'var(--gray)', lineHeight: '1.7', marginBottom: '25px' }}>
+                Analyzing order search patterns to identify untapped market needs and achieve aggressive growth milestones.
+              </p>
+              <div style={{ background: 'rgba(58,134,232,0.08)', padding: '20px', borderRadius: '4px', border: '1px solid rgba(58,134,232,0.2)' }}>
+                <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)', marginBottom: '5px' }}>3x / 30%+ Target</div>
+                <div style={{ fontSize: '10px', color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '700' }}>Order Search Analysis</div>
+              </div>
+            </div>
+
+            {/* SUMMARY BOX */}
+            <div style={{ gridColumn: 'span 2', background: 'linear-gradient(90deg, var(--navy3), var(--navy2))', border: '1px solid var(--border)', borderRadius: '8px', padding: '35px', display: 'flex', alignItems: 'center', gap: '35px', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }}>
+              <div style={{ fontSize: '48px', filter: 'drop-shadow(0 0 10px var(--teal))' }}>🚀</div>
+              <div>
+                <h4 style={{ color: 'var(--teal)', fontSize: '18px', marginBottom: '8px', fontFamily: 'var(--font-display)' }}>Strategic Readiness</h4>
+                <p style={{ fontSize: '14px', color: 'var(--gray)', margin: 0, lineHeight: '1.6' }}>
+                  This combined framework (A+B+C) ensures that our operations remain resilient while scaling toward our <strong>$55,000 monthly delivery</strong> and <strong>$75,000 monthly sales</strong> targets by June 2027.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* SECTION: RISK & MITIGATION */}
+        <section className="section-v4" id="risk-mitigation" ref={el => scrollRef.current[10] = el}>
+          <div className="section-tag"><span></span> 10 — Risk Management</div>
+          <h2>Risk & Mitigation Plan</h2>
+          <p className="section-desc">Anticipated risks for 2026–27 and our proactive strategies to minimize their impact.</p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[
+              { risk: 'Sales team underperformance', impact: 'High', mitigation: 'Intensive 14-day training + weekly performance review. Underperforming members get 30-day improvement plan before any action.', color: 'var(--red)' },
+              { risk: 'Low repeat order rate (below 40%)', impact: 'High', mitigation: 'Dedicated repeat team monitors every client. Tracking sheet flags renewals 30 days in advance for proactive outreach.', color: 'var(--red)' },
+              { risk: 'SMM service delivery quality', impact: 'High', mitigation: 'SMM Manager reviews all deliverables before client submission. Client satisfaction check-in at Day 15 of every project.', color: 'var(--gold)' },
+              { risk: 'Key team member departure', impact: 'Medium', mitigation: 'Cross-training across roles ensures no single point of failure. Each team leader trains a deputy.', color: 'var(--gold)' },
+              { risk: 'Client expectation mismatch (SEO timeline)', impact: 'Medium', mitigation: 'Sales members trained on SEO timelines. Onboarding call sets clear 3/6/12-month milestones for every new client.', color: 'var(--gold)' },
+              { risk: 'Market competition increasing', impact: 'Medium', mitigation: 'Build authority profiles + invest in case studies and work examples to differentiate from competitors on quality.', color: 'var(--teal)' },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'grid', gridTemplateColumns: '2fr 90px 3fr', gap: '0', background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ padding: '20px 25px', borderRight: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--gray)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px' }}>Risk</div>
+                  <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--white)' }}>{item.risk}</div>
+                </div>
+                <div style={{ padding: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--border)', background: `rgba(255,255,255,0.02)` }}>
+                  <span style={{ fontSize: '11px', fontWeight: '800', color: item.color, letterSpacing: '1px', textTransform: 'uppercase' }}>{item.impact}</span>
+                </div>
+                <div style={{ padding: '20px 25px' }}>
+                  <div style={{ fontSize: '10px', color: 'var(--teal)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '6px' }}>Mitigation</div>
+                  <div style={{ fontSize: '13px', color: 'var(--gray)', lineHeight: '1.6' }}>{item.mitigation}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* SECTION: QUARTERLY MILESTONES */}
+        <section className="section-v4" id="quarterly-milestones" ref={el => scrollRef.current[11] = el}>
+          <div className="section-tag"><span></span> 11 — Execution Timeline</div>
+          <h2>Quarterly Milestones 2026–27</h2>
+          <p className="section-desc">Four clear checkpoints to track progress and course-correct throughout the year.</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+            {[
+              {
+                q: 'Q1', months: 'Jul – Sep 2026', color: '#3b82f6', bg: 'rgba(59,130,246,0.08)',
+                goals: [
+                  'Hire & onboard new Sales + SMM members',
+                  'Complete 14-day training for all new hires',
+                  'Launch SMM service line officially',
+                  'Set up repeat order tracking sheet system',
+                  'Achieve $35,000+ monthly operation target',
+                ]
+              },
+              {
+                q: 'Q2', months: 'Oct – Dec 2026', color: '#f59e0b', bg: 'rgba(245,158,11,0.08)',
+                goals: [
+                  'Hit 30%+ repeat order rate',
+                  'Convert 5+ clients into B2B partnerships',
+                  'SMM contributing 30% of monthly target',
+                  'Reach $38,000+ monthly operation target',
+                  'First quarterly performance review & adjustment',
+                ]
+              },
+              {
+                q: 'Q3', months: 'Jan – Mar 2027', color: '#10b981', bg: 'rgba(16,185,129,0.08)',
+                goals: [
+                  'Achieve 45–50% repeat order rate',
+                  'Scale SMM team & expand service packages',
+                  'Launch top-rated profile strategy',
+                  'Reach $40,000+ monthly operation target',
+                  'Mid-year team performance bonuses',
+                ]
+              },
+              {
+                q: 'Q4', months: 'Apr – Jun 2027', color: '#9b5de5', bg: 'rgba(155,93,229,0.08)',
+                goals: [
+                  'Hit 50–60% repeat order target',
+                  'Achieve $45,000 monthly operation target',
+                  'Full B2B pipeline established',
+                  'Prepare 2027–28 KPI strategy presentation',
+                  'Year-end team recognition & growth review',
+                ]
+              }
+            ].map((quarter, qi) => (
+              <div key={qi} style={{ background: quarter.bg, border: `1px solid ${quarter.color}30`, borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ padding: '25px 30px', borderBottom: `1px solid ${quarter.color}30`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontSize: '42px', fontWeight: '800', color: quarter.color, lineHeight: '1' }}>{quarter.q}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--gray)', marginTop: '4px', letterSpacing: '1px' }}>{quarter.months}</div>
+                  </div>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: `${quarter.color}20`, border: `2px solid ${quarter.color}40`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                    {qi === 0 ? '🚀' : qi === 1 ? '📈' : qi === 2 ? '⚡' : '🏆'}
+                  </div>
+                </div>
+                <ul style={{ listStyle: 'none', padding: '20px 30px', margin: 0, display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {quarter.goals.map((goal, gi) => (
+                    <li key={gi} style={{ display: 'flex', gap: '12px', fontSize: '13px', color: 'var(--gray)', lineHeight: '1.5' }}>
+                      <span style={{ color: quarter.color, fontWeight: '800', flexShrink: 0 }}>→</span>
+                      <span>{goal}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             ))}
           </div>
@@ -672,8 +1065,8 @@ function KpiReports() {
 
         .footer-v4 { padding: 60px 0; display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 2px; color: var(--gray); border-top: 1px solid var(--border); }
 
-        .reveal { opacity: 0; transform: translateY(30px); transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-        .reveal.in { opacity: 1; transform: translateY(0); }
+        .reveal { opacity: 1; transform: none; transition: 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+        .reveal.in { opacity: 1; transform: none; }
 
         @media (max-width: 900px) {
           .hero-h1 { font-size: 60px; }
