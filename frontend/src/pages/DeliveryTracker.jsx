@@ -39,6 +39,8 @@ const FU_KEY = 'dt_followups_v2';
 const loadFuState = () => { try { return JSON.parse(localStorage.getItem(FU_KEY) || '{}'); } catch { return {}; } };
 
 function DeliveryTracker() {
+  const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+
   const [rawProjects, setRawProjects] = useState([]);
   const [fuState, setFuState]         = useState(loadFuState);
   const [loading, setLoading]         = useState(true);
@@ -46,12 +48,26 @@ function DeliveryTracker() {
   const [fuFilter, setFuFilter]       = useState('');
   const [modal, setModal]             = useState(null);
   const [toast, setToast]             = useState('');
+  const [selectedMonth, setSelectedMonth] = useState(currentMonthStr);
+  const [availableMonths, setAvailableMonths] = useState([currentMonthStr]);
+
+  // Load available months from archive
+  useEffect(() => {
+    fetch('/api/months')
+      .then(r => r.json())
+      .then(months => {
+        if (Array.isArray(months) && months.length > 0) {
+          setAvailableMonths(months);
+          // Default to last month if current month has no data
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
-    const monthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-
+    setLoading(true);
     Promise.all([
-      fetch(`/api/delivered-projects?month=${monthStr}`).then(r => r.json()),
+      fetch(`/api/delivered-projects?month=${selectedMonth}`).then(r => r.json()),
       fetch('/api/followups').then(r => r.json())
     ])
     .then(([projects, fuData]) => {
@@ -79,7 +95,7 @@ function DeliveryTracker() {
       setRawProjects(SAMPLE_DATA.map(d => ({ ...d, id: d.id })));
       setLoading(false);
     });
-  }, []);
+  }, [selectedMonth]);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(''), 3000); };
 
@@ -178,7 +194,7 @@ function DeliveryTracker() {
         </div>
 
         {/* Controls */}
-        <div className="controls" style={{ marginTop: 20, marginBottom: 20 }}>
+        <div className="controls" style={{ marginTop: 20, marginBottom: 8 }}>
           <div className="search-wrap">
             <span className="si">🔍</span>
             <input 
@@ -188,17 +204,42 @@ function DeliveryTracker() {
               onChange={e => setSearch(e.target.value)} 
             />
           </div>
-          <div className="filter-tabs">
-            {[['', 'All'], ['0', 'No Follow-up'], ['1', '1 Done'], ['2', '2 Done'], ['3', '3 Done'], ['4', '4 Done'], ['5', '5 ✓'], ['6', 'Sold 💰']].map(([v, lbl]) => (
-              <button 
-                key={v} 
-                className={`ftab ${fuFilter === v ? 'active' : ''}`} 
-                onClick={() => setFuFilter(v)}
-              >
-                {lbl}
-              </button>
-            ))}
+          {/* Month Selector */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>📅 Month:</span>
+            <select
+              value={selectedMonth}
+              onChange={e => { setSelectedMonth(e.target.value); setSearch(''); setFuFilter(''); }}
+              style={{
+                background: 'rgba(14,24,38,0.97)',
+                border: '1px solid rgba(148,163,184,0.25)',
+                borderRadius: 8,
+                color: '#a5b4fc',
+                padding: '6px 12px',
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: 'pointer',
+                outline: 'none'
+              }}
+            >
+              {availableMonths.map(m => (
+                <option key={m} value={m} style={{ background: '#0f172a' }}>
+                  {new Date(m + '-01').toLocaleString('en', { month: 'long', year: 'numeric' })}
+                </option>
+              ))}
+            </select>
           </div>
+        </div>
+        <div className="filter-tabs" style={{ marginBottom: 20 }}>
+          {[['', 'All'], ['0', 'No Follow-up'], ['1', '1 Done'], ['2', '2 Done'], ['3', '3 Done'], ['4', '4 Done'], ['5', '5 ✓'], ['6', 'Sold 💰']].map(([v, lbl]) => (
+            <button 
+              key={v} 
+              className={`ftab ${fuFilter === v ? 'active' : ''}`} 
+              onClick={() => setFuFilter(v)}
+            >
+              {lbl}
+            </button>
+          ))}
         </div>
 
         {/* List */}
@@ -299,7 +340,7 @@ function DeliveryTracker() {
         <span>·</span>
         <span>Repeat Order</span>
         <span>·</span>
-        <span>April 2026</span>
+        <span>{new Date(selectedMonth + '-01').toLocaleString('en', { month: 'long', year: 'numeric' })}</span>
       </footer>
 
       {/* Message Modal */}

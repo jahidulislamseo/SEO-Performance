@@ -83,6 +83,9 @@ def sync():
             doc_id = "".join(c for c in id_str if c.isalnum() or c == '_').strip("_")
             
             doc = {
+                "emp_id": str(r[COL["emp_id"]]).strip(),
+                "emp_name": str(r[COL["emp_name"]]).strip(),
+                "sales_dept": str(r[COL["sales_dept"]]).strip(),
                 "order_num": order_num,
                 "order_link": str(r[COL["order_link"]]),
                 "instruction": str(r[COL["instruction"]]),

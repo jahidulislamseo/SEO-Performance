@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
-load_dotenv()
+env_path = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(env_path)
 
 # ─── CONFIGURATION ──────────────────────────────────────────
 SHEET_ID = os.getenv("SHEET_ID")
@@ -70,6 +71,9 @@ def TEAM_SHIFTS(): return get_config().get("team_shifts", {
 
 # Column indices (0-indexed)
 COL = {
+    "emp_id": 0,      # A
+    "emp_name": 1,    # B
+    "sales_dept": 2,  # C
     "assign": 18,     # S
     "status": 19,     # T
     "service": 20,    # U
@@ -84,7 +88,7 @@ COL = {
     "instruction": 15,# P
     "del_last_time": 24,# Y
     "deadline": 25,   # Z
-    "op_dept": 21,    # V — Team Tag (Op. Department in some views)
+    "op_dept": 26,    # AA — Operational Department
 }
 
 # ─── DATABASE ───────────────────────────────────────────────

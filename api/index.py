@@ -1329,7 +1329,10 @@ def get_delivered_from_db():
             "service": {"$regex": "seo|smm", "$options": "i"}
         }
         if month_filter:
-            query["deliveredDate"] = {"$regex": f"^{month_filter}"}
+            query["$or"] = [
+                {"deliveredDate": {"$regex": f"^{month_filter}"}},
+                {"month": month_filter}
+            ]
         projects = list(db["projects_archive"].find(query, {"_id": 0}).sort("date", -1))
         return jsonify(projects)
     except Exception as e:

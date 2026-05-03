@@ -79,29 +79,27 @@ const CountUp = ({ end, duration = 1500, prefix = '', suffix = '', decimals = 0 
 function KpiReports() {
   const scrollRef = useRef([]);
   const memberCost = 550;
-  const memberCount = 34;
 
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5;
 
   const rawData = [
-    { m: "July '25", d: 27990 },
-    { m: "August '25", d: 24488 },
-    { m: "September '25", d: 28612 },
-    { m: "October '25", d: 29076 },
-    { m: "November '25", d: 26564 },
-    { m: "December '25", d: 25768 },
-    { m: "January '26", d: 26283 },
-    { m: "February '26", d: 25856 },
-    { m: "March '26", d: 34327 },
-    { m: "April '26", d: 20002 }
+    { m: "July '25", d: 27990, members: 35 },
+    { m: "August '25", d: 24488, members: 36 },
+    { m: "September '25", d: 28612, members: 35 },
+    { m: "October '25", d: 29076, members: 34 },
+    { m: "November '25", d: 26564, members: 34 },
+    { m: "December '25", d: 25768, members: 33 },
+    { m: "January '26", d: 26283, members: 37 },
+    { m: "February '26", d: 25856, members: 36 },
+    { m: "March '26", d: 34327, members: 34 }
   ];
 
   const processedData = rawData.map(r => {
-    const cost = memberCount * memberCost;
+    const cost = r.members * memberCost;
     const profit = r.d - cost;
     const profitPct = (profit / r.d) * 100;
-    return { ...r, cost, profit, profitPct, members: memberCount };
+    return { ...r, cost, profit, profitPct };
   });
 
   const totalDelivery = 218153;
@@ -135,6 +133,28 @@ function KpiReports() {
       y: { grid: { color: 'rgba(255,255,255,0.05)', drawBorder: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
       x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
     }
+  };
+
+  const futureMonths = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+  const futureOp = [32000, 32000, 33000, 35000, 36000, 38000, 40000, 40000, 40000, 42000, 43000, 45000];
+  const futureSales = futureOp.map(v => Math.round(v * (600000 / 456000)));
+
+  const futureChartData = {
+    labels: futureMonths,
+    datasets: [
+      {
+        label: 'Sales Target ($)',
+        data: futureSales,
+        backgroundColor: 'rgba(245, 158, 11, 0.8)',
+        borderRadius: 4
+      },
+      {
+        label: 'Operation Target ($)',
+        data: futureOp,
+        backgroundColor: 'rgba(6, 182, 212, 0.8)',
+        borderRadius: 4
+      }
+    ]
   };
 
   return (
@@ -404,6 +424,7 @@ function KpiReports() {
               <thead>
                 <tr>
                   <th>Month</th>
+                  <th>Members</th>
                   <th>Delivery ($)</th>
                   <th>Cost ($)</th>
                   <th>Profit ($)</th>
@@ -414,6 +435,7 @@ function KpiReports() {
                 {processedData.map((r, i) => (
                   <tr key={i}>
                     <td>{r.m}</td>
+                    <td className="bold">{r.members}</td>
                     <td className="money">${r.d.toLocaleString()}</td>
                     <td className="money red">${r.cost.toLocaleString()}</td>
                     <td className="money teal">${r.profit.toLocaleString()}</td>
@@ -422,6 +444,58 @@ function KpiReports() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </section>
+
+        {/* SLIDE 8: 26-27 PLAN */}
+        <section className="section-v4 reveal" id="strategic-plan" ref={el => scrollRef.current[7] = el}>
+          <div className="section-tag"><span></span> 07 — Future Roadmap</div>
+          <h2>2026–2027 Financial Plan</h2>
+          <p className="section-desc">Our financial and strategic roadmap for the Jul 2026 – Jun 2027 fiscal year, balancing Operational capacity with aggressive Sales targets.</p>
+
+          <div style={{ height: '300px', marginBottom: '40px', background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', padding: '20px' }}>
+            <Bar 
+              data={futureChartData} 
+              options={{
+                ...chartOptions, 
+                plugins: { legend: { display: true, position: 'top', labels: { color: '#94a3b8', font: { size: 11, family: 'Manrope' } } } },
+                scales: {
+                  x: { stacked: true, grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                  y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } }
+                }
+              }} 
+            />
+          </div>
+
+          <div className="repeat-grid-v4">
+            <div className="repeat-card-v4">
+              <div className="repeat-num-v4" style={{fontSize: "48px", color: "rgba(16, 185, 129, 0.2)"}}>01</div>
+              <div>
+                <h4 style={{color: "#10b981"}}>$1.05M Annual Target</h4>
+                <p>Scaling combined revenue to <strong>$1,056,000</strong> for the fiscal year. This requires an average monthly pipeline of $88,000 across all channels.</p>
+              </div>
+            </div>
+            <div className="repeat-card-v4">
+              <div className="repeat-num-v4" style={{fontSize: "48px", color: "rgba(6, 182, 212, 0.2)"}}>02</div>
+              <div>
+                <h4 style={{color: "#06b6d4"}}>$456k Operations Target</h4>
+                <p>Scaling our internal operational delivery capacity to handle <strong>$456,000</strong> annually ($38,000/mo avg) with strict quality control.</p>
+              </div>
+            </div>
+            <div className="repeat-card-v4">
+              <div className="repeat-num-v4" style={{fontSize: "48px", color: "rgba(245, 158, 11, 0.2)"}}>03</div>
+              <div>
+                <h4 style={{color: "#f59e0b"}}>$600k Sales Target</h4>
+                <p>Aggressive expansion in the Sales team to bring in <strong>$600,000</strong> annually ($50,000/mo avg) via Fiverr, Upwork, and high-ticket B2B clients.</p>
+              </div>
+            </div>
+            <div className="repeat-card-v4">
+              <div className="repeat-num-v4" style={{fontSize: "48px", color: "rgba(59, 130, 246, 0.2)"}}>04</div>
+              <div>
+                <h4 style={{color: "#3b82f6"}}>B2B & Repeat Expansion</h4>
+                <p>Shifting focus heavily towards Repeat buyers and B2B contracts to stabilize monthly revenue and reduce dependency on new marketplace leads.</p>
+              </div>
+            </div>
           </div>
         </section>
 

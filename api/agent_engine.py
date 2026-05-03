@@ -64,6 +64,7 @@ def get_raw_dataframe():
                 if idx < len(df.columns):
                     df.rename(columns={df.columns[idx]: name}, inplace=True)
                     
+        logger.info(f"DataFrame columns: {df.columns.tolist()}")
         return df
     except Exception as e:
         logger.exception(f"Critical error in get_raw_dataframe: {e}")
@@ -120,6 +121,9 @@ def backup_to_db(df, db):
                 "assign": p.get("assign"), "team": p.get("op_dept"), "link": p.get("order_link"),
                 "instruction": p.get("instruction"), "profile": p.get("profile"), 
                 "deadline": p.get("deadline"), 
+                "emp_id": p.get("emp_id"),
+                "emp_name": p.get("emp_name"),
+                "sales_dept": p.get("sales_dept"),
                 "delLastTime": p.get("del_last_time") if p.get("del_last_time") else p.get("del_date"),
                 "last_seen": time.time()
             }

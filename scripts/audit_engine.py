@@ -5,8 +5,10 @@ import pandas as pd
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
 
-# Add parent directory to path so we can import shared_utils and agent_engine
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add project root and api directory to path
+root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(root_dir)
+sys.path.append(os.path.join(root_dir, "api"))
 
 from shared_utils import (
     SHEET_ID, MONGO_URI, DB_NAME, COL,
