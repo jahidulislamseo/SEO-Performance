@@ -1,7 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+} from 'chart.js';
+import { Line, Bar } from 'react-chartjs-2';
 import '../assets/css/employee.css';
 
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 const PROJECTS = [
   { title: 'Local SEO — Dhaka Restaurant', service: 'Local SEO', amtX: 120, status: 'Delivered', date: 'Apr 18' },
   { title: 'GMB Optimization × 3 Locations', service: 'GMB', amtX: 90, status: 'Delivered', date: 'Apr 15' },
@@ -490,27 +514,30 @@ function EmployeePortal() {
 
           {/* PERFORMANCE TAB */}
           {navItem === 'performance' && (
-            <div className="overview-grid">
-              <PerformanceRing pct={pct} da={da} ds={ds} user={user} large />
-              <div className="emp-card">
-                <div className="emp-card-header">
-                  <div className="emp-card-title">📊 Monthly Target</div>
-                </div>
-                <div style={{ padding: 24 }}>
-                  {[
-                    { label: 'Target', value: `$${(user.target || 1100).toLocaleString()}`, color: '#64748b' },
-                    { label: 'Delivered', value: `$${(user.deliveredAmt || 0).toLocaleString()}`, color: '#10b981' },
-                    { label: 'WIP', value: `$${(user.wipAmt || 0).toLocaleString()}`, color: '#f59e0b' },
-                    { label: 'Remaining', value: `$${Math.max(0, (user.target || 1100) - (user.deliveredAmt || 0)).toLocaleString()}`, color: '#3b82f6' },
-                  ].map(row => (
-                    <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                      <span style={{ fontSize: 12, color: '#94a3b8' }}>{row.label}</span>
-                      <span style={{ fontSize: 16, fontWeight: 900, color: row.color }}>{row.value}</span>
-                    </div>
-                  ))}
+            <>
+              <div className="overview-grid">
+                <PerformanceRing pct={pct} da={da} ds={ds} user={user} large />
+                <div className="emp-card">
+                  <div className="emp-card-header">
+                    <div className="emp-card-title">📊 Monthly Target</div>
+                  </div>
+                  <div style={{ padding: 24 }}>
+                    {[
+                      { label: 'Target', value: `$${(user.target || 1100).toLocaleString()}`, color: '#64748b' },
+                      { label: 'Delivered', value: `$${(user.deliveredAmt || 0).toLocaleString()}`, color: '#10b981' },
+                      { label: 'WIP', value: `$${(user.wipAmt || 0).toLocaleString()}`, color: '#f59e0b' },
+                      { label: 'Remaining', value: `$${Math.max(0, (user.target || 1100) - (user.deliveredAmt || 0)).toLocaleString()}`, color: '#3b82f6' },
+                    ].map(row => (
+                      <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                        <span style={{ fontSize: 12, color: '#94a3b8' }}>{row.label}</span>
+                        <span style={{ fontSize: 16, fontWeight: 900, color: row.color }}>{row.value}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
+              <LifetimePerformanceGraph user={user} />
+            </>
           )}
 
           {/* SETTINGS TAB */}
@@ -2608,6 +2635,160 @@ const AdminProjects = () => {
             </tbody>
           </table>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const LifetimePerformanceGraph = ({ user }) => {
+  const [history, setHistory] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    if (!user?.id) return;
+    setLoading(true);
+    fetch(`/api/user/work-history?memberId=${user.id}`)
+      .then(r => r.json())
+      .then(data => {
+        setHistory(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [user?.id]);
+  
+  // Aggregate data by month-year
+  const monthlyData = {};
+  let lifetimeTotal = 0;
+  
+  history.forEach(p => {
+    if (!p.date || p.status === 'Cancelled') return;
+    let month = p.month;
+    if (!month) {
+      const monthMatch = p.date.match(/([a-zA-Z]{3})/);
+      month = monthMatch ? monthMatch[1] : 'Unknown';
+    }
+    
+    if (!monthlyData[month]) {
+      monthlyData[month] = { count: 0, revenue: 0 };
+    }
+    
+    const amt = Number(p.share || p.amtX || 0);
+    monthlyData[month].count += 1;
+    if (p.status === 'Delivered') {
+      monthlyData[month].revenue += amt;
+      lifetimeTotal += amt;
+    }
+  });
+
+  // Sort months chronologically if they are in YYYY-MM format, otherwise alphabetically or keep order
+  const labels = Object.keys(monthlyData).sort((a, b) => a.localeCompare(b));
+  
+  const revenueData = labels.map(l => monthlyData[l].revenue);
+  const countData = labels.map(l => monthlyData[l].count);
+
+  const data = {
+    labels,
+    datasets: [
+      {
+        type: 'line',
+        label: 'Revenue ($)',
+        data: revenueData,
+        borderColor: '#10b981',
+        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        yAxisID: 'y'
+      },
+      {
+        type: 'bar',
+        label: 'Projects Completed',
+        data: countData,
+        backgroundColor: 'rgba(59, 130, 246, 0.8)',
+        borderRadius: 4,
+        yAxisID: 'y1'
+      }
+    ]
+  };
+
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { labels: { color: '#94a3b8', font: { size: 11 } } }
+    },
+    scales: {
+      x: { grid: { display: false }, ticks: { color: '#94a3b8' } },
+      y: { 
+        type: 'linear', display: true, position: 'left',
+        grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#10b981' }
+      },
+      y1: {
+        type: 'linear', display: true, position: 'right',
+        grid: { drawOnChartArea: false }, ticks: { color: '#3b82f6', stepSize: 1 }
+      }
+    }
+  };
+
+  return (
+    <div className="emp-card" style={{ marginTop: '20px' }}>
+      <div className="emp-card-header">
+        <div className="emp-card-title">📈 Lifetime Performance</div>
+        <span style={{ fontSize: 11, color: '#10b981', fontWeight: 900 }}>Total Earned: ${lifetimeTotal.toLocaleString()}</span>
+      </div>
+      <div style={{ padding: 24 }}>
+        {loading ? (
+          <div style={{ textAlign: 'center', color: '#64748b', padding: '40px 0' }}>Loading historical data...</div>
+        ) : labels.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#64748b', padding: '40px 0' }}>No historical data available</div>
+        ) : (
+          <>
+            <div style={{ height: 300 }}>
+              <Bar data={data} options={options} />
+            </div>
+            
+            <div style={{ marginTop: 32 }}>
+              <div style={{ fontSize: 13, fontWeight: 800, color: '#e2e8f0', marginBottom: 16 }}>📊 Month-over-Month Comparison</div>
+              <div style={{ overflowX: 'auto', background: 'rgba(255,255,255,0.02)', borderRadius: 12, padding: 12 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: 'rgba(255,255,255,0.03)', textAlign: 'left' }}>
+                      <th style={{ padding: '12px 16px', color: '#94a3b8', fontWeight: 700, borderRadius: '8px 0 0 8px' }}>Month</th>
+                      <th style={{ padding: '12px 16px', color: '#94a3b8', fontWeight: 700, textAlign: 'center' }}>Projects</th>
+                      <th style={{ padding: '12px 16px', color: '#94a3b8', fontWeight: 700, textAlign: 'right' }}>Revenue</th>
+                      <th style={{ padding: '12px 16px', color: '#94a3b8', fontWeight: 700, textAlign: 'right', borderRadius: '0 8px 8px 0' }}>Difference (MoM)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {labels.map((month, idx) => {
+                      const rev = monthlyData[month].revenue;
+                      const prevRev = idx > 0 ? monthlyData[labels[idx - 1]].revenue : null;
+                      let diffStr = '—';
+                      let diffColor = '#94a3b8';
+                      
+                      if (prevRev !== null) {
+                        const diff = rev - prevRev;
+                        if (diff > 0) { diffStr = `+$${diff.toLocaleString()}`; diffColor = '#10b981'; }
+                        else if (diff < 0) { diffStr = `-$${Math.abs(diff).toLocaleString()}`; diffColor = '#ef4444'; }
+                        else { diffStr = '$0'; }
+                      }
+                      
+                      return (
+                        <tr key={month} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                          <td style={{ padding: '12px 16px', color: '#f1f5f9', fontWeight: 700 }}>{month}</td>
+                          <td style={{ padding: '12px 16px', color: '#60a5fa', textAlign: 'center', fontWeight: 800 }}>{monthlyData[month].count}</td>
+                          <td style={{ padding: '12px 16px', color: '#10b981', textAlign: 'right', fontWeight: 800 }}>${rev.toLocaleString()}</td>
+                          <td style={{ padding: '12px 16px', color: diffColor, textAlign: 'right', fontWeight: 700 }}>{diffStr}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

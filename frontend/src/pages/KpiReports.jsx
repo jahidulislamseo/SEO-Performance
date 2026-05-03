@@ -226,6 +226,60 @@ function KpiReports() {
           </div>
         </section>
 
+        {/* --- SLIDE 1.5: PERSONAL REFLECTIONS --- */}
+        <section className="section-v4">
+          <div className="section-tag"><span></span>Reflections</div>
+          <h2>Personal Reflections</h2>
+          <p className="section-desc">An honest evaluation of leadership missteps and foundational achievements during this period.</p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px', alignItems: 'stretch' }}>
+            
+            {/* Mistakes Column */}
+            <div style={{ background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', padding: '40px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--red)' }}></div>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', color: 'var(--red)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '20px' }}>⚠️</span> Critical Mistakes
+              </h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {[
+                  "The sales team was weak, but I did not take any proper action. I should have taken the initiative to hire better sales members or improve the team.",
+                  "The SEO team was also not strong most of the time, but I did not raise this issue or take steps to fix it.",
+                  "When sales started to drop continuously, I should have planned alternative services (like Paid Ads, CRO, etc.) along with SEO—but I did not do that.",
+                  "I failed to take quick action when I first saw early warning signs of the problem."
+                ].map((mistake, i) => (
+                  <li key={i} style={{ display: 'flex', gap: '15px', color: 'var(--gray)', fontSize: '15px', lineHeight: '1.6' }}>
+                    <span style={{ color: 'var(--red)', fontWeight: '800', fontFamily: 'var(--font-display)', fontSize: '18px' }}>0{i+1}.</span>
+                    <span>{mistake}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Achievements Column */}
+            <div style={{ background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', padding: '40px', position: 'relative', overflow: 'hidden' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: 'var(--teal)' }}></div>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', color: 'var(--teal)', marginBottom: '30px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '20px' }}>✅</span> Key Achievements
+              </h3>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                {[
+                  "I successfully built 4 separate teams to handle different responsibilities effectively.",
+                  "From those 4 teams, I developed 4 team leaders who can take responsibility and manage operations even in my absence.",
+                  "I created strong coordination between the Sales and Operations teams, which improved overall workflow and communication.",
+                  "I improved the team structure and work process, which helped tasks run more smoothly.",
+                  "I gained strong leadership experience by managing multiple teams and handling responsibilities under pressure."
+                ].map((achievement, i) => (
+                  <li key={i} style={{ display: 'flex', gap: '15px', color: 'var(--gray)', fontSize: '15px', lineHeight: '1.6' }}>
+                    <span style={{ color: 'var(--teal)', fontSize: '18px' }}>✓</span>
+                    <span>{achievement}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div>
+        </section>
+
         {/* SLIDE 2: CHALLENGES */}
         <section className="section-v4 reveal" id="challenges" ref={el => scrollRef.current[1] = el}>
           <div className="section-tag"><span></span> 01 — Key Challenges</div>
