@@ -227,7 +227,7 @@ function KpiReports() {
         </section>
 
         {/* --- SLIDE 1.5: PERSONAL REFLECTIONS --- */}
-        <section className="section-v4">
+        <section className="section-v4" style={{ paddingTop: '20px', marginTop: '-40px' }}>
           <div className="section-tag"><span></span>Reflections</div>
           <h2>Personal Reflections</h2>
           <p className="section-desc">An honest evaluation of leadership missteps and foundational achievements during this period.</p>
