@@ -979,7 +979,8 @@ def update_user_profile():
 @app.route("/api/admin/members", methods=["GET"])
 def admin_get_members():
     db = get_db()
-    members = list(db["members"].find({}, {"_id": 0}))
+    # Filter to show only official members as requested
+    members = list(db["members"].find({"isOfficial": True}, {"_id": 0}))
     return jsonify(members)
 
 @app.route("/api/admin/members/update", methods=["POST"])
@@ -989,7 +990,7 @@ def admin_update_member():
     if not emp_id: return jsonify({"error": "missing id"}), 400
     db = get_db()
     # Allow updating more fields in admin mode
-    allowed_fields = ["name", "fullName", "role", "team", "target", "email", "phone", "password", "isAdmin", "offDay", "avatar"]
+    allowed_fields = ["name", "fullName", "role", "team", "target", "email", "phone", "password", "isAdmin", "offDay", "avatar", "isOfficial"]
     update_data = {k: v for k, v in data.items() if k in allowed_fields}
     
     old_doc = db["members"].find_one({"id": emp_id})
@@ -1018,6 +1019,8 @@ def admin_add_member():
     data = request.get_json(force=True)
     if not data.get("id") or not data.get("name"): return jsonify({"error": "missing data"}), 400
     db = get_db()
+    # Set isOfficial to True for manually added members
+    data["isOfficial"] = True
     db["members"].insert_one(data)
     clear_api_cache()
     audit_log(db, "member_added", f"Added member {data.get('id')} - {data.get('name')}")

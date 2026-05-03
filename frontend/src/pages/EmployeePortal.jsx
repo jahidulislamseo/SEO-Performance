@@ -1458,8 +1458,8 @@ const AdminMembers = ({ members }) => {
     { label: 'Monday', value: 0 },
   ];
 
-  const openEdit = (m) => { setForm({ ...m, isAdmin: m.isAdmin || false, offDay: m.offDay ?? 4 }); setModal('edit'); };
-  const openAdd = () => { setForm({ id: '', name: '', fullName: '', team: TEAMS[0], role: ROLES[0], target: 1100, email: '', phone: '', password: 'pass123', isAdmin: false, offDay: 4 }); setModal('add'); };
+  const openEdit = (m) => { setForm({ ...m, isAdmin: m.isAdmin || false, isOfficial: m.isOfficial || false, offDay: m.offDay ?? 4 }); setModal('edit'); };
+  const openAdd = () => { setForm({ id: '', name: '', fullName: '', team: TEAMS[0], role: ROLES[0], target: 1100, email: '', phone: '', password: 'pass123', isAdmin: false, isOfficial: true, offDay: 4 }); setModal('add'); };
 
   const save = async () => {
     const url = modal === 'add' ? '/api/admin/members/add' : '/api/admin/members/update';
@@ -1519,6 +1519,14 @@ const AdminMembers = ({ members }) => {
                   <div style={{ position: 'absolute', top: 3, left: form.isAdmin ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
                 </button>
                 <span style={{ fontSize: 12, color: form.isAdmin ? '#f59e0b' : '#475569' }}>{form.isAdmin ? 'Admin' : 'Regular'}</span>
+              </div>
+            </Field>
+            <Field label="Official Status">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 4 }}>
+                <button onClick={() => f('isOfficial')(!form.isOfficial)} style={{ width: 40, height: 22, borderRadius: 99, border: 'none', cursor: 'pointer', background: form.isOfficial ? '#10b981' : 'rgba(255,255,255,0.08)', transition: 'background 0.2s', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: 3, left: form.isOfficial ? 21 : 3, width: 16, height: 16, borderRadius: '50%', background: 'white', transition: 'left 0.2s' }} />
+                </button>
+                <span style={{ fontSize: 12, color: form.isOfficial ? '#10b981' : '#475569' }}>{form.isOfficial ? 'Official' : 'Guest'}</span>
               </div>
             </Field>
           </div>
