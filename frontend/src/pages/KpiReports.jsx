@@ -80,6 +80,17 @@ function KpiReports() {
   const scrollRef = useRef([]);
   const memberCost = 550;
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  useEffect(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user'));
+      if (u && u.isAdmin) setIsAdmin(true);
+    } catch (e) {}
+    setAuthChecked(true);
+  }, []);
+
   const [currentPage, setCurrentPage] = useState(1);
   const rowsPerPage = 5;
 
@@ -112,6 +123,7 @@ function KpiReports() {
   const totalPages = Math.ceil(processedData.length / rowsPerPage);
 
   useEffect(() => {
+    if (!isAdmin) return;
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
@@ -123,7 +135,7 @@ function KpiReports() {
     const currentRefs = scrollRef.current;
     currentRefs.forEach(el => el && observer.observe(el));
     return () => currentRefs.forEach(el => el && observer.unobserve(el));
-  }, []);
+  }, [isAdmin]);
 
   const chartOptions = {
     responsive: true,
@@ -156,6 +168,17 @@ function KpiReports() {
       }
     ]
   };
+
+  if (!authChecked) return <div style={{ background: '#09111f', minHeight: '100vh' }}></div>;
+  if (!isAdmin) {
+    return (
+      <div style={{ background: '#09111f', color: '#fff', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontFamily: 'Manrope, sans-serif' }}>
+        <h1 style={{ color: '#e5534b', marginBottom: '20px', fontFamily: 'Syne, sans-serif', fontSize: '48px' }}>Access Denied</h1>
+        <p style={{ color: '#94a3b8', marginBottom: '30px', fontSize: '16px' }}>Only Administrators have permission to view the KPI Reports.</p>
+        <Link to="/" style={{ padding: '12px 24px', background: '#17c3a0', color: '#fff', textDecoration: 'none', borderRadius: '4px', fontWeight: '800', letterSpacing: '1px', fontSize: '12px', textTransform: 'uppercase' }}>Return to Dashboard</Link>
+      </div>
+    );
+  }
 
   return (
     <div className="kpi-presentation-v4">
