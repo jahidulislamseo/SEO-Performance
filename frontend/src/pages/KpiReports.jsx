@@ -185,10 +185,10 @@ function KpiReports() {
   };
 
   const planBData = {
-    labels: ['SEO', 'SMM', 'CMS', 'Alternative Services'],
+    labels: ['SEO', 'SMM', 'CMS'],
     datasets: [{
-      data: [50, 30, 10, 10],
-      backgroundColor: ['#17c3a0', '#e5534b', '#3a86e8', '#9b5de5'],
+      data: [50, 40, 10],
+      backgroundColor: ['#17c3a0', '#e5534b', '#3a86e8'],
       borderColor: 'rgba(255,255,255,0.1)',
       borderWidth: 2,
       hoverOffset: 15
@@ -196,10 +196,10 @@ function KpiReports() {
   };
 
   const planCData = {
-    labels: ['SEO', 'SMM', 'CMS', 'Alternative Services'],
+    labels: ['SEO', 'SMM', 'CMS'],
     datasets: [{
-      data: [45, 30, 10, 15],
-      backgroundColor: ['#17c3a0', '#e5534b', '#3a86e8', '#9b5de5'],
+      data: [45, 45, 10],
+      backgroundColor: ['#17c3a0', '#e5534b', '#3a86e8'],
       borderColor: 'rgba(255,255,255,0.1)',
       borderWidth: 2,
       hoverOffset: 15
@@ -301,12 +301,11 @@ function KpiReports() {
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 {[
                   "The sales team was weak, but I did not take any proper action. I should have taken the initiative to hire better sales members or improve the team.",
-                  "SEO team consistency was an operational bottleneck that required more immediate strategic intervention and oversight.",
                   "When sales started to drop continuously, I should have planned alternative services.",
                   "I failed to take quick action when I first saw early warning signs of the problem."
                 ].map((mistake, i) => (
                   <li key={i} style={{ display: 'flex', gap: '15px', color: 'var(--gray)', fontSize: '15px', lineHeight: '1.6' }}>
-                    <span style={{ color: 'var(--red)', fontWeight: '800', fontFamily: 'var(--font-display)', fontSize: '18px' }}>0{i + 1}.</span>
+                    <span style={{ color: 'var(--red)', fontSize: '18px' }}>•</span>
                     <span>{mistake}</span>
                   </li>
                 ))}
@@ -722,8 +721,7 @@ function KpiReports() {
             {/* PLAN A: VISUAL INFOGRAPHIC */}
             <div style={{ background: 'linear-gradient(145deg, var(--navy2), var(--navy))', border: '1px solid var(--border)', borderRadius: '8px', padding: '35px 25px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--teal)', boxShadow: '0 0 20px var(--teal)' }}></div>
-               <div style={{ fontSize: '10px', color: 'var(--teal)', letterSpacing: '2px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px' }}>Plan A: Jul – Sep</div>
-               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '25px', lineHeight: '1.1' }}>Service Mix Target</h3>
+               <div style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--teal)', letterSpacing: '1px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '30px' }}>Plan A: Jul – Sep</div>
                
                <div style={{ height: '200px', position: 'relative', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
                 <div style={{ width: '200px', height: '100%', position: 'relative' }}>
@@ -757,7 +755,9 @@ function KpiReports() {
                         <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
                         <span style={{ fontSize: '12px', color: 'var(--gray)' }}>{s.l}</span>
                       </div>
-                      <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                      {s.l !== 'Alternative Services' && (
+                        <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                      )}
                     </div>
                   ))}
                </div>
@@ -766,8 +766,7 @@ function KpiReports() {
             {/* PLAN B: VISUAL INFOGRAPHIC */}
             <div style={{ background: 'linear-gradient(145deg, var(--navy2), var(--navy))', border: '1px solid var(--border)', borderRadius: '8px', padding: '35px 25px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--gold)', boxShadow: '0 0 20px var(--gold)' }}></div>
-               <div style={{ fontSize: '10px', color: 'var(--gold)', letterSpacing: '2px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px' }}>Plan B: Oct – Dec</div>
-               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '25px', lineHeight: '1.1' }}>Retention Pivot</h3>
+               <div style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--gold)', letterSpacing: '1px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '30px' }}>Plan B: Oct – Dec</div>
                
                <div style={{ height: '200px', position: 'relative', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
                 <div style={{ width: '200px', height: '100%', position: 'relative' }}>
@@ -793,16 +792,18 @@ function KpiReports() {
                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
                     { l: 'SEO Operations', v: '50%', c: 'var(--teal)' },
-                    { l: 'SMM Integration', v: '30%', c: 'var(--red)' },
+                    { l: 'SMM Integration', v: '40%', c: 'var(--red)' },
                     { l: 'CMS Handling', v: '10%', c: 'var(--blue)' },
-                    { l: 'Alternative Services', v: '10%', c: 'var(--purple)' }
+                    { l: 'Alternative Services', v: '', c: 'var(--purple)' }
                   ].map((s, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
                         <span style={{ fontSize: '12px', color: 'var(--gray)' }}>{s.l}</span>
                       </div>
-                      <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                      {s.v && (
+                        <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                      )}
                     </div>
                   ))}
                </div>
@@ -811,8 +812,7 @@ function KpiReports() {
             {/* PLAN C: VISUAL INFOGRAPHIC */}
             <div style={{ background: 'linear-gradient(145deg, var(--navy2), var(--navy))', border: '1px solid var(--border)', borderRadius: '8px', padding: '35px 25px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--blue)', boxShadow: '0 0 20px var(--blue)' }}></div>
-               <div style={{ fontSize: '10px', color: 'var(--blue)', letterSpacing: '2px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '15px' }}>Plan C: Jan – Mar</div>
-               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '24px', marginBottom: '25px', lineHeight: '1.1' }}>Scaling Efficiency</h3>
+               <div style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--blue)', letterSpacing: '1px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '30px' }}>Plan C: Jan – Mar</div>
                
                <div style={{ height: '200px', position: 'relative', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
                 <div style={{ width: '200px', height: '100%', position: 'relative' }}>
@@ -838,16 +838,18 @@ function KpiReports() {
                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
                     { l: 'SEO Operations', v: '45%', c: 'var(--teal)' },
-                    { l: 'SMM Integration', v: '30%', c: 'var(--red)' },
+                    { l: 'SMM Integration', v: '45%', c: 'var(--red)' },
                     { l: 'CMS Handling', v: '10%', c: 'var(--blue)' },
-                    { l: 'Alternative Services', v: '15%', c: 'var(--purple)' }
+                    { l: 'Alternative Services', v: '', c: 'var(--purple)' }
                   ].map((s, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
                         <span style={{ fontSize: '12px', color: 'var(--gray)' }}>{s.l}</span>
                       </div>
-                      <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                      {s.v && (
+                        <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                      )}
                     </div>
                   ))}
                </div>
