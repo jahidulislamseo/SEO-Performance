@@ -116,6 +116,9 @@ function KpiReports() {
   const totalDelivery = 218153;
   const totalCancellation = 15209;
   const cancellationRate = 6.98;
+  const totalDeliveryOrders = 1134;
+  const totalCancellationOrders = 73;
+  const cancellationRateOrders = 6.4;
 
   const indexOfLastRow = currentPage * rowsPerPage;
   const indexOfFirstRow = indexOfLastRow - rowsPerPage;
@@ -204,10 +207,10 @@ function KpiReports() {
   };
 
   const repeatTargetData = {
-    labels: ['Current', 'Q2 Target', 'Year-End Target'],
+    labels: ['July', 'August', 'September', 'October', 'November', 'December', 'January', 'February', 'March', 'April'],
     datasets: [{
-      label: 'Repeat Rate (%)',
-      data: [10, 25, 40],
+      label: 'Repeat Revenue ($)',
+      data: [9276, 8534, 8868, 10104, 5940, 5928, 6405, 5248, 10975, 9213],
       borderColor: '#17c3a0',
       backgroundColor: 'rgba(23, 195, 160, 0.1)',
       fill: true,
@@ -506,7 +509,7 @@ function KpiReports() {
                   ...chartOptions,
                   plugins: { legend: { display: false } },
                   scales: {
-                    y: { min: 0, max: 100, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 } } },
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => '$' + v.toLocaleString() } },
                     x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
                   }
                 }} 
@@ -556,18 +559,40 @@ function KpiReports() {
           <div className="cancel-layout-v4">
             <div className="cancel-stats-col">
               <div className="sum-card-v4 delivery">
-                <div><div className="lbl">Total Delivery</div><div className="val">${totalDelivery.toLocaleString()}</div></div>
+                <div style={{ flex: 1 }}>
+                  <div className="lbl">Total Delivery</div>
+                  <div className="val">${totalDelivery.toLocaleString()}</div>
+                  <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '1px' }}>Orders</span>
+                    <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--teal)', fontFamily: 'var(--font-display)' }}>{totalDeliveryOrders.toLocaleString()}</span>
+                  </div>
+                </div>
                 <span className="icon">📦</span>
               </div>
               <div className="sum-card-v4 total-cancel">
-                <div><div className="lbl">Total Cancellation</div><div className="val">${totalCancellation.toLocaleString()}</div></div>
+                <div style={{ flex: 1 }}>
+                  <div className="lbl">Total Cancellation</div>
+                  <div className="val">${totalCancellation.toLocaleString()}</div>
+                  <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '1px' }}>Orders</span>
+                    <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--red)', fontFamily: 'var(--font-display)' }}>{totalCancellationOrders.toLocaleString()}</span>
+                  </div>
+                </div>
                 <span className="icon">❌</span>
               </div>
               <div className="sum-card-v4 pct">
-                <div><div className="lbl">Cancellation Rate</div><div className="val">{cancellationRate}%</div></div>
+                <div style={{ flex: 1 }}>
+                  <div className="lbl">Cancellation Rate</div>
+                  <div className="val">{cancellationRate}%</div>
+                  <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '11px', color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '1px' }}>By Orders</span>
+                    <span style={{ fontSize: '16px', fontWeight: '800', color: 'var(--gold)', fontFamily: 'var(--font-display)' }}>{cancellationRateOrders}%</span>
+                  </div>
+                </div>
                 <span className="icon">📊</span>
               </div>
             </div>
+
             <div className="cancel-table-col">
               <table className="cancel-table-v4">
                 <thead><tr><th>Month</th><th>Cancellation ($)</th></tr></thead>

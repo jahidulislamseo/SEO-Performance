@@ -411,26 +411,49 @@ def process_and_save(df, db):
     for team in targets.keys():
         tag = TEAM_TAG_MAP.get(team, team.replace(" ", "_"))
         
-        # Filter original dataframe for this team's tag in op_dept
+        # 1. Start with projects specifically assigned to members of this team
+        team_members = [m for m in member_summaries if m.get("team") == team]
+        m_delivered_amt = sum(m.get("deliveredAmt", 0) for m in team_members)
+        m_wip_amt = sum(m.get("wipAmt", 0) for m in team_members)
+        m_delivered_count = sum(m.get("delivered", 0) for m in team_members)
+        m_wip_count = sum(m.get("wip", 0) for m in team_members)
+        m_rev_count = sum(m.get("revision", 0) for m in team_members)
+        m_cancel_count = sum(m.get("cancelled", 0) for m in team_members)
+        m_total_projects = sum(m.get("total", 0) for m in team_members)
+
+        # 2. Add projects that match the op_dept tag but might not be assigned to an official member
+        # (This ensures we capture 'unassigned' or 'external' deliveries for that team)
         t_df = df[df['op_dept'].astype(str).str.strip().str.lower() == tag.lower()]
+        
+        # To avoid double counting, we'll only take the difference if the op_dept total is higher
+        # OR we can just rely on member aggregation since the user wants it 'team অনুযায়ী'
+        # Actually, let's just use member aggregation as the primary source of truth now
+        # but keep t_df for metadata like project list if needed.
         
         delivered = t_df[t_df['status'] == 'Delivered']
         wip_rev = t_df[t_df['status'].isin(['WIP', 'Revision'])]
         
+        # Final Team Values (Max of member sum or sheet tag sum to be safe)
+        final_delivered_amt = max(m_delivered_amt, round(delivered['amount_x'].sum(), 2))
+        final_wip_amt = max(m_wip_amt, round(wip_rev['amount_x'].sum(), 2))
+        final_delivered_count = max(m_delivered_count, len(delivered))
+        final_total_projects = max(m_total_projects, len(t_df))
+
         team_data[team] = {
             "name": team,
             "leader": mgmt["leaders"].get(team, {}).get("name", "N/A"),
-            "amt": round(delivered['amount_x'].sum(), 2),
-            "deliveredAmt": round(delivered['amount_x'].sum(), 2),
-            "wipAmt": round(wip_rev['amount_x'].sum(), 2),
-            "projects": len(t_df),
-            "delivered": len(delivered),
-            "wip": len(t_df[t_df['status'] == 'WIP']),
-            "revision": len(t_df[t_df['status'] == 'Revision']),
-            "cancelled": len(t_df[t_df['status'] == 'Cancelled']),
+            "amt": final_delivered_amt,
+            "deliveredAmt": final_delivered_amt,
+            "wipAmt": final_wip_amt,
+            "projects": final_total_projects,
+            "delivered": final_delivered_count,
+            "wip": max(m_wip_count, len(t_df[t_df['status'] == 'WIP'])),
+            "revision": max(m_rev_count, len(t_df[t_df['status'] == 'Revision'])),
+            "cancelled": max(m_cancel_count, len(t_df[t_df['status'] == 'Cancelled'])),
             "target": targets.get(team, 0),
-            "remaining": round(targets.get(team, 0) - round(delivered['amount_x'].sum(), 2), 2),
-            "progress": round((round(delivered['amount_x'].sum(), 2) / targets.get(team, 0)) * 100, 1) if targets.get(team, 0) else 0
+            "remaining": round(targets.get(team, 0) - final_delivered_amt, 2),
+            "progress": round((final_delivered_amt / targets.get(team, 0)) * 100, 1) if targets.get(team, 0) else 0,
+            "members": [{"id": m["id"], "name": m["name"], "deliveredAmt": m["deliveredAmt"]} for m in team_members]
         }
 
     # 7. Save to MongoDB

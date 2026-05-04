@@ -1473,7 +1473,7 @@ const AdminMembers = ({ members }) => {
   const [confirmDel, setConfirmDel] = React.useState(null);
 
   React.useEffect(() => {
-    fetch('/api/admin/members').then(r => r.json()).then(setList);
+    fetch('/api/admin/members').then(r => r.json()).then(d => setList(Array.isArray(d) ? d.sort((a, b) => (a.name || "").localeCompare(b.name || "")) : []));
   }, []);
 
   const showToast = (msg, type = 'ok') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3000); };
@@ -1503,7 +1503,7 @@ const AdminMembers = ({ members }) => {
     else showToast(d.error || 'Error', 'error');
   };
 
-  const visible = list.filter(m => !search || m.name?.toLowerCase().includes(search.toLowerCase()) || m.id?.includes(search));
+  const visible = list.filter(m => !search || m.name?.toLowerCase().includes(search.toLowerCase()) || m.id?.includes(search)).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
   const f = (k) => (v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -2199,7 +2199,15 @@ const UserSettingsPage = ({ user, setUser }) => {
 // ─── OverviewDashboard ──────────────────────────────────────────
 const TeamReportCard = ({ teamData }) => {
   if (!teamData) return null;
-  const { name, leader, deliveredAmt, target, wipAmt, remaining, progress, delivered, wip, revision, cancelled, projects } = teamData;
+  let { name, leader, deliveredAmt, target, wipAmt, remaining, progress, delivered, wip, revision, cancelled, projects, members } = teamData;
+  // Fallback: If deliveredAmt is 0 but we have members, sum their performance
+  if (!deliveredAmt && members && members.length > 0) {
+    deliveredAmt = members.reduce((sum, m) => sum + (m.deliveredAmt || 0), 0);
+    wipAmt = members.reduce((sum, m) => sum + (m.wipAmt || 0), 0);
+    target = members.reduce((sum, m) => sum + (m.target || 0), 0);
+    remaining = Math.max(0, target - deliveredAmt);
+    progress = target > 0 ? Math.min(100, Math.round((deliveredAmt / target) * 100)) : 0;
+  }
   const fmtK = (val) => '$' + (val / 1000).toFixed(1) + 'K';
   
   return (
@@ -2435,7 +2443,7 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
             <span style={{ fontSize: 10, fontWeight: 800, color: '#3b82f6', background: 'rgba(59,130,246,0.1)', padding: '4px 8px', borderRadius: 6 }}>TEAM VIEW</span>
           </div>
           <div style={{ padding: '4px 0 8px' }}>
-            {members.filter(m => m.team === (user.team || 'GEO Rankers')).sort((a,b) => (b.deliveredAmt||0) - (a.deliveredAmt||0)).map((m, i) => {
+            {members.filter(m => m.team === (user.team || 'GEO Rankers')).sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((m, i) => {
               const mp = pctOf(m.deliveredAmt, m.target);
               return (
                 <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', background: m.id === user.id ? 'rgba(59,130,246,0.05)' : 'transparent' }}>

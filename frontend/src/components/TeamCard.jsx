@@ -15,11 +15,11 @@ const TeamCard = ({ team, teamData = {}, members = [], target = 1100 }) => {
   const totalTarget = teamData.target || members.length * target;
   const totalWip = teamData.wipAmt || members.reduce((s, m) => s + (m.wipAmt || 0), 0);
   
-  const deliveredCount = teamData.delivered !== undefined ? teamData.delivered : members.reduce((s,m)=>s+(m.delivered||0),0);
-  const wipCount = teamData.wip !== undefined ? teamData.wip : members.reduce((s,m)=>s+(m.wip||0),0);
-  const revisionCount = teamData.revision !== undefined ? teamData.revision : members.reduce((s,m)=>s+(m.revision||0),0);
-  const cancelledCount = teamData.cancelled !== undefined ? teamData.cancelled : members.reduce((s,m)=>s+(m.cancelled||0),0);
-  const totalCount = teamData.projects !== undefined ? teamData.projects : deliveredCount + wipCount;
+  const deliveredCount = teamData.delivered || members.reduce((s,m)=>s+(m.delivered||0),0);
+  const wipCount = teamData.wip || members.reduce((s,m)=>s+(m.wip||0),0);
+  const revisionCount = teamData.revision || members.reduce((s,m)=>s+(m.revision||0),0);
+  const cancelledCount = teamData.cancelled || members.reduce((s,m)=>s+(m.cancelled||0),0);
+  const totalCount = teamData.projects || members.reduce((s,m)=>s+(m.total||0),0);
 
   const remaining = Math.max(0, totalTarget - totalDelivered);
   const pct = totalTarget > 0 ? Math.min(100, Math.round((totalDelivered / totalTarget) * 100)) : 0;

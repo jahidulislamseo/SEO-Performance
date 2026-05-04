@@ -133,7 +133,7 @@ function MainDashboard() {
     const filteredMembers = members.filter(m =>
       (teamFilter === 'All' || m.team === teamFilter) &&
       (m.name?.toLowerCase().includes(searchQ.toLowerCase()) || m.fullName?.toLowerCase().includes(searchQ.toLowerCase()))
-    );
+    ).sort((a, b) => (a.name || "").localeCompare(b.name || ""));
 
     // Select one best performer per team based on performanceScore
     const topPerformers = [];
@@ -145,6 +145,7 @@ function MainDashboard() {
       }
     });
     Object.values(teamBest)
+      .filter(m => (m.deliveredAmt || 0) > 0)
       .sort((a, b) => {
         const scoreDiff = (b.performanceScore || 0) - (a.performanceScore || 0);
         if (scoreDiff !== 0) return scoreDiff;
