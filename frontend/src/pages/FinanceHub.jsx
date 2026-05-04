@@ -11,6 +11,7 @@ const PLATFORM_MAP = { 'Fiverr': 'Green', 'Upwork': 'Repeat', 'B2B': 'B2B', 'PPH
 const MONTHLY_TARGETS = [32000,32000,33000,35000,36000,38000,40000,40000,40000,42000,43000,45000];
 const REPEAT_VALS     = [5000,6000,5500,7000,6500,8000,7500,8500,9000,9500,10000,11000];
 const B2B_VALS        = [1000,1500,1200,1800,1600,2000,1900,2200,2500,2800,3000,3500];
+const SMM_VALS        = [3000,3000,3000,3000,4000,4000,5000,6000,6000,7000,9000,10000];
 const SCALE           = 600000 / 456000;
 const SALES_TARGETS   = MONTHLY_TARGETS.map(v => Math.round(v * SCALE));
 
@@ -36,6 +37,7 @@ const FinanceHub = () => {
     { name: 'Fiverr', type: 'Marketplace', monthly: months.map((_,i) => MONTHLY_TARGETS[i] - (REPEAT_VALS[i] + B2B_VALS[i])) },
     { name: 'Upwork', type: 'Marketplace', monthly: REPEAT_VALS },
     { name: 'B2B',    type: 'B2B Sales',   monthly: B2B_VALS },
+    { name: 'SMM',    type: 'SMM Support', monthly: SMM_VALS },
   ];
   const salesProfiles = [
     { name: 'Fiverr', type: 'Marketplace', monthly: SALES_TARGETS.map((v,i) => v - (Math.round(REPEAT_VALS[i]*SCALE) + Math.round(B2B_VALS[i]*SCALE))) },
@@ -100,7 +102,7 @@ const FinanceHub = () => {
         <>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '20px', marginBottom: '40px' }}>
             <StatCard label="TOTAL REVENUE"   value={usd(totalRev)} sub="Jul 2026 – Jun 2027" icon="💰" color="#3b82f6" />
-            <StatCard label="OPERATION TARGET" value={usd(456000)}   sub="SEO Operation"       icon="🏢" color="#06b6d4" />
+            <StatCard label="OPERATION TARGET" value={usd(519000)}   sub="SEO + SMM Operation"  icon="🏢" color="#06b6d4" />
             <StatCard label="SALES TARGET"    value={usd(600000)}   sub="SEO Sales"            icon="📊" color="#10b981" />
             <StatCard label="AVG MONTHLY"     value={usd(avgRev)}   sub="Per month average"    icon="🎯" color="#ec4899" />
           </div>
@@ -113,7 +115,7 @@ const FinanceHub = () => {
           </div>
 
           <div style={{ marginBottom: '40px' }}>
-            <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#06b6d4', marginBottom: '20px' }}>Monthly Breakdown — Operation ($456k Target)</h2>
+            <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#06b6d4', marginBottom: '20px' }}>Monthly Breakdown — Operation ($519k Target)</h2>
             <BreakdownTable months={months} profiles={opProfiles} usd={usd} />
           </div>
 

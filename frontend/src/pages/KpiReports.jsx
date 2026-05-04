@@ -646,36 +646,39 @@ function KpiReports() {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr>
-                  {['Month', 'Op. Target ($)', 'Sales Target ($)', 'SMM ($)', 'CMS ($)', 'Total ($)', 'Members'].map(h => (
+                  {['Month', 'SEO ($)', 'SMM ($)', 'CMS ($)', 'Op. Target ($)', 'Sales Target ($)', 'Members'].map(h => (
                     <th key={h} style={{ textAlign: 'left', padding: '14px 18px', borderBottom: '2px solid var(--teal)', color: 'var(--teal)', fontFamily: 'var(--font-display)', fontSize: '10px', letterSpacing: '1.5px', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {[
-                  { m: "Jul '26", op: 35000, sales: 48000, smm: 4000, cms: 1000, members: 38 },
-                  { m: "Aug '26", op: 35000, sales: 48000, smm: 4500, cms: 1200, members: 38 },
-                  { m: "Sep '26", op: 38000, sales: 52000, smm: 5000, cms: 1200, members: 40 },
-                  { m: "Oct '26", op: 40000, sales: 55000, smm: 6000, cms: 1500, members: 42 },
-                  { m: "Nov '26", op: 42000, sales: 58000, smm: 6500, cms: 1800, members: 43 },
-                  { m: "Dec '26", op: 45000, sales: 62000, smm: 7500, cms: 2000, members: 44 },
-                  { m: "Jan '27", op: 48000, sales: 65000, smm: 8500, cms: 2200, members: 45 },
-                  { m: "Feb '27", op: 48000, sales: 65000, smm: 8500, cms: 2200, members: 45 },
-                  { m: "Mar '27", op: 50000, sales: 68000, smm: 9000, cms: 2500, members: 46 },
-                  { m: "Apr '27", op: 52000, sales: 71000, smm: 10000, cms: 2800, members: 48 },
-                  { m: "May '27", op: 54000, sales: 73000, smm: 11000, cms: 3000, members: 50 },
-                  { m: "Jun '27", op: 55000, sales: 75000, smm: 12000, cms: 3000, members: 50 },
+                  { m: "Jul '26", op: 31000, sales: 48000, smm: 3000, cms: 1000, ops_m: 28, smm_m: 7 },
+                  { m: "Aug '26", op: 30800, sales: 48000, smm: 3000, cms: 1200, ops_m: 28, smm_m: 7 },
+                  { m: "Sep '26", op: 31800, sales: 52000, smm: 3000, cms: 1200, ops_m: 28, smm_m: 7 },
+                  { m: "Oct '26", op: 33500, sales: 55000, smm: 3000, cms: 1500, ops_m: 32, smm_m: 10 },
+                  { m: "Nov '26", op: 34200, sales: 58000, smm: 4000, cms: 1800, ops_m: 32, smm_m: 10 },
+                  { m: "Dec '26", op: 36000, sales: 62000, smm: 4000, cms: 2000, ops_m: 35, smm_m: 10 },
+                  { m: "Jan '27", op: 37800, sales: 65000, smm: 5000, cms: 2200, ops_m: 40, smm_m: 10 },
+                  { m: "Feb '27", op: 37800, sales: 65000, smm: 6000, cms: 2200, ops_m: 40, smm_m: 10 },
+                  { m: "Mar '27", op: 37500, sales: 68000, smm: 6000, cms: 2500, ops_m: 40, smm_m: 10 },
+                  { m: "Apr '27", op: 39200, sales: 71000, smm: 7000, cms: 2800, ops_m: 40, smm_m: 12 },
+                  { m: "May '27", op: 40000, sales: 73000, smm: 9000, cms: 3000, ops_m: 42, smm_m: 12 },
+                  { m: "Jun '27", op: 42000, sales: 75000, smm: 10000, cms: 3000, ops_m: 42, smm_m: 12 },
                 ].map((row, i) => {
-                  const total = row.op + row.smm + row.cms;
+                  const opTotal = row.op + row.smm + row.cms;
+                  const totalMembers = row.ops_m + row.smm_m;
                   return (
                     <tr key={i} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
                       <td style={{ padding: '13px 18px', fontFamily: 'var(--font-display)', fontSize: '13px', color: 'var(--white)', borderBottom: '1px solid var(--border)' }}>{row.m}</td>
                       <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--teal)', fontWeight: '700', borderBottom: '1px solid var(--border)' }}>${row.op.toLocaleString()}</td>
-                      <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--gold)', fontWeight: '700', borderBottom: '1px solid var(--border)' }}>${row.sales.toLocaleString()}</td>
                       <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--red)', borderBottom: '1px solid var(--border)' }}>${row.smm.toLocaleString()}</td>
                       <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--blue)', borderBottom: '1px solid var(--border)' }}>${row.cms.toLocaleString()}</td>
-                      <td style={{ padding: '13px 18px', fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)', borderBottom: '1px solid var(--border)' }}>${total.toLocaleString()}</td>
-                      <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--gray)', borderBottom: '1px solid var(--border)' }}>{row.members}</td>
+                      <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--white)', fontWeight: '800', borderBottom: '1px solid var(--border)' }}>${opTotal.toLocaleString()}</td>
+                      <td style={{ padding: '13px 18px', fontSize: '13px', color: 'var(--gold)', fontWeight: '700', borderBottom: '1px solid var(--border)' }}>${row.sales.toLocaleString()}</td>
+                      <td style={{ padding: '13px 18px', fontSize: '11px', color: 'var(--gray)', borderBottom: '1px solid var(--border)', whiteSpace: 'nowrap' }}>
+                        <span style={{ color: 'var(--white)', fontWeight: '600' }}>{row.ops_m}</span> + <span style={{ color: 'var(--teal)' }}>{row.smm_m}</span> = <span style={{ color: 'var(--white)', fontWeight: '800' }}>{totalMembers}</span>
+                      </td>
                     </tr>
                   );
                 })}
