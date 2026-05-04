@@ -868,7 +868,25 @@ function KpiReports() {
 
 
 
+
+        {/* SECTION: THANK YOU */}
+        <section className="thank-you-section reveal">
+          <div className="ty-grid"></div>
+          <div className="ty-content">
+            <div className="ty-eyebrow">A Message of Gratitude</div>
+            <h2 className="ty-h1">Thank <em>You</em></h2>
+            <p className="ty-sub">Success is never a solo journey. This progress is the result of every team member's hard work, every leader's dedication, and our collective commitment to excellence.</p>
+            <div className="ty-footer">
+              <div className="ty-signature">
+                <span className="name">SEO & SMM Team</span>
+              </div>
+              <div className="ty-motto">"Excellence is not an act, but a habit."</div>
+            </div>
+          </div>
+        </section>
+
       </main>
+
 
       <footer className="footer-v4">
         <span>SEO Operations Team · 2025–2026</span>
@@ -1028,7 +1046,29 @@ function KpiReports() {
           .services-compare-v4 { grid-template-columns: 1fr; }
           .svc-arrow { display: none; }
         }
+
+        /* THANK YOU SECTION */
+        .thank-you-section { padding: 150px 0; position: relative; text-align: center; border-bottom: none; }
+        .ty-grid { position: absolute; inset: 0; background-image: radial-gradient(var(--teal) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.05; mask-image: radial-gradient(circle at center, black, transparent); }
+        .ty-content { position: relative; z-index: 10; max-width: 800px; margin: 0 auto; }
+        .ty-eyebrow { font-family: var(--font-display); font-size: 11px; letter-spacing: 5px; text-transform: uppercase; color: var(--teal); margin-bottom: 30px; }
+        .ty-h1 { font-family: var(--font-display); font-size: 120px; font-weight: 800; line-height: 1; letter-spacing: -6px; margin-bottom: 40px; }
+        .ty-h1 em { font-style: normal; color: var(--teal); position: relative; }
+        .ty-h1 em::after { content: ''; position: absolute; bottom: 15px; left: 0; width: 100%; height: 8px; background: rgba(23,195,160,0.2); z-index: -1; }
+        .ty-sub { font-size: 20px; color: var(--gray); line-height: 1.8; margin-bottom: 60px; font-weight: 500; }
+        .ty-footer { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+        .ty-signature { display: flex; flex-direction: column; align-items: center; }
+        .ty-signature .name { font-family: var(--font-display); font-size: 24px; color: var(--white); font-weight: 700; margin-bottom: 4px; }
+        .ty-signature .title { font-size: 12px; color: var(--teal); letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
+        .ty-motto { font-size: 16px; font-style: italic; color: var(--gray); opacity: 0.7; font-family: var(--font-sans); }
+
+        @media (max-width: 900px) {
+          .ty-h1 { font-size: 80px; letter-spacing: -3px; }
+          .ty-sub { font-size: 16px; }
+        }
+
       `}</style>
+
     </div>
   );
 }
