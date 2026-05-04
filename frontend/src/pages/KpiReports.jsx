@@ -185,10 +185,10 @@ function KpiReports() {
   };
 
   const planBData = {
-    labels: ['SEO', 'SMM', 'CMS'],
+    labels: ['SEO', 'SMM', 'CMS', 'Alternative Services'],
     datasets: [{
-      data: [55, 35, 10],
-      backgroundColor: ['#17c3a0', '#e5534b', '#3a86e8'],
+      data: [50, 30, 10, 10],
+      backgroundColor: ['#17c3a0', '#e5534b', '#3a86e8', '#9b5de5'],
       borderColor: 'rgba(255,255,255,0.1)',
       borderWidth: 2,
       hoverOffset: 15
@@ -196,10 +196,10 @@ function KpiReports() {
   };
 
   const planCData = {
-    labels: ['SEO', 'SMM', 'CMS'],
+    labels: ['SEO', 'SMM', 'CMS', 'Alternative Services'],
     datasets: [{
-      data: [50, 40, 10],
-      backgroundColor: ['#17c3a0', '#e5534b', '#3a86e8'],
+      data: [45, 30, 10, 15],
+      backgroundColor: ['#17c3a0', '#e5534b', '#3a86e8', '#9b5de5'],
       borderColor: 'rgba(255,255,255,0.1)',
       borderWidth: 2,
       hoverOffset: 15
@@ -783,7 +783,7 @@ function KpiReports() {
                   />
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', pointerEvents: 'none' }}>
                     <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--white)', fontFamily: 'var(--font-display)', lineHeight: '1' }}>
-                      55%
+                      50%
                     </div>
                     <div style={{ fontSize: '9px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800', marginTop: '4px' }}>SEO Anchor</div>
                   </div>
@@ -792,9 +792,10 @@ function KpiReports() {
 
                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
-                    { l: 'SEO Operations', v: '55%', c: 'var(--teal)' },
-                    { l: 'SMM Integration', v: '35%', c: 'var(--red)' },
-                    { l: 'CMS Handling', v: '10%', c: 'var(--blue)' }
+                    { l: 'SEO Operations', v: '50%', c: 'var(--teal)' },
+                    { l: 'SMM Integration', v: '30%', c: 'var(--red)' },
+                    { l: 'CMS Handling', v: '10%', c: 'var(--blue)' },
+                    { l: 'Alternative Services', v: '10%', c: 'var(--purple)' }
                   ].map((s, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -827,7 +828,7 @@ function KpiReports() {
                   />
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', pointerEvents: 'none' }}>
                     <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--white)', fontFamily: 'var(--font-display)', lineHeight: '1' }}>
-                      50%
+                      45%
                     </div>
                     <div style={{ fontSize: '9px', color: 'var(--teal)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800', marginTop: '4px' }}>SEO Anchor</div>
                   </div>
@@ -836,9 +837,10 @@ function KpiReports() {
 
                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {[
-                    { l: 'SEO Operations', v: '50%', c: 'var(--teal)' },
-                    { l: 'SMM Integration', v: '40%', c: 'var(--red)' },
-                    { l: 'CMS Handling', v: '10%', c: 'var(--blue)' }
+                    { l: 'SEO Operations', v: '45%', c: 'var(--teal)' },
+                    { l: 'SMM Integration', v: '30%', c: 'var(--red)' },
+                    { l: 'CMS Handling', v: '10%', c: 'var(--blue)' },
+                    { l: 'Alternative Services', v: '15%', c: 'var(--purple)' }
                   ].map((s, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
