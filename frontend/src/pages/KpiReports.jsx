@@ -185,20 +185,24 @@ function KpiReports() {
     labels: futureMonths,
     datasets: [
       {
-        label: 'Sales Target ($)',
-        data: futureSales,
-        backgroundColor: 'rgba(251, 191, 36, 0.85)',
-        hoverBackgroundColor: '#fbbf24',
-        borderRadius: 8,
-        borderWidth: 0
-      },
-      {
         label: 'Operation Target ($)',
         data: futureOp,
-        backgroundColor: 'rgba(168, 85, 247, 0.85)',
+        backgroundColor: '#9049D6',
         hoverBackgroundColor: '#a855f7',
-        borderRadius: 8,
-        borderWidth: 0
+        borderRadius: 4,
+        borderWidth: 0,
+        barPercentage: 0.8,
+        categoryPercentage: 0.8
+      },
+      {
+        label: 'Sales Target ($)',
+        data: futureSales,
+        backgroundColor: '#D7A423',
+        hoverBackgroundColor: '#fbbf24',
+        borderRadius: 4,
+        borderWidth: 0,
+        barPercentage: 0.8,
+        categoryPercentage: 0.8
       }
     ]
   };
@@ -672,27 +676,46 @@ function KpiReports() {
           <h2>2026–2027 Financial Plan</h2>
           <p className="section-desc">Our financial and strategic roadmap for the Jul 2026 – Jun 2027 fiscal year, balancing Operational capacity with aggressive Sales targets.</p>
 
-          <div style={{ height: '320px', marginBottom: '40px', background: 'var(--glass)', backdropFilter: 'blur(16px)', border: '1px solid var(--border)', borderRadius: '16px', padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.4)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '13px', letterSpacing: '2px', textTransform: 'uppercase', color: 'var(--slate-400)' }}>2026–27 Revenue Forecast</h4>
-              <div style={{ display: 'flex', gap: '16px' }}>
-                {[{ c: '#fbbf24', l: 'Sales Target' }, { c: '#a855f7', l: 'Op. Target' }].map((item, i) => (
-                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: item.c }}></div>
-                    <span style={{ fontSize: '11px', color: 'var(--slate-400)' }}>{item.l}</span>
-                  </div>
-                ))}
+          <div style={{ height: '360px', marginBottom: '40px', background: '#0a0a16', border: '1px solid var(--border)', borderRadius: '12px', padding: '32px', position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '30px' }}>
+              <div>
+                <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '20px', fontWeight: '800', color: 'var(--white)', margin: 0 }}>Revenue forecast</h4>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <div style={{ fontSize: '11px', color: 'var(--slate-500)', letterSpacing: '3px', fontWeight: '600', marginBottom: '20px' }}>JUL '26 — JUN '27</div>
+                <div style={{ display: 'flex', gap: '20px', justifyContent: 'flex-end' }}>
+                  {[{ c: '#9049D6', l: 'Operation Target ($)' }, { c: '#D7A423', l: 'Sales Target ($)' }].map((item, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: item.c }}></div>
+                      <span style={{ fontSize: '12px', color: 'var(--slate-400)' }}>{item.l}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
-            <div style={{ height: '240px' }}>
+            <div style={{ height: '220px' }}>
               <Bar
                 data={futureChartData}
                 options={{
                   ...chartOptions,
-                  plugins: { ...chartOptions.plugins, legend: { display: false } },
+                  plugins: { 
+                    ...chartOptions.plugins, 
+                    legend: { display: false },
+                    tooltip: {
+                      ...chartOptions.plugins.tooltip,
+                      backgroundColor: 'rgba(10, 10, 22, 0.95)',
+                      borderColor: 'rgba(34, 211, 238, 0.3)',
+                      borderWidth: 1,
+                      titleColor: '#fff',
+                      bodyColor: '#94a3b8',
+                      callbacks: {
+                        label: (ctx) => `${ctx.dataset.label}: $${ctx.raw.toLocaleString()}`
+                      }
+                    }
+                  },
                   scales: {
-                    x: { stacked: true, grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10, family: 'Plus Jakarta Sans' } } },
-                    y: { stacked: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10, family: 'Plus Jakarta Sans' }, callback: v => '$' + (v/1000) + 'K' } }
+                    x: { stacked: false, grid: { display: false }, ticks: { color: '#64748b', font: { size: 10, family: 'Plus Jakarta Sans' } } },
+                    y: { stacked: false, grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false }, ticks: { color: '#64748b', font: { size: 10, family: 'Plus Jakarta Sans' }, callback: v => '$' + (v/1000) + 'K' } }
                   }
                 }}
               />
