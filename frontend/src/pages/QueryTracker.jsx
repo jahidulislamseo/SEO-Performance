@@ -158,7 +158,7 @@ function QueryTracker() {
 
       <main className="main" style={{ position: 'relative', zIndex: 10 }}>
         {/* KPI strip */}
-        <div className="kpi-strip" style={{ display: 'flex', gap: '20px', marginBottom: '30px', width: '100%' }}>
+        <div className="kpi-strip res-grid-auto" style={{ gap: '20px', marginBottom: '30px' }}>
           {[
             { lbl: 'Total Queries', val: counts.all, color: '#a5b4fc', icon: '📊' },
             { lbl: '🆕 New', val: counts.new, color: '#60a5fa', icon: '🆕' },
@@ -177,7 +177,7 @@ function QueryTracker() {
         </div>
 
         {/* Controls */}
-        <div className="controls" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '20px', marginTop: 30, marginBottom: 30 }}>
+        <div className="controls res-stack" style={{ gap: '20px', marginTop: 30, marginBottom: 30 }}>
           <div className="search-wrap" style={{ flex: 1, maxWidth: '400px' }}>
             <span className="si">🔍</span>
             <input 

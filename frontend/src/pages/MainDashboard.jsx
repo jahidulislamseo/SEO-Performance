@@ -252,7 +252,7 @@ function MainDashboard() {
 
 
         {/* Countdown Bar */}
-        <div className="countdown-bar" style={{ margin: '10px 32px', borderRadius: '16px', border: '1px solid rgba(148,163,184,0.1)', background: 'rgba(59, 130, 246, 0.03)' }}>
+        <div className="countdown-bar" style={{ borderRadius: '16px', border: '1px solid rgba(148,163,184,0.1)', background: 'rgba(59, 130, 246, 0.03)' }}>
           <div className="cd-left">
             <div className="cd-item">
               <span style={{ fontSize: '18px' }}>📅</span>
@@ -280,7 +280,7 @@ function MainDashboard() {
           </div>
         </div>
         {/* Attendance Summary Strip */}
-        <div className="att-summary-strip" style={{ margin: '0 32px 10px', display: 'flex', gap: '12px' }}>
+        <div className="att-summary-strip" style={{ display: 'flex', gap: '12px' }}>
           <div style={{ flex: 1, background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: '12px', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <span style={{ fontSize: '11px', fontWeight: 800, color: '#10b981' }}>PRESENT TODAY</span>
             <span style={{ fontSize: '16px', fontWeight: 900, color: '#10b981' }}>{deptSummary.presentToday || 0}</span>
@@ -328,7 +328,7 @@ function MainDashboard() {
             <section className="dash-section">
 
               {/* Quick Insights Highlights */}
-              <div className="quick-insights" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '24px' }}>
+              <div className="quick-insights res-grid-3" style={{ marginBottom: '24px' }}>
                 <div className="tc" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px' }}>
                   <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '1px solid rgba(59,130,246,0.3)', boxShadow: '0 0 15px rgba(59,130,246,0.2)' }}>🚀</div>
                   <div>
@@ -373,7 +373,7 @@ function MainDashboard() {
               />
 
               {/* Team Performance Comparison Chart */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '24px' }}>
+              <div className="dashboard-charts res-grid-2" style={{ marginTop: '24px' }}>
                 {finStats && finStats.months && (
                   <div className="tc" style={{ padding: '24px', height: '350px', position: 'relative' }}>
                     <div style={{ fontSize: '12px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', marginBottom: '20px' }}>📈 REVENUE TREND (LAST 12 MONTHS)</div>

@@ -106,7 +106,9 @@ function EmployeePortal() {
   const [checkedIn, setCheckedIn] = useState(false);
   const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
   const [checkedOut, setCheckedOut] = useState(false);
-  const [navItem, setNavItem] = useState('overview');
+  const [navItem, setNavItem] = useState('performance');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
   const [clock, setClock] = useState(new Date());
   const [logs, setLogs] = useState([]);
 
@@ -386,7 +388,9 @@ function EmployeePortal() {
         </div>
       )}
 
-      <aside className="emp-sidebar">
+      <div className={`sb-mobile-overlay ${isSidebarOpen ? 'open' : ''}`} onClick={() => setIsSidebarOpen(false)} />
+
+      <aside className={`emp-sidebar ${isSidebarOpen ? 'open' : ''}`}>
         <div className="sb-top">
           <div className="sb-brand">
             <div className="sb-brand-icon">
@@ -405,7 +409,7 @@ function EmployeePortal() {
             <button
               key={n.id}
               className={`sb-item ${navItem === n.id ? 'active' : ''} ${n.admin ? 'sb-admin-item' : ''}`}
-              onClick={() => setNavItem(n.id)}
+              onClick={() => { setNavItem(n.id); setIsSidebarOpen(false); }}
             >
               <span className="sb-icon">{n.icon}</span>
               <span className="sb-label">{n.label}</span>
@@ -445,6 +449,9 @@ function EmployeePortal() {
       <main className="emp-main">
         <header className="emp-topbar">
           <div className="tb-left">
+            <button className="mobile-menu-btn" onClick={() => setIsSidebarOpen(true)} style={{ 
+              display: 'none', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: '20px', cursor: 'pointer', marginRight: '15px'
+            }}>☰</button>
             <div className="emp-greeting">{greeting}, <span>{user.name.split(' ')[0]}</span> 👋</div>
           </div>
           <div className="tb-right">
@@ -455,10 +462,11 @@ function EmployeePortal() {
           </div>
         </header>
 
+
         <div className="emp-content">
           {/* Stat cards — visible everywhere except history, admin and settings */}
           {navItem !== 'history' && navItem !== 'admin' && navItem !== 'settings' && (
-            <div className="stat-cards">
+            <div className="stat-cards res-grid-auto" style={{ gap: '16px' }}>
               <div className="stat-card" style={{ '--sc-color': '#10b981' }}>
                 <div className="sc-value">${(user.deliveredAmt || 0).toLocaleString()}</div>
                 <div className="sc-label">Delivered</div>
@@ -515,7 +523,7 @@ function EmployeePortal() {
           {/* PERFORMANCE TAB */}
           {navItem === 'performance' && (
             <>
-              <div className="overview-grid">
+              <div className="overview-grid res-grid-2">
                 <PerformanceRing pct={pct} da={da} ds={ds} user={user} large />
                 <div className="emp-card">
                   <div className="emp-card-header">
@@ -745,7 +753,7 @@ const PerformanceRing = ({ pct, da, ds, user }) => (
           <div style={{ fontSize: 10, color: '#64748b' }}>Target</div>
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 24 }}>
+      <div className="res-grid-2" style={{ gap: 10, marginTop: 24 }}>
         <div style={{ background: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 12 }}>
           <div style={{ fontSize: 18, fontWeight: 900, color: '#10b981' }}>{user.delivered || 0}</div>
           <div style={{ fontSize: 9, color: '#64748b', textTransform: 'uppercase' }}>Done</div>

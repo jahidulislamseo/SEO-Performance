@@ -800,6 +800,45 @@
   transition: opacity .2s;
 }
 
+@media (max-width: 1024px) {
+  :root {
+    --emp-sidebar-w: 0px;
+  }
+  
+  .emp-sidebar {
+    position: fixed;
+    left: -260px;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    z-index: 200;
+    box-shadow: 20px 0 50px rgba(0,0,0,0.5);
+    transition: left 0.3s ease;
+  }
+  
+  .emp-sidebar.open {
+    left: 0;
+  }
+  
+  .emp-main {
+    width: 100%;
+  }
+  
+  .sb-mobile-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 150;
+    display: none;
+  }
+  
+  .sb-mobile-overlay.open {
+    display: block;
+  }
+}
+
+
 .emp-sidebar.collapsed .sb-user-mini {
   opacity: 0;
   pointer-events: none;
@@ -3718,3 +3757,20 @@
 .sync-btn:hover {
   box-shadow: 0 12px 28px rgba(37, 99, 235, 0.35);
 }
+
+@media (max-width: 1024px) {
+  .mobile-menu-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+  }
+  
+  .emp-topbar {
+    padding: 0 20px !important;
+  }
+}

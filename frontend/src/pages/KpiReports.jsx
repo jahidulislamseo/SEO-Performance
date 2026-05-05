@@ -724,13 +724,13 @@ function KpiReports() {
 
           <div style={{ marginBottom: '40px', paddingTop: '10px' }}>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px', color: 'var(--white)', marginBottom: '10px', lineHeight: '1.1' }}>
-              Strategic Growth Plan
+              8 Pillars of Growth
               <em style={{ fontStyle: 'normal', display: 'block', fontSize: '30px', fontWeight: '600', letterSpacing: '-1px', background: 'linear-gradient(to right, var(--accent), var(--primary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                2026 — 2027
+                Strategic Plan 2026 — 2027
               </em>
             </h2>
             <p style={{ fontSize: '15px', color: 'var(--slate-500)', lineHeight: '1.7', maxWidth: '600px', marginTop: '12px' }}>
-              Six key pillars driving our next fiscal year — from sales excellence to B2B expansion and full-service integration.
+              Eight key pillars driving our next fiscal year — from sales excellence and retention to B2B expansion and AI-driven search integration.
             </p>
           </div>
 
@@ -741,7 +741,9 @@ function KpiReports() {
               { n: "03", t: "Query Tracker ↗", c: "#f59e0b", cBg: "rgba(245, 158, 11, 0.2)", d: "Our custom-built Query Tracker system gives full visibility into every client query — identifying why orders are slowing down, what issues are unresolved, and providing clear solutions. Sales members can use this data directly to address concerns and confidently close more orders." },
               { n: "04", t: "B2B Expansion", c: "#9b5de5", cBg: "rgba(155, 93, 229, 0.2)", d: "Actively converting high-potential clients into long-term B2B partnerships. We are consistently working to grow our B2B client base, ensuring more stable, high-value accounts and increasing the total number of clients month over month." },
               { n: "05", t: "SMM Integration", c: "#e5534b", cBg: "rgba(229, 83, 75, 0.2)", d: "To achieve our monthly targets, we have launched a dedicated SMM service line. This addition allows us to capture new client segments and is projected to contribute 30–45% towards hitting our overall delivery targets each month." },
-              { n: "06", t: "CMS Management", c: "#06b6d4", cBg: "rgba(6, 182, 212, 0.2)", d: "Offering end-to-end CMS handling (WordPress, Shopify) alongside SEO efforts. This service is expected to contribute 5–7% towards our monthly delivery targets." }
+              { n: "06", t: "CMS Management", c: "#06b6d4", cBg: "rgba(6, 182, 212, 0.2)", d: "Offering end-to-end CMS handling (WordPress, Shopify) alongside SEO efforts. This service is expected to contribute 5–7% towards our monthly delivery targets." },
+              { n: "07", t: "Cross-Sell Strategy", c: "#f472b6", cBg: "rgba(244, 114, 182, 0.2)", d: "Leveraging all existing service lines to cross-sell SEO and SMM packages. Every client interaction is treated as an opportunity to expand our engagement and drive higher average order value." },
+              { n: "08", t: "Alternative Services", c: "#22d3ee", cBg: "rgba(34, 211, 238, 0.2)", d: "Capturing new market segments by launching high-demand alternative services, specifically Contextual Backlinks and E-commerce SEO, providing more entry points for potential clients." }
             ].map((item, i) => (
               <div key={i} className="repeat-card-v4">
                 <div className="repeat-num-v4" style={{ fontSize: "48px", color: item.cBg }}>{item.n}</div>
@@ -751,8 +753,10 @@ function KpiReports() {
                 </div>
               </div>
             ))}
+
           </div>
         </section>
+
 
 
 
@@ -850,6 +854,8 @@ function KpiReports() {
                     { l: 'SMM Integration', v: '30%', c: 'var(--rose)' },
                     { l: 'CMS Handling', v: '10%', c: 'var(--primary)' }
                   ].map((s, i) => (
+
+
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
@@ -893,18 +899,20 @@ function KpiReports() {
                   {[
                     { l: 'SEO Operations', v: '50%', c: '#10b981' },
                     { l: 'SMM Integration', v: '40%', c: '#ef4444' },
-                    { l: 'CMS Handling', v: '10%', c: '#3b82f6' }
+                    { l: 'CMS Handling', v: '10%', c: '#3b82f6' },
+                    { l: 'Alternative Services', c: 'var(--indigo)' }
                   ].map((s, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
                         <span style={{ fontSize: '12px', color: 'var(--slate-400)' }}>{s.l}</span>
                       </div>
-                      {s.v && (
+                      {s.l !== 'Alternative Services' && s.v && (
                         <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
                       )}
                     </div>
                   ))}
+
                </div>
             </div>
 
@@ -938,18 +946,20 @@ function KpiReports() {
                   {[
                     { l: 'SEO Operations', v: '45%', c: '#10b981' },
                     { l: 'SMM Integration', v: '45%', c: '#ef4444' },
-                    { l: 'CMS Handling', v: '10%', c: '#3b82f6' }
+                    { l: 'CMS Handling', v: '10%', c: '#3b82f6' },
+                    { l: 'Alternative Services', c: 'var(--indigo)' }
                   ].map((s, i) => (
                     <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
                         <span style={{ fontSize: '12px', color: 'var(--slate-400)' }}>{s.l}</span>
                       </div>
-                      {s.v && (
+                      {s.l !== 'Alternative Services' && s.v && (
                         <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
                       )}
                     </div>
                   ))}
+
                </div>
             </div>
 

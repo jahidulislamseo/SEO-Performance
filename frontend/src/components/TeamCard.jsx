@@ -79,7 +79,7 @@ const TeamCard = ({ team, teamData = {}, members = [], target = 1100 }) => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '20px' }}>
+      <div className="res-grid-3" style={{ gap: '10px', marginBottom: '20px' }}>
         <MiniBox label="ACHIEVED" value={`$${k(totalDelivered)}`} />
         <MiniBox label="TARGET" value={`$${k(totalTarget)}`} />
         <MiniBox label="REMAINING" value={`$${k(remaining)}`} />
@@ -89,7 +89,7 @@ const TeamCard = ({ team, teamData = {}, members = [], target = 1100 }) => {
         <div style={{ height: '100%', width: `${pct}%`, background: `linear-gradient(90deg, ${colors.from}, ${colors.to})`, borderRadius: '10px', boxShadow: `0 0 10px ${colors.from}88` }}></div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+      <div className="res-grid-3" style={{ gap: '8px' }}>
         <GridItem icon="✅" label="Delivery" value={deliveredCount} color="#10b981" />
         <GridItem icon="⏳" label="WIP" value={wipCount} color="#3b82f6" />
         <GridItem icon="🔄" label="Revision" value={revisionCount} color="#8b5cf6" />

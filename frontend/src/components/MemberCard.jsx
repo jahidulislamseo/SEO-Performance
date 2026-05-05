@@ -76,27 +76,27 @@ const MemberCard = ({ member, onClick, att }) => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' }}>
+      <div className="res-grid-auto" style={{ gap: '8px', marginBottom: '16px', gridTemplateColumns: 'repeat(auto-fit, minmax(60px, 1fr))' }}>
         <GridStat label="TOTAL" value={total} />
         <GridStat label="WIP" value={wip} color="#3b82f6" />
         <GridStat label="DONE" value={delivered} color="#10b981" />
         <GridStat label="CANCEL" value={member.cancelled || 0} color="#ef4444" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+      <div className="res-grid-2" style={{ gap: '10px', marginBottom: '12px' }}>
         <BoxStat label="DELIVERED $" value={`$${deliveredAmt}`} sub={`${delivered} projects`} />
         <BoxStat label="WIP PIPELINE" value={`$${wipAmt}`} sub={`${wip} active`} />
       </div>
 
       {/* Attendance strip — PRESENT = total checked-in days (on-time + late) */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+      <div className="res-grid-3" style={{ gap: '8px', marginBottom: '10px' }}>
         <AttStat label="PRESENT" value={member.presentCount ?? ((member.inTimeCount ?? 0) + (member.lateCount ?? 0))} color="#10b981" />
         <AttStat label="LATE"    value={member.lateCount ?? 0}   color="#f59e0b" />
         <AttStat label="ABSENT"  value={member.absentCount ?? 0} color="#ef4444" />
       </div>
 
       {/* Today's In / Out times — always visible */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+      <div className="res-grid-2" style={{ gap: '8px', marginBottom: '12px' }}>
         <div style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.15)', borderRadius: '10px', padding: '8px 12px', textAlign: 'center' }}>
           <div style={{ fontSize: '8px', fontWeight: 800, color: '#334155', letterSpacing: '0.8px', marginBottom: '3px' }}>IN TIME</div>
           <div style={{ fontSize: '13px', fontWeight: 900, color: att?.today_in ? '#10b981' : '#334155' }}>

@@ -177,3 +177,56 @@
 .st-new-b { background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); }
 .st-pending-b { background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); }
 .st-closed-b { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+
+@media (max-width: 1024px) {
+  .q-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .qc {
+    padding: 20px;
+  }
+  
+  .q-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+    padding: 15px;
+  }
+  
+  .q-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .q-right {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+  
+  .q-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .q-actions > div {
+    width: 100%;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  
+  .q-actions > div:last-child {
+    margin-left: 0 !important;
+    margin-top: 5px;
+  }
+  
+  .q-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+

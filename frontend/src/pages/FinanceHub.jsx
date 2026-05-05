@@ -66,10 +66,10 @@ const FinanceHub = () => {
   const QCOLS = ['#06b6d4','#10b981','#f59e0b','#ec4899'];
 
   return (
-    <div className="finance-kpi-root" style={{ background: '#060B14', minHeight: '100vh', color: '#f1f5f9', padding: '40px' }}>
+    <div className="finance-kpi-root" style={{ background: '#060B14', minHeight: '100vh', color: '#f1f5f9', padding: 'clamp(16px, 4vw, 40px)' }}>
 
       {/* Header */}
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+      <header className="finance-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>📊</div>
           <div>
@@ -85,7 +85,7 @@ const FinanceHub = () => {
       </header>
 
       {/* Tabs */}
-      <nav style={{ display: 'flex', gap: '8px', marginBottom: '40px' }}>
+      <nav style={{ display: 'flex', gap: '8px', marginBottom: '40px', flexWrap: 'wrap' }}>
         {['Finance','Delivery','Summary'].map(tab => (
           <button key={tab} onClick={() => setActiveTab(tab.toLowerCase())} style={{
             padding: '8px 24px', borderRadius: '99px',
@@ -100,7 +100,7 @@ const FinanceHub = () => {
       {/* ── FINANCE TAB ── */}
       {activeTab === 'finance' && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '20px', marginBottom: '40px' }}>
+          <div className="res-grid-auto" style={{ gap: '20px', marginBottom: '40px' }}>
             <StatCard label="TOTAL REVENUE"   value={usd(totalRev)} sub="Jul 2026 – Jun 2027" icon="💰" color="#3b82f6" />
             <StatCard label="OPERATION TARGET" value={usd(519000)}   sub="SEO + SMM Operation"  icon="🏢" color="#06b6d4" />
             <StatCard label="SALES TARGET"    value={usd(600000)}   sub="SEO Sales"            icon="📊" color="#10b981" />
@@ -109,7 +109,7 @@ const FinanceHub = () => {
 
           <div style={{ marginBottom: '40px' }}>
             <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#cbd5e1', marginBottom: '20px' }}>Quarterly Overview</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '20px' }}>
+            <div className="res-grid-auto" style={{ gap: '20px' }}>
               {qs.map((v,i) => <QCard key={i} label={`Q${i+1}`} value={usd(v)} sub={QSUBS[i]} color={QCOLS[i]} progress={pct(v, totalRev/4*1.1)} />)}
             </div>
           </div>
@@ -126,7 +126,7 @@ const FinanceHub = () => {
 
           <div>
             <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#cbd5e1', marginBottom: '20px' }}>Platform Overview</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '20px' }}>
+            <div className="res-grid-auto" style={{ gap: '20px' }}>
               {opProfiles.map((p,i) => {
                 const total = p.monthly.reduce((a,b)=>a+b,0);
                 const colors = ['#10b981','#06b6d4','#f59e0b'];
@@ -140,7 +140,7 @@ const FinanceHub = () => {
       {/* ── DELIVERY TAB ── */}
       {activeTab === 'delivery' && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '20px', marginBottom: '40px' }}>
+          <div className="res-grid-auto" style={{ gap: '20px', marginBottom: '40px' }}>
             <StatCard label="ACHIEVED (LIVE)"  value={usd(dept.achieved||0)}       sub="This month actual" icon="✅" color="#10b981" />
             <StatCard label="WIP PIPELINE"     value={usd(dept.wipAmt||0)}         sub="In progress"      icon="⏳" color="#f59e0b" />
             <StatCard label="TOTAL ORDERS"     value={dept.uniqueProjects||0}      sub="Unique orders"    icon="📦" color="#3b82f6" />
@@ -151,7 +151,7 @@ const FinanceHub = () => {
           {dept.platformStats && (
             <div style={{ marginBottom: '40px' }}>
               <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#cbd5e1', marginBottom: '20px' }}>Live Platform Revenue (This Month)</h2>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: '16px' }}>
+              <div className="res-grid-auto" style={{ gap: '16px' }}>
                 {Object.entries(dept.platformStats).map(([name, val], i) => {
                   const colors = ['#10b981','#06b6d4','#f59e0b','#a78bfa'];
                   return (
@@ -215,7 +215,7 @@ const FinanceHub = () => {
       {/* ── SUMMARY TAB ── */}
       {activeTab === 'summary' && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '20px', marginBottom: '40px' }}>
+          <div className="res-grid-3" style={{ gap: '20px', marginBottom: '40px' }}>
             <StatCard label="SEO ANNUAL TARGET" value={usd(totalRev)}    sub="Operation + Sales" icon="📈" color="#3b82f6" />
             <StatCard label="SMM ANNUAL TARGET"  value={usd(totalSmmRev)} sub="Fiverr + Upwork"   icon="📣" color="#a78bfa" />
             <StatCard label="COMBINED TOTAL"     value={usd(totalRev + totalSmmRev)} sub="All teams" icon="💼" color="#10b981" />
@@ -224,7 +224,7 @@ const FinanceHub = () => {
           {/* Team comparison */}
           <div style={{ marginBottom: '40px' }}>
             <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#cbd5e1', marginBottom: '20px' }}>Annual Team Comparison</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+            <div className="res-grid-2" style={{ gap: '20px' }}>
               {/* SEO */}
               <div style={{ background: '#0C1220', border: '1px solid rgba(59,130,246,0.2)', borderRadius: '16px', padding: '24px' }}>
                 <div style={{ fontSize: '12px', fontWeight: 800, color: '#3b82f6', marginBottom: '16px' }}>SEO TEAM</div>
@@ -259,8 +259,8 @@ const FinanceHub = () => {
           {/* Monthly combined view */}
           <div>
             <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#cbd5e1', marginBottom: '20px' }}>Combined Monthly Target (SEO + SMM)</h2>
-            <div style={{ background: '#0C1220', border: '1px solid rgba(148,163,184,0.1)', borderRadius: '16px', padding: '20px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12,1fr)', gap: 8 }}>
+            <div className="chart-grid-scroll" style={{ background: '#0C1220', border: '1px solid rgba(148,163,184,0.1)', borderRadius: '16px', padding: '20px', overflowX: 'auto' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(12, 1fr)', gap: 8, minWidth: '600px' }}>
                 {months.map((m, i) => {
                   const seoVal = MONTHLY_TARGETS[i] + SALES_TARGETS[i];
                   const smmVal = smmProfiles.reduce((a,p) => a + (p.monthly?.[i]||0), 0);

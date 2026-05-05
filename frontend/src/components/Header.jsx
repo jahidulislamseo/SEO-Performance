@@ -51,7 +51,7 @@ const Header = ({ dept = "GEO Rankers", month = "April 2026", onRefresh, onExpor
       <div className="hr">
         {/* Sync toast message */}
         {syncMsg && (
-          <div style={{
+          <div className="sync-toast" style={{
             padding: '4px 14px', borderRadius: '99px', fontSize: '11px', fontWeight: 800,
             background: syncMsg.includes('✅') ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)',
             border: `1px solid ${syncMsg.includes('✅') ? 'rgba(16,185,129,0.3)' : 'rgba(239,68,68,0.3)'}`,
@@ -64,7 +64,7 @@ const Header = ({ dept = "GEO Rankers", month = "April 2026", onRefresh, onExpor
 
         <div className="live-badge" style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', color: '#10b981' }}>
           <div className="ldot" style={{ background: syncing ? '#f59e0b' : '#10b981', boxShadow: `0 0 10px ${syncing ? '#f59e0b' : '#10b981'}` }}></div>
-          <span>{syncing ? 'Syncing...' : 'Systems Active'}</span>
+          <span>{syncing ? 'Sync' : 'Active'}</span>
         </div>
         
         <div className="header-actions" style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '12px', border: '1px solid rgba(148,163,184,0.1)' }}>
@@ -79,19 +79,19 @@ const Header = ({ dept = "GEO Rankers", month = "April 2026", onRefresh, onExpor
             disabled={syncing}
             title="Sync from Google Sheets"
           >↻</button>
-          <button className="hbtn" style={{ border: 'none', background: 'transparent', fontSize: '14px' }} onClick={() => window.print()} title="Print Dashboard">🖨️</button>
-          <button className="hbtn" style={{ border: 'none', background: 'transparent', fontSize: '14px' }} onClick={toggleTheme} title="Toggle Theme">{theme === 'dark' ? '☀️' : '🌙'}</button>
+          <button className="hbtn theme-toggle-mobile" style={{ border: 'none', background: 'transparent', fontSize: '14px' }} onClick={toggleTheme} title="Toggle Theme">{theme === 'dark' ? '☀️' : '🌙'}</button>
+          <button className="hbtn print-btn-mobile" style={{ border: 'none', background: 'transparent', fontSize: '14px' }} onClick={() => window.print()} title="Print Dashboard">🖨️</button>
         </div>
 
-        <button className="hbtn green" style={{ fontSize: '10px', padding: '6px 12px' }} onClick={onExport}>
-          ⬇️ EXPORT CSV
+        <button className="hbtn green export-btn-mobile" style={{ fontSize: '10px', padding: '6px 12px' }} onClick={onExport}>
+          ⬇️ EXPORT
         </button>
 
-        <div className="clock-wrap" style={{ display: 'flex', alignItems: 'center', gap: '10px', marginLeft: '10px', padding: '6px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid rgba(148,163,184,0.1)' }}>
-          <span style={{ fontSize: '10px', textTransform: 'uppercase', fontWeight: 800, color: '#64748b' }}>Time</span>
+        <div className="clock-wrap" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid rgba(148,163,184,0.1)' }}>
           <div className="clock" style={{ fontSize: '14px', fontWeight: 800, color: '#3b82f6' }}>{time}</div>
         </div>
       </div>
+
 
       <style>{`
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }

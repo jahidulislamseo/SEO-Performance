@@ -28,8 +28,8 @@ const DeptOverview = ({
         borderRadius: '32px', padding: '40px', position: 'relative', overflow: 'hidden',
         boxShadow: '0 10px 40px rgba(0,0,0,0.3)', backdropFilter: 'blur(20px)'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-          <div style={{ flex: 1 }}>
+        <div className="dept-overview-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '30px' }}>
+          <div style={{ flex: '1 1 500px' }}>
             <div style={{ fontSize: '11px', fontWeight: 900, color: '#64748b', letterSpacing: '1px', marginBottom: '8px' }}>DEPARTMENT OVERVIEW</div>
             <div style={{ fontSize: '40px', fontWeight: 900, color: '#fff', marginBottom: '8px' }}>
               ${k(delivered)} / <span style={{ color: '#64748b' }}>${k(total)}</span>
@@ -48,7 +48,7 @@ const DeptOverview = ({
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '48px', marginTop: '32px' }}>
+            <div className="res-grid-auto" style={{ marginTop: '32px' }}>
               <MiniStat label="ACHIEVED" value={`$${delivered.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} color="#10b981" />
               <MiniStat label="REMAINING" value={`$${Math.max(0, total - delivered).toLocaleString(undefined, { minimumFractionDigits: 2 })}`} color="#f1f5f9" />
               <MiniStat label="WIP PIPELINE" value={`$${wip.toLocaleString(undefined, { minimumFractionDigits: 2 })}`} color="#f59e0b" />
@@ -56,7 +56,8 @@ const DeptOverview = ({
             </div>
           </div>
 
-          <div style={{ marginLeft: '60px', textAlign: 'center' }}>
+
+          <div style={{ textAlign: 'center', margin: '0 auto' }}>
             <div style={{ position: 'relative', width: '120px', height: '120px' }}>
               <svg width="120" height="120" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" stroke="rgba(255,255,255,0.03)" strokeWidth="8" fill="none" />
@@ -78,7 +79,7 @@ const DeptOverview = ({
         <div style={{ width: '20px', height: '20px', background: 'linear-gradient(45deg, #10b981, #3b82f6)', borderRadius: '4px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px' }}>📊</div>
         <div style={{ fontSize: '11px', fontWeight: 900, color: '#f1f5f9', textTransform: 'uppercase', letterSpacing: '1.5px' }}>PLATFORM BREAKDOWN</div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: '12px' }}>
+      <div className="res-grid-auto" style={{ gap: '12px' }}>
         <StatusCard label="PROJECTS" val={projectCount} sub="Total unique orders" color="#8b5cf6" icon="📊" />
         <StatusCard label="TOTAL DELIVERED" val={`$${k(delivered)}`} sub={`${deliveredCount} delivered`} color="#10b981" icon="✉️" />
         <StatusCard label="WIP PIPELINE" val={`$${k(wip)}`} sub={`${wipCount} active`} color="#f59e0b" icon="⏳" />
@@ -88,7 +89,7 @@ const DeptOverview = ({
       </div>
 
       {/* 3. Real Platform Stats (Mini) */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginTop: '8px' }}>
+      <div className="res-grid-auto" style={{ gap: '16px', marginTop: '8px' }}>
         {platforms.map((p, i) => (
           <div key={i} style={{ 
             background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(255,255,255,0.03)', 
@@ -101,7 +102,7 @@ const DeptOverview = ({
       </div>
 
       {/* 4. Accolades Row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '16px' }}>
+      <div className="res-grid-2" style={{ marginTop: '16px' }}>
         <AccoladeCard 
           label="BEST PERFORMER" 
           name={bestPerformer?.name || "TBA"} 
