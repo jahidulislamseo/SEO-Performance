@@ -246,6 +246,13 @@
   }
 }
 
+@media (max-width: 600px) {
+  .kpi-strip {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
 @media (max-width: 480px) {
   .dt-right-col {
     flex-direction: column;
@@ -255,10 +262,17 @@
   
   .dt-actions {
     width: 100%;
+    display: flex;
+    gap: 10px;
   }
   
   .dt-btn {
     flex: 1;
     justify-content: center;
+    padding: 12px;
+  }
+
+  .kpi-strip {
+    grid-template-columns: 1fr;
   }
 }

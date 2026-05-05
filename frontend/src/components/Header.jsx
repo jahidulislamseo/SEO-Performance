@@ -84,7 +84,7 @@ const Header = ({ dept = "GEO Rankers", month = "April 2026", onRefresh, onExpor
         </div>
 
         <button className="hbtn green export-btn-mobile" style={{ fontSize: '10px', padding: '6px 12px' }} onClick={onExport}>
-          ⬇️ EXPORT
+          <span>⬇️ EXPORT</span>
         </button>
 
         <div className="clock-wrap" style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '6px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: '10px', border: '1px solid rgba(148,163,184,0.1)' }}>

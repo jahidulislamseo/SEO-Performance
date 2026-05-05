@@ -1106,19 +1106,29 @@ body[data-theme="light"] {
   .att-summary-strip {
     margin: 0 16px 10px !important;
     flex-wrap: wrap;
+    gap: 8px !important;
   }
   
   .att-summary-strip > div {
     flex: 1 1 40% !important;
   }
 
+  .page-nav {
+    padding: 10px 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .page-nav-inner {
     gap: 6px;
+    flex-wrap: nowrap;
+    width: max-content;
   }
   
   .page-nav-btn {
-    padding: 6px 10px;
+    padding: 6px 12px;
     font-size: 10px;
+    white-space: nowrap;
   }
 
   .quick-insights {
@@ -1139,19 +1149,82 @@ body[data-theme="light"] {
     gap: 8px;
     padding: 30px 16px;
   }
+
+  /* Member & Team Card Grid Overrides */
+  .res-grid-3, .res-grid-auto {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .mc, .tc {
+    padding: 20px !important;
+  }
+
+  .mc-top {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mc-stats, .res-grid-2 {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (max-width: 480px) {
   .welcome-strip h2 {
-    font-size: 22px !important;
+    font-size: 26px !important;
+    letter-spacing: -1px;
+    background: linear-gradient(135deg, #fff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   
   .att-summary-strip > div {
     flex: 1 1 100% !important;
+    background: rgba(255,255,255,0.03);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.05);
   }
-  
-  .page-nav-btn {
-    flex: 1 1 45%;
-    text-align: center;
+
+  .kpi-val {
+    font-size: 24px !important;
+    color: #fff;
+  }
+
+  /* DeptOverview Specific */
+  .dept-overview-inner {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    padding: 20px 10px !important;
+  }
+
+  .dept-overview-inner > div {
+    flex: 1 1 100% !important;
+    width: 100%;
+  }
+
+  .res-grid-auto {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+  .lb-table th, .lb-table td {
+    padding: 12px 10px !important;
+    font-size: 11px !important;
+  }
+
+  .lb-head {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start !important;
+    padding: 20px 16px !important;
+  }
+
+  .mc, .tc, .dept-card {
+    padding: 24px 20px !important;
+    border-radius: 24px !important;
+    margin-bottom: 16px !important;
   }
 }

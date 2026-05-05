@@ -182,7 +182,23 @@ function WorkExamples() {
           .work-grid {
             grid-template-columns: 1fr;
           }
+          .page-nav {
+            margin: 0 16px 20px;
+          }
+          .main {
+            padding: 0 16px 60px !important;
+          }
         }
+
+        @media (max-width: 600px) {
+          .work-card-body {
+            overflow-x: auto;
+          }
+          .work-header-row, .work-item-row {
+            min-width: 500px;
+          }
+        }
+
       `}</style>
     </div>
   );

@@ -165,13 +165,13 @@ function KpiReports() {
       }
     },
     scales: {
-      y: { 
-        grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false }, 
+      y: {
+        grid: { color: 'rgba(255,255,255,0.04)', drawBorder: false },
         ticks: { color: '#64748b', font: { size: 11, family: 'Plus Jakarta Sans' }, padding: 8 },
         border: { dash: [4, 4] }
       },
-      x: { 
-        grid: { display: false }, 
+      x: {
+        grid: { display: false },
         ticks: { color: '#64748b', font: { size: 11, family: 'Plus Jakarta Sans' }, padding: 8 }
       }
     }
@@ -525,7 +525,7 @@ function KpiReports() {
           <div className="section-tag"><span></span> 04 — Repeat Business &amp; Retention</div>
 
 
-          <div style={{ display: 'grid', gridTemplateColumns: '350px 1fr', gap: '50px', marginBottom: '60px', alignItems: 'center' }}>
+          <div className="side-grid-v4">
             <div style={{ background: 'var(--navy2)', border: '1px solid var(--border)', borderRadius: '4px', padding: '30px' }}>
               <h4 style={{ fontFamily: 'var(--font-display)', color: 'var(--accent)', marginBottom: '15px' }}>Retention Roadmap</h4>
               <p style={{ fontSize: '13px', color: 'var(--slate-400)', lineHeight: '1.6', marginBottom: '20px' }}>
@@ -543,8 +543,8 @@ function KpiReports() {
               </div>
             </div>
             <div style={{ height: '220px', background: 'rgba(255,255,255,0.01)', border: '1px solid var(--border)', borderRadius: '4px', padding: '20px' }}>
-              <Line 
-                data={repeatTargetData} 
+              <Line
+                data={repeatTargetData}
                 options={{
                   ...chartOptions,
                   plugins: { legend: { display: false } },
@@ -552,7 +552,7 @@ function KpiReports() {
                     y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => '$' + v.toLocaleString() } },
                     x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
                   }
-                }} 
+                }}
               />
             </div>
           </div>
@@ -563,7 +563,7 @@ function KpiReports() {
               { n: "02", t: "Tracking Sheet System", d: "Structured client tracking sheet to monitor renewal dates, satisfaction, and upsells." },
               { n: "03", t: "Cross-Service Expansion", d: "Combining our dedicated repeat team, structured tracking system, and cross-sell strategy — repeating clients are guided into adjacent services (SMM, Meta/Google Ads, CMS). Together, these three pillars form a complete client retention engine designed to maximize LTV, reduce churn, and hit our 30–40% repeat order target." }
             ].map((r, i) => (
-              <div key={i} className="repeat-card-v4" style={i === 2 ? { gridColumn: 'span 2', background: 'linear-gradient(135deg, rgba(23,195,160,0.08), rgba(14,24,38,0.95))', borderColor: 'rgba(23,195,160,0.25)' } : {}}>
+              <div key={i} className={`repeat-card-v4 ${i === 2 ? 'full-width' : ''}`}>
                 <div className="repeat-num-v4">{r.n}</div>
                 <div>
                   <h4>{r.t}</h4>
@@ -588,8 +588,8 @@ function KpiReports() {
               <span style={{ fontSize: '11px', color: 'var(--slate-500)', letterSpacing: '1px' }}>Jul 2025 – Mar 2026</span>
             </div>
             <div style={{ height: '220px' }}>
-              <Line 
-                data={cancellationTrendData} 
+              <Line
+                data={cancellationTrendData}
                 options={{
                   ...chartOptions,
                   plugins: { ...chartOptions.plugins, legend: { display: false } },
@@ -597,7 +597,7 @@ function KpiReports() {
                     y: { grid: { color: 'rgba(244, 63, 94, 0.06)' }, ticks: { color: '#94a3b8', font: { size: 10 }, callback: v => '$' + v.toLocaleString() } },
                     x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { size: 10 } } }
                   }
-                }} 
+                }}
               />
             </div>
           </div>
@@ -698,8 +698,8 @@ function KpiReports() {
                 data={futureChartData}
                 options={{
                   ...chartOptions,
-                  plugins: { 
-                    ...chartOptions.plugins, 
+                  plugins: {
+                    ...chartOptions.plugins,
                     legend: { display: false },
                     tooltip: {
                       ...chartOptions.plugins.tooltip,
@@ -715,7 +715,7 @@ function KpiReports() {
                   },
                   scales: {
                     x: { stacked: false, grid: { display: false }, ticks: { color: '#64748b', font: { size: 10, family: 'Plus Jakarta Sans' } } },
-                    y: { stacked: false, grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false }, ticks: { color: '#64748b', font: { size: 10, family: 'Plus Jakarta Sans' }, callback: v => '$' + (v/1000) + 'K' } }
+                    y: { stacked: false, grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false }, ticks: { color: '#64748b', font: { size: 10, family: 'Plus Jakarta Sans' }, callback: v => '$' + (v / 1000) + 'K' } }
                   }
                 }}
               />
@@ -724,13 +724,13 @@ function KpiReports() {
 
           <div style={{ marginBottom: '40px', paddingTop: '10px' }}>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '48px', fontWeight: '800', letterSpacing: '-2px', color: 'var(--white)', marginBottom: '10px', lineHeight: '1.1' }}>
-              8 Pillars of Growth
+              9 Pillars of Growth
               <em style={{ fontStyle: 'normal', display: 'block', fontSize: '30px', fontWeight: '600', letterSpacing: '-1px', background: 'linear-gradient(to right, var(--accent), var(--primary))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 Strategic Plan 2026 — 2027
               </em>
             </h2>
             <p style={{ fontSize: '15px', color: 'var(--slate-500)', lineHeight: '1.7', maxWidth: '600px', marginTop: '12px' }}>
-              Eight key pillars driving our next fiscal year — from sales excellence and retention to B2B expansion and AI-driven search integration.
+              Nine key pillars driving our next fiscal year — from sales excellence and retention to B2B expansion and quality-driven growth.
             </p>
           </div>
 
@@ -743,16 +743,26 @@ function KpiReports() {
               { n: "05", t: "SMM Integration", c: "#e5534b", cBg: "rgba(229, 83, 75, 0.2)", d: "To achieve our monthly targets, we have launched a dedicated SMM service line. This addition allows us to capture new client segments and is projected to contribute 30–45% towards hitting our overall delivery targets each month." },
               { n: "06", t: "CMS Management", c: "#06b6d4", cBg: "rgba(6, 182, 212, 0.2)", d: "Offering end-to-end CMS handling (WordPress, Shopify) alongside SEO efforts. This service is expected to contribute 5–7% towards our monthly delivery targets." },
               { n: "07", t: "Cross-Sell Strategy", c: "#f472b6", cBg: "rgba(244, 114, 182, 0.2)", d: "Leveraging all existing service lines to cross-sell SEO and SMM packages. Every client interaction is treated as an opportunity to expand our engagement and drive higher average order value." },
-              { n: "08", t: "Alternative Services", c: "#22d3ee", cBg: "rgba(34, 211, 238, 0.2)", d: "Capturing new market segments by launching high-demand alternative services, specifically Contextual Backlinks and E-commerce SEO, providing more entry points for potential clients." }
+              {
+                n: "08", t: "Alternative Services", c: "#22d3ee", cBg: "rgba(34, 211, 238, 0.2)", d: (
+                  <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <li>• Contextual Backlinks</li>
+                    <li>• E-commerce SEO</li>
+                  </ul>
+                )
+              },
+              { n: "09", t: "Cancellation / Bad Feedback", c: "#8b5cf6", cBg: "rgba(139, 92, 246, 0.2)", d: "Implementing rigorous quality control to reduce cancellations and negative feedback. Proactive communication and strict standards ensure every delivery meets client expectations.", full: true }
             ].map((item, i) => (
-              <div key={i} className="repeat-card-v4">
+              <div key={i} className="repeat-card-v4" style={item.full ? { gridColumn: 'span 2' } : {}}>
                 <div className="repeat-num-v4" style={{ fontSize: "48px", color: item.cBg }}>{item.n}</div>
                 <div>
                   <h4 style={{ color: item.c }}>{item.t}</h4>
-                  <p>{item.d}</p>
+                  <div style={{ fontSize: '15px', color: 'var(--slate-400)', lineHeight: '1.7' }}>{item.d}</div>
                 </div>
               </div>
             ))}
+
+
 
           </div>
         </section>
@@ -824,20 +834,20 @@ function KpiReports() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '25px', marginBottom: '40px' }}>
             {/* PLAN A: VISUAL INFOGRAPHIC */}
             <div style={{ background: 'linear-gradient(145deg, var(--navy2), var(--navy))', border: '1px solid var(--border)', borderRadius: '8px', padding: '35px 25px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
-               <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--accent)', boxShadow: '0 0 20px var(--accent)' }}></div>
-               <div style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--accent)', letterSpacing: '1px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '30px' }}>Plan A: Jul – Sep</div>
-               
-               <div style={{ height: '200px', position: 'relative', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--accent)', boxShadow: '0 0 20px var(--accent)' }}></div>
+              <div style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--accent)', letterSpacing: '1px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '30px' }}>Plan A: Jul – Sep</div>
+
+              <div style={{ height: '200px', position: 'relative', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
                 <div style={{ width: '200px', height: '100%', position: 'relative' }}>
-                  <Doughnut 
-                    data={serviceMixData} 
-                    options={{ 
+                  <Doughnut
+                    data={serviceMixData}
+                    options={{
                       plugins: { legend: { display: false } },
                       cutout: '70%',
                       spacing: 5,
                       borderRadius: 2,
                       maintainAspectRatio: false
-                    }} 
+                    }}
                   />
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', pointerEvents: 'none' }}>
                     <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--white)', fontFamily: 'var(--font-display)', lineHeight: '1' }}>
@@ -846,45 +856,45 @@ function KpiReports() {
                     <div style={{ fontSize: '9px', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800', marginTop: '4px' }}>SEO Anchor</div>
                   </div>
                 </div>
-               </div>
+              </div>
 
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { l: 'SEO Operations', v: '60%', c: 'var(--accent)' },
-                    { l: 'SMM Integration', v: '30%', c: 'var(--rose)' },
-                    { l: 'CMS Handling', v: '10%', c: 'var(--primary)' }
-                  ].map((s, i) => (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[
+                  { l: 'SEO Operations', v: '60%', c: 'var(--accent)' },
+                  { l: 'SMM Integration', v: '30%', c: 'var(--rose)' },
+                  { l: 'CMS Handling', v: '10%', c: 'var(--primary)' }
+                ].map((s, i) => (
 
 
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
-                        <span style={{ fontSize: '12px', color: 'var(--slate-400)' }}>{s.l}</span>
-                      </div>
-                      {s.l !== 'Alternative Services' && (
-                        <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
-                      )}
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
+                      <span style={{ fontSize: '12px', color: 'var(--slate-400)' }}>{s.l}</span>
                     </div>
-                  ))}
-               </div>
+                    {s.l !== 'Alternative Services' && (
+                      <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* PLAN B: VISUAL INFOGRAPHIC */}
             <div style={{ background: 'linear-gradient(145deg, var(--navy2), var(--navy))', border: '1px solid var(--border)', borderRadius: '8px', padding: '35px 25px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
-               <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--secondary)', boxShadow: '0 0 20px var(--secondary)' }}></div>
-               <div style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--secondary)', letterSpacing: '1px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '30px' }}>Plan B: Oct – Dec</div>
-               
-               <div style={{ height: '200px', position: 'relative', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--secondary)', boxShadow: '0 0 20px var(--secondary)' }}></div>
+              <div style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--secondary)', letterSpacing: '1px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '30px' }}>Plan B: Oct – Dec</div>
+
+              <div style={{ height: '200px', position: 'relative', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
                 <div style={{ width: '200px', height: '100%', position: 'relative' }}>
-                  <Doughnut 
-                    data={planBData} 
-                    options={{ 
+                  <Doughnut
+                    data={planBData}
+                    options={{
                       plugins: { legend: { display: false } },
                       cutout: '70%',
                       spacing: 5,
                       borderRadius: 2,
                       maintainAspectRatio: false
-                    }} 
+                    }}
                   />
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', pointerEvents: 'none' }}>
                     <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--white)', fontFamily: 'var(--font-display)', lineHeight: '1' }}>
@@ -893,45 +903,45 @@ function KpiReports() {
                     <div style={{ fontSize: '9px', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800', marginTop: '4px' }}>SEO Anchor</div>
                   </div>
                 </div>
-               </div>
+              </div>
 
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { l: 'SEO Operations', v: '50%', c: '#10b981' },
-                    { l: 'SMM Integration', v: '40%', c: '#ef4444' },
-                    { l: 'CMS Handling', v: '10%', c: '#3b82f6' },
-                    { l: 'Alternative Services', c: 'var(--indigo)' }
-                  ].map((s, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
-                        <span style={{ fontSize: '12px', color: 'var(--slate-400)' }}>{s.l}</span>
-                      </div>
-                      {s.l !== 'Alternative Services' && s.v && (
-                        <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
-                      )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[
+                  { l: 'SEO Operations', v: '50%', c: '#10b981' },
+                  { l: 'SMM Integration', v: '40%', c: '#ef4444' },
+                  { l: 'CMS Handling', v: '10%', c: '#3b82f6' },
+                  { l: 'Alternative Services', c: 'var(--indigo)' }
+                ].map((s, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
+                      <span style={{ fontSize: '12px', color: 'var(--slate-400)' }}>{s.l}</span>
                     </div>
-                  ))}
+                    {s.l !== 'Alternative Services' && s.v && (
+                      <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                    )}
+                  </div>
+                ))}
 
-               </div>
+              </div>
             </div>
 
             {/* PLAN C: VISUAL INFOGRAPHIC */}
             <div style={{ background: 'linear-gradient(145deg, var(--navy2), var(--navy))', border: '1px solid var(--border)', borderRadius: '8px', padding: '35px 25px', display: 'flex', flexDirection: 'column', justifyContent: 'center', position: 'relative', boxShadow: '0 20px 40px rgba(0,0,0,0.3)' }}>
-               <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--primary)', boxShadow: '0 0 20px var(--primary)' }}></div>
-               <div style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--primary)', letterSpacing: '1px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '30px' }}>Plan C: Jan – Mar</div>
-               
-               <div style={{ height: '200px', position: 'relative', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: 'var(--primary)', boxShadow: '0 0 20px var(--primary)' }}></div>
+              <div style={{ fontSize: '22px', fontFamily: 'var(--font-display)', color: 'var(--primary)', letterSpacing: '1px', fontWeight: '800', textTransform: 'uppercase', marginBottom: '30px' }}>Plan C: Jan – Mar</div>
+
+              <div style={{ height: '200px', position: 'relative', marginBottom: '30px', display: 'flex', justifyContent: 'center' }}>
                 <div style={{ width: '200px', height: '100%', position: 'relative' }}>
-                  <Doughnut 
-                    data={planCData} 
-                    options={{ 
+                  <Doughnut
+                    data={planCData}
+                    options={{
                       plugins: { legend: { display: false } },
                       cutout: '70%',
                       spacing: 5,
                       borderRadius: 2,
                       maintainAspectRatio: false
-                    }} 
+                    }}
                   />
                   <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', textAlign: 'center', width: '100%', pointerEvents: 'none' }}>
                     <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--white)', fontFamily: 'var(--font-display)', lineHeight: '1' }}>
@@ -940,27 +950,27 @@ function KpiReports() {
                     <div style={{ fontSize: '9px', color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: '800', marginTop: '4px' }}>SEO Anchor</div>
                   </div>
                 </div>
-               </div>
+              </div>
 
-               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {[
-                    { l: 'SEO Operations', v: '45%', c: '#10b981' },
-                    { l: 'SMM Integration', v: '45%', c: '#ef4444' },
-                    { l: 'CMS Handling', v: '10%', c: '#3b82f6' },
-                    { l: 'Alternative Services', c: 'var(--indigo)' }
-                  ].map((s, i) => (
-                    <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
-                        <span style={{ fontSize: '12px', color: 'var(--slate-400)' }}>{s.l}</span>
-                      </div>
-                      {s.l !== 'Alternative Services' && s.v && (
-                        <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
-                      )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {[
+                  { l: 'SEO Operations', v: '45%', c: '#10b981' },
+                  { l: 'SMM Integration', v: '45%', c: '#ef4444' },
+                  { l: 'CMS Handling', v: '10%', c: '#3b82f6' },
+                  { l: 'Alternative Services', c: 'var(--indigo)' }
+                ].map((s, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 15px', background: 'rgba(255,255,255,0.02)', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.03)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '8px', height: '8px', borderRadius: '1px', background: s.c }}></div>
+                      <span style={{ fontSize: '12px', color: 'var(--slate-400)' }}>{s.l}</span>
                     </div>
-                  ))}
+                    {s.l !== 'Alternative Services' && s.v && (
+                      <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--white)', fontFamily: 'var(--font-display)' }}>{s.v}</span>
+                    )}
+                  </div>
+                ))}
 
-               </div>
+              </div>
             </div>
 
             {/* SUMMARY BOX */}
@@ -987,7 +997,7 @@ function KpiReports() {
           <div className="ty-content">
             <div className="ty-eyebrow">A Message of Gratitude</div>
             <h2 className="ty-h1">Thank <em>You</em></h2>
-            <p className="ty-sub">Success is never a solo journey. This progress is the result of every team member's hard work, every leader's dedication, and our collective commitment to excellence.</p>
+            <p className="ty-sub">Success doesn’t come alone. It comes from everyone working hard together.</p>
             <div className="ty-footer">
               <div className="ty-signature">
                 <span className="name">SEO & SMM Team</span>
@@ -1099,7 +1109,15 @@ function KpiReports() {
         .reveal-stagger > *:nth-child(5) { transition-delay: 0.5s; }
         .reveal-stagger > *:nth-child(6) { transition-delay: 0.6s; }
 
-        .report-actions-v4 { position: fixed; top: 80px; right: 40px; display: flex; gap: 10px; z-index: 1000; animation: fadeIn 1s 1s backwards; }
+        .report-actions-v4 { 
+          position: fixed; 
+          top: 80px; 
+          right: 40px; 
+          display: flex; 
+          gap: 10px; 
+          z-index: 1000; 
+          animation: fadeIn 1s 1s backwards; 
+        }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
         .btn-v4 { background: var(--glass); backdrop-filter: blur(8px); border: 1px solid var(--border); padding: 10px 18px; border-radius: 8px; font-size: 10px; font-weight: 800; color: var(--white); cursor: pointer; text-decoration: none; transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); letter-spacing: 1px; }
@@ -1113,7 +1131,7 @@ function KpiReports() {
         .hero-grid-bg { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px); background-size: 60px 60px; mask-image: radial-gradient(ellipse 80% 80% at 80% 20%, black, transparent); pointer-events: none; }
         .hero-eyebrow { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--accent); margin-bottom: 28px; display: flex; align-items: center; gap: 12px; font-family: var(--font-display); }
         .hero-eyebrow span { width: 40px; height: 1px; background: var(--accent); }
-        .hero-h1 { font-family: var(--font-display); font-size: 110px; font-weight: 800; line-height: 0.9; letter-spacing: -5px; margin-bottom: 25px; color: var(--white); animation: slideUpFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+        .hero-h1 { font-family: var(--font-display); font-size: clamp(48px, 10vw, 110px); font-weight: 800; line-height: 0.9; letter-spacing: -5px; margin-bottom: 25px; color: var(--white); animation: slideUpFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
         .hero-h1 em { 
           font-style: normal; 
           display: block; 
@@ -1123,7 +1141,7 @@ function KpiReports() {
           filter: drop-shadow(0 0 20px rgba(34, 211, 238, 0.2));
           animation: slideUpFade 1.2s 0.2s cubic-bezier(0.16, 1, 0.3, 1) backwards;
         }
-        .hero-sub { max-width: 500px; font-size: 18px; color: var(--slate-400); line-height: 1.6; margin-bottom: 20px; animation: slideUpFade 1.2s 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+        .hero-sub { max-width: 500px; font-size: clamp(14px, 2vw, 18px); color: var(--slate-400); line-height: 1.6; margin-bottom: 20px; animation: slideUpFade 1.2s 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
         .hero-meta { font-size: 14px; color: var(--slate-500); margin-bottom: 60px; animation: slideUpFade 1.2s 0.5s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
         .hero-meta strong { color: var(--white); }
 
@@ -1173,7 +1191,7 @@ function KpiReports() {
           animation: pulse-glow 2s infinite;
           flex-shrink: 0;
         }
-        .kpi-presentation-v4 h2 { font-family: var(--font-display); font-size: 56px; font-weight: 800; letter-spacing: -2px; margin-bottom: 24px; color: var(--white); }
+        .kpi-presentation-v4 h2 { font-family: var(--font-display); font-size: clamp(32px, 5vw, 56px); font-weight: 800; letter-spacing: -2px; margin-bottom: 24px; color: var(--white); }
         .section-desc { font-size: 16px; color: var(--slate-500); max-width: 650px; margin-bottom: 60px; line-height: 1.8; }
 
         /* CHALLENGE TABLE V4 */
@@ -1243,8 +1261,15 @@ function KpiReports() {
         .repeat-card-v4 h4 { font-family: var(--font-display); font-size: 22px; color: var(--accent); margin-bottom: 12px; }
         .repeat-card-v4 p { font-size: 15px; color: var(--slate-400); line-height: 1.7; }
 
+        .side-grid-v4 { display: grid; grid-template-columns: 350px 1fr; gap: 50px; margin-bottom: 60px; align-items: center; }
+        @media (max-width: 900px) { .side-grid-v4 { grid-template-columns: 1fr; gap: 30px; } }
+
+        .repeat-card-v4.full-width { grid-column: span 2; background: linear-gradient(135deg, rgba(23,195,160,0.08), rgba(14,24,38,0.95)); border-color: rgba(23,195,160,0.25); }
+        @media (max-width: 900px) { .repeat-card-v4.full-width { grid-column: auto; } }
+
         /* CANCEL V4 */
         .cancel-layout-v4 { display: grid; grid-template-columns: 350px 1fr; gap: 50px; }
+        @media (max-width: 900px) { .cancel-layout-v4 { grid-template-columns: 1fr; } }
         .sum-card-v4 { padding: 30px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; border: 1px solid var(--border); background: var(--glass); backdrop-filter: blur(12px); }
         .sum-card-v4.delivery { border-color: rgba(16, 185, 129, 0.2); }
         .sum-card-v4.total-cancel { border-color: rgba(244, 63, 94, 0.2); }
@@ -1277,17 +1302,55 @@ function KpiReports() {
         .badge-v4.success { background: rgba(34, 211, 238, 0.1); color: var(--accent); border: 1px solid rgba(34, 211, 238, 0.2); }
         .badge-v4.warning { background: rgba(251, 191, 36, 0.1); color: var(--secondary); border: 1px solid rgba(251, 191, 36, 0.2); }
 
-        .footer-v4 { padding: 60px 0; display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 2px; color: var(--gray); border-top: 1px solid var(--border); }
-
-
+        .footer-v4 { padding: 60px 0; display: flex; justify-content: space-between; font-size: 11px; letter-spacing: 2px; color: var(--slate-500); border-top: 1px solid var(--border); }
 
         @media (max-width: 900px) {
-          .hero-h1 { font-size: 60px; }
+          .report-actions-v4 {
+            position: relative;
+            top: 0;
+            right: 0;
+            margin-top: 20px;
+            justify-content: center;
+          }
+          .report-container-v4 {
+            padding: 0 20px;
+          }
+          .hero-section-v4 {
+            padding: 60px 0;
+            text-align: center;
+          }
+          .hero-eyebrow {
+            justify-content: center;
+          }
+          .hero-sub {
+            margin-left: auto;
+            margin-right: auto;
+          }
           .hero-kpis-v4 { flex-direction: column; }
           .training-shifts-v4, .plan-grid-v4, .repeat-grid-v4, .cancel-layout-v4 { grid-template-columns: 1fr; }
           .services-compare-v4 { grid-template-columns: 1fr; }
           .svc-arrow { display: none; }
+          .kpi-card-v4 { border-right: none; border-bottom: 1px solid var(--border); }
+          .kpi-card-v4:last-child { border-bottom: none; }
         }
+
+        @media (max-width: 480px) {
+          .section-v4 {
+            padding: 60px 0;
+          }
+          .challenge-table-v4 td:nth-child(2) {
+            width: auto;
+          }
+          .challenge-table-v4 td:first-child {
+            width: 60px;
+            font-size: 20px;
+          }
+          .ty-h1 {
+            font-size: clamp(60px, 15vw, 100px);
+            letter-spacing: -4px;
+          }
+        }
+
 
         /* THANK YOU SECTION */
         .thank-you-section { padding: 150px 0; position: relative; text-align: center; border-bottom: none; background: rgba(168, 85, 247, 0.03); }

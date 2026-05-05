@@ -73,14 +73,14 @@ const FinanceHub = () => {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{ width: '40px', height: '40px', background: 'linear-gradient(135deg,#3b82f6,#8b5cf6)', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>📊</div>
           <div>
-            <h1 style={{ fontSize: '24px', fontWeight: 900, letterSpacing: '-0.5px', margin: 0 }}>Finance Hub</h1>
-            <p style={{ fontSize: '11px', color: '#64748b', fontWeight: 700 }}>Fiscal Year 2026–2027 • SEO + SMM Teams</p>
+            <h1 style={{ fontSize: 'clamp(18px, 4vw, 24px)', fontWeight: 900, letterSpacing: '-0.5px', margin: 0 }}>Finance Hub</h1>
+            <p style={{ fontSize: '10px', color: '#64748b', fontWeight: 700 }}>Fiscal Year 2026–2027 • SEO + SMM Teams</p>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <div style={{ padding: '8px 16px', border: '1px solid #f59e0b', borderRadius: '8px', color: '#f59e0b', fontSize: '10px', fontWeight: 800 }}>⚡ Live Dashboard</div>
-          <Link to="/kpi-reports" style={{ padding: '8px 16px', border: '1px solid rgba(236,72,153,0.3)', background: 'rgba(236,72,153,0.1)', borderRadius: '8px', color: '#f472b6', fontSize: '10px', fontWeight: 800, textDecoration: 'none' }}>📊 KPI Reports</Link>
-          <Link to="/" style={{ padding: '8px 16px', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '8px', color: '#64748b', fontSize: '10px', fontWeight: 800, textDecoration: 'none' }}>← Dashboard</Link>
+        <div className="header-actions" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <div style={{ padding: '6px 12px', border: '1px solid #f59e0b', borderRadius: '8px', color: '#f59e0b', fontSize: '9px', fontWeight: 800 }}>⚡ LIVE</div>
+          <Link to="/kpi-reports" style={{ padding: '6px 12px', border: '1px solid rgba(236,72,153,0.3)', background: 'rgba(236,72,153,0.1)', borderRadius: '8px', color: '#f472b6', fontSize: '9px', fontWeight: 800, textDecoration: 'none' }}>📊 REPORTS</Link>
+          <Link to="/" style={{ padding: '6px 12px', border: '1px solid rgba(148,163,184,0.2)', borderRadius: '8px', color: '#64748b', fontSize: '9px', fontWeight: 800, textDecoration: 'none' }}>← DASHBOARD</Link>
         </div>
       </header>
 
@@ -171,8 +171,8 @@ const FinanceHub = () => {
           {/* Top performers this month */}
           <div>
             <h2 style={{ fontSize: '14px', fontWeight: 800, color: '#cbd5e1', marginBottom: '20px' }}>Member Delivery This Month</h2>
-            <div style={{ background: '#0C1220', border: '1px solid rgba(148,163,184,0.1)', borderRadius: '16px', overflow: 'hidden' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <div style={{ background: '#0C1220', border: '1px solid rgba(148,163,184,0.1)', borderRadius: '16px', overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '800px' }}>
                 <thead>
                   <tr style={{ background: 'rgba(255,255,255,0.02)' }}>
                     {['#','Member','Team','Delivered','WIP','Orders','Progress'].map(h => (

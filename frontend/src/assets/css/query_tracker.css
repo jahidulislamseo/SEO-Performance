@@ -198,7 +198,7 @@
   .q-header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 12px;
+    gap: 15px;
   }
   
   .q-right {
@@ -209,24 +209,35 @@
   
   .q-actions {
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
   }
   
   .q-actions > div {
     width: 100%;
     display: grid !important;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 8px;
   }
   
   .q-actions > div:last-child {
     margin-left: 0 !important;
-    margin-top: 5px;
   }
   
   .q-action-btn {
     width: 100%;
     justify-content: center;
+    padding: 12px;
+  }
+
+  .q-client {
+    font-size: 18px;
   }
 }
+
+@media (max-width: 480px) {
+  .q-actions > div {
+    grid-template-columns: 1fr;
+  }
+}
+
 
