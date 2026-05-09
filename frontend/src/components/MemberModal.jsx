@@ -125,7 +125,8 @@ const ProjectCard = ({ p, statusBadge }) => {
         <InfoItem label="ASSIGNED" value={p.assign || p.assigned || "N/A"} />
         <InfoItem label="ORDER DATE" value={p.date || "N/A"} />
         <InfoItem label="DELIVERED" value={p.deliveredDate || p.date || "N/A"} />
-        <InfoItem label="ORDER LINK" value={p.link && p.link.startsWith('http') ? <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 800 }}>Open Order ↗</a> : <span style={{ color: '#64748b' }}>N/A</span>} />
+        <InfoItem label="INSTRUCTION SHEET" value={p.instruction && p.instruction.startsWith('http') ? <a href={p.instruction} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 800 }}>Open Sheet ↗</a> : <span style={{ color: '#64748b' }}>N/A</span>} />
+        <InfoItem label="WORK SHEET" value={p.workSheet && p.workSheet.startsWith('http') ? <a href={p.workSheet} target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 800 }}>Open Sheet ↗</a> : <span style={{ color: '#64748b' }}>N/A</span>} />
       </div>
 
       <div style={{ 
