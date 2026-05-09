@@ -93,7 +93,7 @@ const TeamCard = ({ team, teamData = {}, members = [], target = 1100 }) => {
         <GridItem icon="✅" label="Delivery" value={deliveredCount} color="#10b981" />
         <GridItem icon="⏳" label="WIP" value={wipCount} color="#3b82f6" />
         <GridItem icon="🔄" label="Revision" value={revisionCount} color="#8b5cf6" />
-        <GridItem icon="❌" label="Cancel" value={cancelledCount} color="#ef4444" />
+        <GridItem icon="❌" label="Cancel" value={cancelledCount > 0 ? `$${k(teamData.cancelledAmt || 0)}` : 0} color="#ef4444" subLabel={cancelledCount > 0 ? `${cancelledCount} orders` : ''} />
         <GridItem icon="📦" label="Total" value={totalCount} color="#f59e0b" />
         <GridItem icon="🎯" label="Complete" value={`${pct}%`} color={colors.accent} />
       </div>
@@ -108,12 +108,13 @@ const MiniBox = ({ label, value }) => (
   </div>
 );
 
-const GridItem = ({ icon, label, value, color }) => (
+const GridItem = ({ icon, label, value, color, subLabel }) => (
   <div style={{ background: 'rgba(255,255,255,0.02)', padding: '10px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)', textAlign: 'center' }}>
     <div style={{ fontSize: '14px', fontWeight: 900, color: color, marginBottom: '2px' }}>{value}</div>
     <div style={{ fontSize: '8px', color: '#64748b', fontWeight: 800, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
       <span style={{ fontSize: '10px' }}>{icon}</span> {label}
     </div>
+    {subLabel && <div style={{ fontSize: '7px', color: '#475569', marginTop: '2px', fontWeight: 700 }}>{subLabel}</div>}
   </div>
 );
 

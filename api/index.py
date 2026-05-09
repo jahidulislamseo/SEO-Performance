@@ -235,15 +235,17 @@ def _build_month_payload(month_str):
     # Fetch ALL project remarks to join in real-time
     all_remarks = {r["order"]: r.get("logs", []) for r in db["project_remarks"].find({}, {"order": 1, "logs": 1})}
     
-    # Filter only SEO and SMM projects
+    # Filter only SEO, SMM, and CMS projects
     projects = []
     for p in raw_projects:
-        if "SEO" in str(p.get("service", "")).upper() or "SMM" in str(p.get("service", "")).upper():
+        svc = str(p.get("service", "")).upper()
+        if "SEO" in svc or "SMM" in svc or "CMS" in svc:
             order_num = p.get("order")
             p["userRemarks"] = all_remarks.get(order_num, [])
             projects.append(p)
     
-    members_list = list(db["members"].find({"isOfficial": True}, {"_id": 0}))
+    all_members = list(db["members"].find({}, {"_id": 0}))
+    members_list = [m for m in all_members if m.get("id")]
     ADMIN_IDS = {"17149", "17137", "17248", "17238"}
 
     platform_stats = {"Fiverr": 0.0, "Upwork": 0.0, "B2B": 0.0, "PPH": 0.0}
@@ -253,20 +255,20 @@ def _build_month_payload(month_str):
     delivered_count = wip_count = cancelled_count = 0
 
     for p in projects:
-        status = str(p.get("status", "")).strip()
+        status = str(p.get("status", "")).strip().lower()
         amt = float(p.get("amtX", 0) or 0)
         prof = str(p.get("profile", "")).lower()
-        if status == "Delivered":
+        if status == "delivered":
             total_delivered_amt += amt
             delivered_count += 1
             if "fiverr" in prof: platform_stats["Fiverr"] += amt
             elif "upwork" in prof: platform_stats["Upwork"] += amt
             elif "pph" in prof: platform_stats["PPH"] += amt
             else: platform_stats["B2B"] += amt
-        elif status in ("WIP", "Revision"):
+        elif status in ("wip", "revision"):
             total_wip_amt += amt
             wip_count += 1
-        elif status == "Cancelled":
+        elif status == "cancelled":
             total_cancelled_amt += amt
             cancelled_count += 1
 
@@ -278,15 +280,17 @@ def _build_month_payload(month_str):
         emp_id = _clean_id(m.get("id", ""))
         m_projects = []
         for p in projects:
-            assign_str = str(p.get("assign", ""))
-            parts = [x.strip().lower() for x in _re.split(r"[/,]", assign_str) if x.strip()]
-            num_assigned = max(len(parts), 1)
-            if name.strip().lower() in parts:
-                share = round(float(p.get("amtX", 0) or 0) / num_assigned, 2)
+            p_assign = str(p.get("assign", "")).lower()
+            parts = [x.strip() for x in _re.split(r"[/,]", p_assign) if x.strip()]
+            m_name_lower = name.strip().lower()
+            if m_name_lower in parts:
+                share = round(float(p.get("amtX", 0) or 0) / max(len(parts), 1), 2)
                 m_projects.append({**p, "share": share})
 
-        delivered_projects = [p for p in m_projects if p.get("status") == "Delivered"]
-        wip_projects = [p for p in m_projects if p.get("status") in ("WIP", "Revision")]
+        delivered_projects = [p for p in m_projects if p.get("status", "").lower() == "delivered"]
+        wip_projects = [p for p in m_projects if p.get("status", "").lower() in ("wip", "revision")]
+        cancelled_projects = [p for p in m_projects if p.get("status", "").lower() == "cancelled"]
+        
         team_name = m.get("team", "GEO Rankers")
         if team_name == "SMM": team_name = "Dark Rankers"
         delivered_amt = round(sum(p["share"] for p in delivered_projects), 2)
@@ -298,9 +302,9 @@ def _build_month_payload(month_str):
             "role": m.get("role", "Member"), "email": m.get("email", ""), "phone": m.get("phone", ""),
             "target": target, "total": len(m_projects),
             "delivered": len(delivered_projects),
-            "wip": len([p for p in m_projects if p.get("status") == "WIP"]),
-            "revision": len([p for p in m_projects if p.get("status") == "Revision"]),
-            "cancelled": len([p for p in m_projects if p.get("status") == "Cancelled"]),
+            "wip": len([p for p in m_projects if p.get("status", "").lower() == "wip"]),
+            "revision": len([p for p in m_projects if p.get("status", "").lower() == "revision"]),
+            "cancelled": len(cancelled_projects),
             "deliveredAmt": delivered_amt, "wipAmt": wip_amt,
             "lateCount": 0, "absentCount": 0, "inTimeCount": 0, "presentCount": 0,
             "projects": [{"order": p.get("order"), "status": p.get("status"), "amtX": p.get("amtX"),
@@ -320,23 +324,40 @@ def _build_month_payload(month_str):
         "GEO Rankers": "Geo_Rankers", "Rank Riser": "Rank_Riser",
         "Search Apex": "Search_Apex", "Dark Rankers": "Dark_Rankers"
     }
+    # 3. Calculate Team Summaries by attributing member stats
     team_data = {}
     for team in targets.keys():
-        tag = TEAM_TAG_MAP.get(team, team.replace(" ", "_"))
-        t_projects = [p for p in projects if str(p.get("team", "")).strip().lower() == tag.lower()]
-        t_delivered = [p for p in t_projects if p.get("status") == "Delivered"]
-        t_wip = [p for p in t_projects if p.get("status") in ("WIP", "Revision")]
-        t_delivered_amt = round(sum(float(p.get("amtX", 0) or 0) for p in t_delivered), 2)
-        t_wip_amt = round(sum(float(p.get("amtX", 0) or 0) for p in t_wip), 2)
+        team_members = [m for m in member_summaries if m["team"] == team]
+        t_delivered_amt = round(sum(m["deliveredAmt"] for m in team_members), 2)
+        t_wip_amt = round(sum(m["wipAmt"] for m in team_members), 2)
+        
+        # Calculate cancellation amount and counts for the team
+        t_cancelled_amt = 0.0
+        t_cancelled_count = 0
+        t_delivered_count = 0
+        t_wip_count = 0
+        t_revision_count = 0
+        
+        for m in team_members:
+            t_cancelled_amt += sum(p["share"] for p in m["projects"] if p.get("status") == "Cancelled")
+            t_cancelled_count += m["cancelled"]
+            t_delivered_count += m["delivered"]
+            t_wip_count += m["wip"]
+            t_revision_count += m["revision"]
+
         team_target = targets.get(team, 0)
         team_data[team] = {
             "name": team,
             "leader": mgmt.get("leaders", {}).get(team, {}).get("name", "N/A"),
-            "amt": t_delivered_amt, "deliveredAmt": t_delivered_amt, "wipAmt": t_wip_amt,
-            "projects": len(t_projects), "delivered": len(t_delivered),
-            "wip": len([p for p in t_projects if p.get("status") == "WIP"]),
-            "revision": len([p for p in t_projects if p.get("status") == "Revision"]),
-            "cancelled": len([p for p in t_projects if p.get("status") == "Cancelled"]),
+            "amt": t_delivered_amt, 
+            "deliveredAmt": t_delivered_amt, 
+            "wipAmt": t_wip_amt,
+            "cancelledAmt": round(t_cancelled_amt, 2),
+            "projects": t_delivered_count + t_wip_count + t_cancelled_count, 
+            "delivered": t_delivered_count,
+            "wip": t_wip_count,
+            "revision": t_revision_count,
+            "cancelled": t_cancelled_count,
             "target": team_target,
             "remaining": round(team_target - t_delivered_amt, 2),
             "progress": round((t_delivered_amt / team_target) * 100, 1) if team_target else 0
