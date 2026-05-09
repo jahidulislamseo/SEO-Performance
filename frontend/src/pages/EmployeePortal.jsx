@@ -948,6 +948,79 @@ const DailyWorkLog = ({ order, initialRemarks }) => {
   );
 };
 
+const WorksheetField = ({ order, initialUrl }) => {
+  const [url, setUrl] = React.useState(initialUrl || '');
+  const [editing, setEditing] = React.useState(!initialUrl);
+  const [saving, setSaving] = React.useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      const res = await fetch('/api/user/project-worksheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order, url: url.trim() })
+      });
+      const data = await res.json();
+      if (data.status === 'ok') setEditing(false);
+    } catch {
+      alert('Failed to save worksheet');
+    }
+    setSaving(false);
+  };
+
+  if (!editing && url) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <a href={url} target="_blank" rel="noreferrer" className="pcard-link">Open Sheet ↗</a>
+        <button
+          onClick={() => setEditing(true)}
+          style={{
+            padding: '2px 8px', fontSize: 10, fontWeight: 700, cursor: 'pointer',
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: 5, color: '#94a3b8'
+          }}
+        >Edit</button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 6 }}>
+      <input
+        type="url"
+        value={url}
+        onChange={e => setUrl(e.target.value)}
+        placeholder="Paste worksheet URL..."
+        style={{
+          flex: 1, height: 30, background: 'rgba(255,255,255,0.03)',
+          border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6,
+          padding: '0 10px', color: '#e2e8f0', fontSize: 12, fontFamily: 'inherit'
+        }}
+      />
+      <button
+        onClick={save}
+        disabled={saving || !url.trim()}
+        style={{
+          padding: '0 12px', background: '#3b82f6', color: '#fff', border: 'none',
+          borderRadius: 6, fontSize: 11, fontWeight: 800, cursor: 'pointer',
+          opacity: (saving || !url.trim()) ? 0.5 : 1
+        }}
+      >{saving ? '...' : 'Save'}</button>
+      {url && (
+        <button
+          onClick={() => setEditing(false)}
+          style={{
+            padding: '0 8px', background: 'rgba(255,255,255,0.05)', color: '#94a3b8',
+            border: '1px solid rgba(255,255,255,0.1)', borderRadius: 6, fontSize: 11,
+            fontWeight: 700, cursor: 'pointer'
+          }}
+        >Cancel</button>
+      )}
+    </div>
+  );
+};
+
 const ProjectCard = ({ p }) => {
   const cfg = STATUS_CONFIG[p.status] || STATUS_CONFIG.WIP;
   const persons = (p.amtX && p.share && p.amtX !== p.share)
@@ -994,6 +1067,10 @@ const ProjectCard = ({ p }) => {
           <div className="pcard-field-value">{p.assign || p.deliveredBy || '—'}</div>
         </div>
         <div className="pcard-field">
+          <div className="pcard-field-label">PROFILE</div>
+          <div className="pcard-field-value">{p.profile || '—'}</div>
+        </div>
+        <div className="pcard-field">
           <div className="pcard-field-label">ORDER DATE</div>
           <div className="pcard-field-value">{p.date || '—'}</div>
         </div>
@@ -1008,6 +1085,12 @@ const ProjectCard = ({ p }) => {
               ? <a href={p.instruction} target="_blank" rel="noreferrer" className="pcard-link">Open Sheet ↗</a>
               : <span style={{ color: '#334155' }}>—</span>
             }
+          </div>
+        </div>
+        <div className="pcard-field">
+          <div className="pcard-field-label">WORK SHEET</div>
+          <div className="pcard-field-value">
+            <WorksheetField order={p.order} initialUrl={p.userWorksheet} />
           </div>
         </div>
         <div className="pcard-field" style={{ gridColumn: 'span 3' }}>

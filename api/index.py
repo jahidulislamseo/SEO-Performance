@@ -159,14 +159,16 @@ def _build_current_payload():
     
     # Fetch ALL project remarks to join in real-time
     all_remarks = {r["order"]: r.get("logs", []) for r in db["project_remarks"].find({}, {"order": 1, "logs": 1})}
+    all_worksheets = {r["order"]: r.get("url", "") for r in db["project_worksheets"].find({}, {"order": 1, "url": 1})}
 
     seen_ids = {}
     for m in member_docs:
-        # Join remarks to each project in real-time
+        # Join remarks and worksheets to each project in real-time
         if "projects" in m:
             for p in m["projects"]:
                 order_num = p.get("order")
                 p["userRemarks"] = all_remarks.get(order_num, [])
+                p["userWorksheet"] = all_worksheets.get(order_num, "")
         
         seen_ids[_clean_id(m.get("id", ""))] = m
     member_docs = list(seen_ids.values())
@@ -907,12 +909,21 @@ def api_user_profile():
         emp_id = member["id"]
         sum_doc = db["member_summaries"].find_one({"id": emp_id}, {"_id": 0})
         if not sum_doc: sum_doc = {**member, "deliveredAmt": 0, "wipAmt": 0, "projects": [], "progress": 0}
-        
+
         admin_ids = ["17149", "17137", "17248", "17238"]
         current_id_str = str(member.get("id")).split('.')[0]
         is_admin = "Manager" in member.get("role", "") or "Leader" in member.get("role", "") or member.get("isAdmin", False) or current_id_str in admin_ids
         tot_days, elap_days = get_month_working_stats(db)
-        
+
+        # Join remarks and worksheets to projects in real-time
+        all_remarks = {r["order"]: r.get("logs", []) for r in db["project_remarks"].find({}, {"order": 1, "logs": 1})}
+        all_worksheets = {r["order"]: r.get("url", "") for r in db["project_worksheets"].find({}, {"order": 1, "url": 1})}
+        projects = sum_doc.get("projects", [])
+        for p in projects:
+            order_num = p.get("order")
+            p["userRemarks"] = all_remarks.get(order_num, [])
+            p["userWorksheet"] = all_worksheets.get(order_num, "")
+
         res = {
             "password": member.get("password", "pass123"),
             "profile": {
@@ -928,7 +939,7 @@ def api_user_profile():
                 "workingDays": tot_days, "elapsedDays": elap_days, "deliveredAmt": sum_doc.get("deliveredAmt", 0),
                 "wipAmt": sum_doc.get("wipAmt", 0), "present": sum_doc.get("delivered", 0)
             },
-            "projects": sum_doc.get("projects", []),
+            "projects": projects,
             "performance": [
                 {"label": "Target Progress", "value": sum_doc.get("progress", 0), "target": 100, "unit": "%", "color": "#0f766e"}
             ]
@@ -1438,6 +1449,31 @@ def update_project_remark():
         return jsonify({"status": "ok", "message": "Remark added", "remark": new_remark})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/user/project-worksheet", methods=["POST"])
+def update_project_worksheet():
+    """Allows an employee to save or update a custom worksheet URL for a project."""
+    try:
+        db = get_db()
+        data = request.json
+        order_num = data.get("order")
+        url = data.get("url", "").strip()
+
+        if not order_num:
+            return jsonify({"error": "order number required"}), 400
+
+        db["project_worksheets"].update_one(
+            {"order": order_num},
+            {"$set": {"url": url}},
+            upsert=True
+        )
+
+        clear_api_cache()
+        return jsonify({"status": "ok", "url": url})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/user/work-history")
 def get_user_work_history():
