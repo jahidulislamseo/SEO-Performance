@@ -50,7 +50,7 @@ const MemberModal = ({ member, onClose }) => {
                 {member.avatar ? <img src={member.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : (member.name?.slice(0,2).toUpperCase() || '?')}
               </div>
               <div>
-                <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '4px' }}>{member.name}</h2>
+                <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#fff', marginBottom: '4px' }}>{member.fullName || member.name}</h2>
                 <p style={{ fontSize: '12px', color: '#64748b', fontWeight: 700 }}>{member.team} • {member.role || 'Member'} • #{String(member.id || '').slice(-5)}</p>
               </div>
             </div>

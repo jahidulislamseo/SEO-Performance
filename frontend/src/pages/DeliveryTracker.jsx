@@ -38,6 +38,13 @@ const initials = (s) => s.split(' ').map(w => w[0]).join('').slice(0, 2).toUpper
 const FU_KEY = 'dt_followups_v2';
 const loadFuState = () => { try { return JSON.parse(localStorage.getItem(FU_KEY) || '{}'); } catch { return {}; } };
 
+const formatAmt = (val) => {
+  const num = parseFloat(val);
+  if (isNaN(num)) return '0';
+  const rounded = Math.round(num * 100) / 100;
+  return rounded.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+};
+
 function DeliveryTracker() {
   const currentMonthStr = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
 
@@ -194,16 +201,32 @@ function DeliveryTracker() {
         </div>
 
         {/* Controls */}
-        <div className="controls" style={{ marginTop: 20, marginBottom: 8 }}>
-          <div className="search-wrap">
-            <span className="si">🔍</span>
-            <input 
-              className="search-input" 
-              placeholder="Search client / order..." 
-              value={search} 
-              onChange={e => setSearch(e.target.value)} 
-            />
+        <div className="controls" style={{ marginTop: 20, marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <div className="search-wrap">
+              <span className="si">🔍</span>
+              <input 
+                className="search-input" 
+                placeholder="Search client / order..." 
+                value={search} 
+                onChange={e => setSearch(e.target.value)} 
+              />
+            </div>
+            
+            {/* Filter Tabs moved here */}
+            <div className="filter-tabs" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {[['', 'All'], ['0', 'No Follow-up'], ['1', '1 Done'], ['2', '2 Done'], ['3', '3 Done'], ['4', '4 Done'], ['5', '5 ✓'], ['6', 'Sold 💰']].map(([v, lbl]) => (
+                <button 
+                  key={v} 
+                  className={`ftab ${fuFilter === v ? 'active' : ''}`} 
+                  onClick={() => setFuFilter(v)}
+                >
+                  {lbl}
+                </button>
+              ))}
+            </div>
           </div>
+
           {/* Month Selector */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: 12, color: '#64748b', fontWeight: 600 }}>📅 Month:</span>
@@ -229,17 +252,6 @@ function DeliveryTracker() {
               ))}
             </select>
           </div>
-        </div>
-        <div className="filter-tabs" style={{ marginBottom: 20 }}>
-          {[['', 'All'], ['0', 'No Follow-up'], ['1', '1 Done'], ['2', '2 Done'], ['3', '3 Done'], ['4', '4 Done'], ['5', '5 ✓'], ['6', 'Sold 💰']].map(([v, lbl]) => (
-            <button 
-              key={v} 
-              className={`ftab ${fuFilter === v ? 'active' : ''}`} 
-              onClick={() => setFuFilter(v)}
-            >
-              {lbl}
-            </button>
-          ))}
         </div>
 
         {/* List */}
@@ -309,7 +321,7 @@ function DeliveryTracker() {
                 {/* Column 4: Right Section */}
                 <div className="dt-right-col">
                   <div className="dt-price-row">
-                    <div className="dt-price">${item.amt}</div>
+                    <div className="dt-price">${formatAmt(item.amt)}</div>
                     {item.sold ? (
                       <span className="dt-status-pill sp-sold">💰 Sold</span>
                     ) : fc === 5 ? (

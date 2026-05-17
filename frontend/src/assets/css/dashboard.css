@@ -848,7 +848,7 @@ body[data-theme="light"] {
 /* ── KPI STRIP ── */
 .kpi-strip {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 12px;
   margin-bottom: 24px;
 }
@@ -969,6 +969,7 @@ body[data-theme="light"] {
 /* ── CONTROLS ── */
 .controls {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
@@ -999,7 +1000,7 @@ body[data-theme="light"] {
   font-weight: 600;
   outline: none;
   font-family: inherit;
-  width: 180px;
+  width: 260px;
   transition: all .2s;
 }
 

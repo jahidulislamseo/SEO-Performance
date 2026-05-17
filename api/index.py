@@ -182,6 +182,7 @@ def _build_current_payload():
         if prof:
             if "target" in prof: m["target"] = prof["target"]
             if "name" in prof: m["name"] = prof["name"]
+            if "fullName" in prof: m["fullName"] = prof["fullName"]
             if "role" in prof: m["role"] = prof["role"]
             if "team" in prof: m["team"] = prof["team"]
             if "avatar" in prof: m["avatar"] = prof["avatar"]
@@ -352,8 +353,20 @@ def _build_month_payload(month_str):
         "bestPerformer": sorted(member_summaries, key=lambda x: x["deliveredAmt"], reverse=True)[0] if member_summaries else None,
         "bestTeam": sorted(team_data.values(), key=lambda x: x["deliveredAmt"], reverse=True)[0] if team_data else None,
     }
+    settings_doc = db["settings"].find_one({"_id": "dashboard_services"})
+    selected_services = settings_doc.get("services", []) if settings_doc else []
+    svc_data = {}
+    for svc in selected_services:
+        svc_projects = [p for p in projects if p.get("service") == svc]
+        s_delivered = [p for p in svc_projects if p.get("status") == "Delivered"]
+        svc_data[svc] = {
+            "name": svc,
+            "deliveredAmt": round(sum(float(p.get("amtX", 0) or 0) for p in s_delivered), 2),
+            "delivered": len(s_delivered)
+        }
+
     summary = {
-        "dept": dept_doc, "teams": team_data,
+        "dept": dept_doc, "teams": team_data, "serviceLines": svc_data,
         "totalAchieved": round(total_delivered_amt, 2),
         "uniqueOrders": dept_doc["uniqueProjects"], "totaleOrders": dept_doc["uniqueProjects"],
         "audit": {"seoSmmRows": len(projects), "matchedRows": len(projects), "unmatchedRows": 0,
@@ -699,7 +712,7 @@ def attendance_checkin():
             shift_hour, shift_minute = 8, 0
             
         shift_time = now.replace(hour=shift_hour, minute=shift_minute, second=0, microsecond=0)
-        cutoff = shift_time + timedelta(minutes=15)
+        cutoff = shift_time + timedelta(minutes=25)
         
         status = "Late" if now > cutoff else "Present"
         
@@ -1025,6 +1038,7 @@ def admin_update_member():
             [{"$set": {"assign": {"$replaceAll": {"input": "$assign", "find": old_name, "replacement": new_name}}}}]
         )
     
+    agent_engine.calculate_summaries()
     clear_api_cache()
     audit_log(db, "member_updated", f"Updated member {emp_id}")
     return jsonify({"ok": True})
@@ -1037,6 +1051,7 @@ def admin_add_member():
     # Set isOfficial to True for manually added members
     data["isOfficial"] = True
     db["members"].insert_one(data)
+    agent_engine.calculate_summaries()
     clear_api_cache()
     audit_log(db, "member_added", f"Added member {data.get('id')} - {data.get('name')}")
     return jsonify({"ok": True})
@@ -1048,6 +1063,7 @@ def admin_delete_member():
     if not emp_id: return jsonify({"error": "missing id"}), 400
     db = get_db()
     db["members"].delete_one({"id": emp_id})
+    agent_engine.calculate_summaries()
     clear_api_cache()
     audit_log(db, "member_deleted", f"Deleted member {emp_id}")
     return jsonify({"ok": True})
@@ -1113,7 +1129,9 @@ def admin_send_announcement():
     if not message: return jsonify({"error": "message required"}), 400
     db = get_db()
     title = data.get("title", "Announcement")
-    
+    alert_type = data.get("alert_type", "info")  # info | warning | success | urgent
+    ts = time.time()
+
     docs = []
     if target == "all":
         # Create a global announcement for the public dashboard
@@ -1121,8 +1139,9 @@ def admin_send_announcement():
             "emp_id": "all",
             "text": message,
             "title": title,
+            "alert_type": alert_type,
             "read": False,
-            "timestamp": time.time(),
+            "timestamp": ts,
             "target": "all"
         })
         
@@ -1134,8 +1153,9 @@ def admin_send_announcement():
                     "emp_id": m["id"],
                     "text": message,
                     "title": title,
+                    "alert_type": alert_type,
                     "read": False,
-                    "timestamp": time.time(),
+                    "timestamp": ts,
                     "target": "all"
                 })
     else:
@@ -1147,15 +1167,16 @@ def admin_send_announcement():
                     "emp_id": m["id"],
                     "text": message,
                     "title": title,
+                    "alert_type": alert_type,
                     "read": False,
-                    "timestamp": time.time(),
+                    "timestamp": ts,
                     "target": target
                 })
                 
     if docs:
         db["notifications"].insert_many(docs)
     
-    audit_log(db, "announcement_sent", f"Sent announcement to {target}: {title}")
+    audit_log(db, "announcement_sent", f"Sent [{alert_type.upper()}] announcement to {target}: {title}")
     return jsonify({"ok": True})
 
 @app.route("/api/admin/announcements/history", methods=["GET"])
@@ -1177,6 +1198,23 @@ def get_announcement_history():
     ]
     history = list(db["notifications"].aggregate(pipeline))
     return jsonify(history)
+
+@app.route("/api/admin/announcements/delete", methods=["POST"])
+def admin_delete_announcement():
+    data = request.get_json(force=True)
+    timestamp = data.get("timestamp")
+    if not timestamp: return jsonify({"error": "timestamp required"}), 400
+    db = get_db()
+    
+    try:
+        ts_val = float(timestamp)
+        query = {"$or": [{"timestamp": ts_val}, {"timestamp": str(timestamp)}]}
+    except (ValueError, TypeError):
+        query = {"timestamp": timestamp}
+        
+    res = db["notifications"].delete_many(query)
+    audit_log(db, "announcement_deleted", f"Deleted announcement with timestamp {timestamp}. Deleted {res.deleted_count} documents.")
+    return jsonify({"ok": True, "deleted_count": res.deleted_count})
 
 @app.route("/api/attendance-stats", methods=["GET"])
 def get_attendance_stats():
@@ -1378,6 +1416,8 @@ def admin_all_projects():
         db = get_db()
         month_filter = request.args.get("month", "")
         search_q = request.args.get("q", "").strip().lower()
+        service_filter = request.args.get("service", "").strip()
+        assign_filter = request.args.get("assign", "").strip()
         
         query = {}
         conditions = []
@@ -1400,11 +1440,19 @@ def admin_all_projects():
                     {"status": {"$regex": search_q, "$options": "i"}}
                 ]
             })
+
+        # Exact filter for Service Line dropdown
+        if service_filter:
+            conditions.append({"service": service_filter})
+
+        # Exact filter for Delivered By dropdown
+        if assign_filter:
+            conditions.append({"assign": {"$regex": assign_filter, "$options": "i"}})
             
         if conditions:
             query["$and"] = conditions
             
-        projects = list(db["projects_archive"].find(query, {"_id": 0}).sort("date", -1).limit(1000))
+        projects = list(db["projects_archive"].find(query, {"_id": 0}).sort("date", -1))
         
         # Join remarks in real-time
         all_remarks = {r["order"]: r.get("logs", []) for r in db["project_remarks"].find({}, {"order": 1, "logs": 1})}
@@ -1412,6 +1460,33 @@ def admin_all_projects():
             p["userRemarks"] = all_remarks.get(p.get("order"), [])
             
         return jsonify(projects)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/admin/dashboard-services", methods=["GET", "POST"])
+def admin_dashboard_services():
+    """Manage which service lines are shown on the Main Dashboard."""
+    try:
+        db = get_db()
+        if request.method == "POST":
+            data = request.json
+            services = data.get("services", [])
+            db["settings"].update_one({"_id": "dashboard_services"}, {"$set": {"services": services}}, upsert=True)
+            import agent_engine
+            # Run in a background thread or wait slightly, here we just call it directly
+            # to ensure the dashboard reflects the new selection immediately
+            try:
+                agent_engine.calculate_summaries()
+            except Exception as ex:
+                print(f"Error recalculating summaries: {ex}")
+            return jsonify({"ok": True})
+
+        settings_doc = db["settings"].find_one({"_id": "dashboard_services"})
+        selected = settings_doc.get("services", []) if settings_doc else []
+        
+        available = db["projects_archive"].distinct("service")
+        available = sorted([s for s in available if s])
+        return jsonify({"selected": selected, "available": available})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -1531,8 +1606,10 @@ def api_query_tracker():
             rows = fetch_sheet_data_gviz("Query Sheet", QUERY_SHEET_ID)
             if rows:
                 q_batch = []
-                for r in rows[1:]: # Skip header
+                for r in rows:
                     if len(r) < 5: continue
+                    if str(r[0]).strip().lower() == "date":
+                        continue
                     while len(r) < 15: r.append("")
                     date_val = str(r[0]).strip()
                     member = str(r[1]).strip()

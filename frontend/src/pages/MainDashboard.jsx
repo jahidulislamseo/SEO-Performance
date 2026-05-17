@@ -195,20 +195,36 @@ function MainDashboard() {
         />
 
         {/* Announcements Marquee */}
-        {notifs.length > 0 && (
-          <div className="announcement-bar" style={{ background: 'rgba(59,130,246,0.06)', borderBottom: '1px solid rgba(59,130,246,0.1)', padding: '10px 32px', display: 'flex', alignItems: 'center', gap: '16px', overflow: 'hidden' }}>
-            <div style={{ background: '#3b82f6', color: '#fff', fontSize: '9px', fontWeight: 900, padding: '3px 8px', borderRadius: '4px', whiteSpace: 'nowrap', boxShadow: '0 0 10px rgba(59,130,246,0.3)' }}>ANNOUNCEMENT</div>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              <div className="marquee-content" style={{ display: 'flex', gap: '60px', animation: 'marquee 40s linear infinite', whiteSpace: 'nowrap' }}>
-                {[...notifs, ...notifs].map((n, i) => (
-                  <div key={i} style={{ fontSize: '13px', color: '#93c5fd', fontWeight: 500 }}>
-                    <strong style={{ color: '#fff', marginRight: '6px' }}>{n.title || 'Update'}:</strong> {n.text}
-                  </div>
-                ))}
+        {notifs.length > 0 && (() => {
+          const ALERT_COLORS = {
+            info:    { bar: 'rgba(59,130,246,0.06)',  border: 'rgba(59,130,246,0.15)', badge: '#3b82f6', badgeShadow: 'rgba(59,130,246,0.3)',  text: '#93c5fd'  },
+            success: { bar: 'rgba(16,185,129,0.06)',  border: 'rgba(16,185,129,0.15)', badge: '#10b981', badgeShadow: 'rgba(16,185,129,0.3)',  text: '#6ee7b7'  },
+            warning: { bar: 'rgba(245,158,11,0.06)',  border: 'rgba(245,158,11,0.15)', badge: '#f59e0b', badgeShadow: 'rgba(245,158,11,0.3)',  text: '#fcd34d'  },
+            urgent:  { bar: 'rgba(239,68,68,0.08)',   border: 'rgba(239,68,68,0.2)',   badge: '#ef4444', badgeShadow: 'rgba(239,68,68,0.35)',  text: '#fca5a5'  },
+          };
+          const firstType = notifs[0]?.alert_type || 'info';
+          const c = ALERT_COLORS[firstType] || ALERT_COLORS.info;
+          const badgeLabels = { info: 'INFO', success: 'UPDATE', warning: 'WARNING', urgent: 'URGENT' };
+          return (
+            <div className="announcement-bar" style={{ background: c.bar, borderBottom: `1px solid ${c.border}`, padding: '10px 32px', display: 'flex', alignItems: 'center', gap: '16px', overflow: 'hidden' }}>
+              <div style={{ background: c.badge, color: '#fff', fontSize: '9px', fontWeight: 900, padding: '3px 8px', borderRadius: '4px', whiteSpace: 'nowrap', boxShadow: `0 0 10px ${c.badgeShadow}`, letterSpacing: '0.8px' }}>
+                {badgeLabels[firstType] || 'ANNOUNCEMENT'}
+              </div>
+              <div style={{ flex: 1, overflow: 'hidden' }}>
+                <div className="marquee-content" style={{ display: 'flex', gap: '60px', animation: 'marquee 40s linear infinite', whiteSpace: 'nowrap' }}>
+                  {[...notifs, ...notifs].map((n, i) => {
+                    const nc = ALERT_COLORS[n.alert_type || 'info'] || ALERT_COLORS.info;
+                    return (
+                      <div key={i} style={{ fontSize: '13px', color: nc.text, fontWeight: 500 }}>
+                        <strong style={{ color: '#fff', marginRight: '6px' }}>{n.title || 'Update'}:</strong>{n.text}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
 
         <div className="welcome-strip" style={{ padding: '24px 32px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', position: 'relative', zIndex: 10 }}>
@@ -333,7 +349,7 @@ function MainDashboard() {
                   <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(139,92,246,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px', border: '1px solid rgba(59,130,246,0.3)', boxShadow: '0 0 15px rgba(59,130,246,0.2)' }}>🚀</div>
                   <div>
                     <div style={{ fontSize: '11px', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Top Performer</div>
-                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#f1f5f9', marginTop: '2px' }}>{topPerformers[0]?.name || 'N/A'}</div>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: '#f1f5f9', marginTop: '2px' }}>{topPerformers[0]?.fullName || topPerformers[0]?.name || 'N/A'}</div>
                     <div style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 700 }}>${topPerformers[0]?.deliveredAmt || 0} Delivered</div>
                   </div>
                 </div>
@@ -440,7 +456,35 @@ function MainDashboard() {
                 </div>
               </div>
 
-              {/* Platform Breakdown Strip */}
+              {/* Service Lines Strip */}
+              {summary.serviceLines && Object.keys(summary.serviceLines).length > 0 && (
+                <>
+                  <div className="stitle" style={{ marginTop: '30px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span>🎯 Active Service Lines</span>
+                    <span style={{ fontSize: 10, background: 'rgba(59,130,246,0.1)', color: '#60a5fa', padding: '2px 8px', borderRadius: 12 }}>Live</span>
+                  </div>
+                  <div className="platform-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                    {Object.values(summary.serviceLines).map((svc) => (
+                      <div key={svc.name} className="tc" style={{ padding: '20px', background: 'rgba(15, 23, 42, 0.4)', border: '1px solid rgba(148,163,184,0.1)', borderRadius: 12, position: 'relative', overflow: 'hidden' }}>
+                        <div style={{ position: 'absolute', top: 0, left: 0, height: '100%', width: 4, background: '#3b82f6' }}></div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 800, color: '#f8fafc' }}>{svc.name}</div>
+                          <div style={{ fontSize: '10px', fontWeight: 700, color: '#94a3b8', background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: 4 }}>{svc.delivered} Projects</div>
+                        </div>
+                        <div style={{ fontSize: '24px', fontWeight: 900, color: '#10b981', letterSpacing: '-0.5px' }}>
+                          ${svc.deliveredAmt.toLocaleString()}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#64748b', marginTop: 4, fontWeight: 600 }}>Total Revenue Delivered</div>
+                        
+                        <div className="tc-track" style={{ height: '4px', marginTop: '16px', background: 'rgba(255,255,255,0.05)' }}>
+                          <div className="tc-fill" style={{ width: `${Math.min(100, (svc.deliveredAmt / (summary.totalAchieved || 1)) * 100)}%`, background: '#3b82f6' }}></div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+
               <div className="stitle" style={{ marginTop: '30px' }}>📊 Platform Breakdown</div>
               <div className="platform-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '12px', marginBottom: '24px' }}>
                 {deptSummary.platforms && Object.entries(deptSummary.platforms).map(([p, val]) => (
@@ -453,6 +497,49 @@ function MainDashboard() {
                   </div>
                 ))}
               </div>
+
+              {/* Unassigned Projects Section */}
+              {deptSummary.unassignedProjects && deptSummary.unassignedProjects.length > 0 && (
+                <div style={{ marginBottom: '30px' }}>
+                  <div className="stitle" style={{ display: 'flex', alignItems: 'center', gap: 8, color: '#f8fafc' }}>
+                    <span>🚨 Unassigned Projects</span>
+                    <span style={{ fontSize: 10, background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', padding: '2px 8px', borderRadius: 12, fontWeight: 700 }}>Action Required</span>
+                  </div>
+                  <div style={{ background: 'rgba(15, 23, 42, 0.4)', borderRadius: 12, border: '1px solid rgba(239, 68, 68, 0.2)', overflow: 'hidden', marginTop: '12px' }}>
+                    <div style={{ overflowX: 'auto' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(255,255,255,0.02)', color: '#94a3b8', fontSize: '11px', textTransform: 'uppercase' }}>
+                            <th style={{ padding: '12px 16px', fontWeight: 700 }}>Order ID</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 700 }}>Client</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 700 }}>Service</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 700 }}>Status</th>
+                            <th style={{ padding: '12px 16px', fontWeight: 700, textAlign: 'right' }}>Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {deptSummary.unassignedProjects.map((p, idx) => (
+                            <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)', color: '#f1f5f9' }}>
+                              <td style={{ padding: '12px 16px', fontWeight: 600 }}>
+                                {p.link ? <a href={p.link} target="_blank" rel="noreferrer" style={{ color: '#3b82f6', textDecoration: 'none' }}>{p.order}</a> : p.order}
+                              </td>
+                              <td style={{ padding: '12px 16px' }}>{p.client}</td>
+                              <td style={{ padding: '12px 16px', color: '#94a3b8' }}>{p.service}</td>
+                              <td style={{ padding: '12px 16px' }}>
+                                <span style={{ padding: '2px 8px', borderRadius: 12, fontSize: '10px', fontWeight: 700, background: p.status === 'WIP' ? 'rgba(59,130,246,0.1)' : 'rgba(245,158,11,0.1)', color: p.status === 'WIP' ? '#60a5fa' : '#fbbf24' }}>
+                                  {p.status}
+                                </span>
+                              </td>
+                              <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 800, color: '#10b981' }}>${p.amount}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
 
             </section>
           )}
@@ -502,7 +589,7 @@ function MainDashboard() {
                             {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : m.name?.charAt(0)}
                           </div>
                           <div>
-                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#f1f5f9' }}>{m.name}</div>
+                            <div style={{ fontSize: '18px', fontWeight: 900, color: '#f1f5f9' }}>{m.fullName || m.name}</div>
                             <div style={{ fontSize: '11px', fontWeight: 700, color: '#64748b' }}>
                               {m.fullName} - <span style={{ color: '#10b981' }}>{m.team}</span>
                             </div>

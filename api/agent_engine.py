@@ -160,9 +160,18 @@ def process_and_save(df, db):
     if 'amount_x' in df.columns:
         df['amount_x'] = df['amount_x'].apply(clean_amt).fillna(0.0)
     
-    # Filter for SEO/SMM
+    # Dynamic Filter from Admin Settings (Dashboard Services)
     if 'service' in df.columns:
-        df = df[df['service'].str.contains('SEO|SMM', case=False, na=False)]
+        settings_doc = db["settings"].find_one({"_id": "dashboard_services"})
+        selected_services = settings_doc.get("services", []) if settings_doc else []
+        
+        if selected_services:
+            # Escape regex characters just in case, though they are usually plain text
+            pattern = '|'.join([re.escape(s) for s in selected_services])
+            df = df[df['service'].str.contains(pattern, case=False, na=False)]
+        else:
+            # Fallback to default if nothing selected
+            df = df[df['service'].str.contains('SEO|SMM|Cross Function CMS', case=False, na=False)]
 
     # ─── DATE FILTERING (Dynamic Month) ───
     cur_y = time.strftime("%Y")
@@ -240,7 +249,26 @@ def process_and_save(df, db):
     wipRows = df[df['status'].isin(['WIP', 'Revision'])]['order_num'].nunique()
     cancelledRows = df[df['status'] == 'Cancelled']['order_num'].nunique()
     matchedRows = edf['order_num'].nunique() if not edf.empty else 0
-    unmatchedRows = seoSmmRows - (df[df['order_num'].isin(edf['order_num'])]['order_num'].nunique() if not edf.empty else 0)
+    
+    # Extract actual unassigned projects (Active/WIP/Revision only, skip Delivered/Cancelled if we want)
+    unmatched_df = df[~df['order_num'].isin(edf['order_num'])] if not edf.empty else df
+    unassigned_list = []
+    for _, r in unmatched_df.iterrows():
+        order = str(r.get('order_num', '')).strip()
+        if not order or order.lower() == 'n/a': continue
+        status = str(r.get('status', '')).strip()
+        if status in ['Delivered', 'Cancelled', 'Completed']: continue # Only show active unassigned
+        
+        unassigned_list.append({
+            "order": order,
+            "client": str(r.get('client', '')),
+            "service": str(r.get('service', '')),
+            "status": status,
+            "amount": safe_float(r.get('amount_x', 0)),
+            "link": str(r.get('order_link', ''))
+        })
+        
+    unmatchedRows = len(unmatched_df) # Total unmatched rows for audit
 
     # Platform Breakdown (Current Month)
     platform_stats = {"Fiverr": 0.0, "Upwork": 0.0, "B2B": 0.0, "PPH": 0.0}
@@ -415,29 +443,32 @@ def process_and_save(df, db):
         team_members = [m for m in member_summaries if m.get("team") == team]
         m_delivered_amt = sum(m.get("deliveredAmt", 0) for m in team_members)
         m_wip_amt = sum(m.get("wipAmt", 0) for m in team_members)
-        m_delivered_count = sum(m.get("delivered", 0) for m in team_members)
-        m_wip_count = sum(m.get("wip", 0) for m in team_members)
-        m_rev_count = sum(m.get("revision", 0) for m in team_members)
-        m_cancel_count = sum(m.get("cancelled", 0) for m in team_members)
-        m_total_projects = sum(m.get("total", 0) for m in team_members)
 
-        # 2. Add projects that match the op_dept tag but might not be assigned to an official member
+        # 2. Get unique project rows assigned to team members or tagged with team's op_dept to prevent double-counting
+        team_member_names = {m["name"].strip().lower() for m in team_members}
+        member_orders = set()
+        if not edf.empty:
+            member_orders = set(edf[edf['matched_name'].str.strip().str.lower().isin(team_member_names)]['order_num'])
+            
+        is_team_tag = df['op_dept'].astype(str).str.strip().str.lower() == tag.lower()
+        is_member_order = df['order_num'].isin(member_orders)
+        team_projects_df = df[is_team_tag | is_member_order].copy()
+        
+        final_total_projects = len(team_projects_df)
+        final_delivered_count = len(team_projects_df[team_projects_df['status'] == 'Delivered'])
+        final_wip_count = len(team_projects_df[team_projects_df['status'] == 'WIP'])
+        final_rev_count = len(team_projects_df[team_projects_df['status'] == 'Revision'])
+        final_cancel_count = len(team_projects_df[team_projects_df['status'] == 'Cancelled'])
+
+        # 3. Add projects that match the op_dept tag but might not be assigned to an official member
         # (This ensures we capture 'unassigned' or 'external' deliveries for that team)
         t_df = df[df['op_dept'].astype(str).str.strip().str.lower() == tag.lower()]
-        
-        # To avoid double counting, we'll only take the difference if the op_dept total is higher
-        # OR we can just rely on member aggregation since the user wants it 'team অনুযায়ী'
-        # Actually, let's just use member aggregation as the primary source of truth now
-        # but keep t_df for metadata like project list if needed.
-        
         delivered = t_df[t_df['status'] == 'Delivered']
         wip_rev = t_df[t_df['status'].isin(['WIP', 'Revision'])]
         
         # Final Team Values (Max of member sum or sheet tag sum to be safe)
         final_delivered_amt = max(m_delivered_amt, round(delivered['amount_x'].sum(), 2))
         final_wip_amt = max(m_wip_amt, round(wip_rev['amount_x'].sum(), 2))
-        final_delivered_count = max(m_delivered_count, len(delivered))
-        final_total_projects = max(m_total_projects, len(t_df))
 
         team_data[team] = {
             "name": team,
@@ -447,9 +478,9 @@ def process_and_save(df, db):
             "wipAmt": final_wip_amt,
             "projects": final_total_projects,
             "delivered": final_delivered_count,
-            "wip": max(m_wip_count, len(t_df[t_df['status'] == 'WIP'])),
-            "revision": max(m_rev_count, len(t_df[t_df['status'] == 'Revision'])),
-            "cancelled": max(m_cancel_count, len(t_df[t_df['status'] == 'Cancelled'])),
+            "wip": final_wip_count,
+            "revision": final_rev_count,
+            "cancelled": final_cancel_count,
             "target": targets.get(team, 0),
             "remaining": round(targets.get(team, 0) - final_delivered_amt, 2),
             "progress": round((final_delivered_amt / targets.get(team, 0)) * 100, 1) if targets.get(team, 0) else 0,
@@ -492,6 +523,7 @@ def process_and_save(df, db):
         "wipRows": wipRows,
         "cancelledRows": cancelledRows,
         "unmatchedRows": unmatchedRows,
+        "unassignedProjects": unassigned_list,
         "platformStats": platform_stats,
         "presentToday": total_present_today,
         "lateToday": total_late_today,

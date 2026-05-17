@@ -50,7 +50,7 @@ const MemberCard = ({ member, onClick, att }) => {
             {member.avatar ? <img src={member.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : member.name?.charAt(0)}
           </div>
           <div>
-            <div style={{ fontSize: '15px', fontWeight: 900, color: '#f1f5f9' }}>{member.name}</div>
+            <div style={{ fontSize: '15px', fontWeight: 900, color: '#f1f5f9' }}>{member.fullName || member.name}</div>
             <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 700 }}>{member.team} • #{member.id?.slice(-5)}</div>
           </div>
         </div>

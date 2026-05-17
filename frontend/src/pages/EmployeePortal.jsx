@@ -1713,6 +1713,10 @@ const AdminAttendance = () => {
   const [editing, setEditing] = React.useState(null);
   const [toast, setToast] = React.useState(null);
 
+  const [searchEmp, setSearchEmp] = React.useState('');
+  const [filterStatus, setFilterStatus] = React.useState('');
+  const [sortConfig, setSortConfig] = React.useState({ key: null, direction: 'asc' });
+
   const load = (d) => fetch(`/api/admin/attendance?date=${d}`).then(r => r.json()).then(setRecords);
   React.useEffect(() => { load(date); }, [date]);
 
@@ -1724,6 +1728,37 @@ const AdminAttendance = () => {
     if (d.ok) { showToast('Updated!'); setEditing(null); load(date); }
     else showToast(d.error || 'Error', 'error');
   };
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredRecords = React.useMemo(() => {
+    return records.filter(r => {
+      if (searchEmp && !r.emp_id?.toLowerCase().includes(searchEmp.toLowerCase())) return false;
+      if (filterStatus && r.status !== filterStatus) return false;
+      return true;
+    });
+  }, [records, searchEmp, filterStatus]);
+
+  const sortedRecords = React.useMemo(() => {
+    let sortableItems = [...filteredRecords];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        let aVal = a[sortConfig.key] || '';
+        let bVal = b[sortConfig.key] || '';
+
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredRecords, sortConfig]);
 
   const statusColor = { Present: '#10b981', Late: '#f59e0b', Absent: '#ef4444', Leave: '#a78bfa' };
 
@@ -1742,22 +1777,60 @@ const AdminAttendance = () => {
         </Modal>
       )}
       <div className="emp-card">
-        <div className="emp-card-header">
+        <div className="emp-card-header" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="emp-card-title">Attendance Records</div>
-          <input type="date" value={date} onChange={e => setDate(e.target.value)}
-            style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f1f5f9', fontSize: 12, fontFamily: 'Manrope,sans-serif' }} />
+          <div style={{ display: 'flex', gap: 8, marginLeft: 'auto', alignItems: 'center' }}>
+            <input 
+              placeholder="Search Employee..." 
+              value={searchEmp} 
+              onChange={e => setSearchEmp(e.target.value)}
+              style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#fff', fontSize: 12, fontFamily: 'Manrope,sans-serif', width: 140 }}
+            />
+            <select 
+              value={filterStatus} 
+              onChange={e => setFilterStatus(e.target.value)}
+              style={{ padding: '6px 12px', background: '#0c1424', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#fff', fontSize: 12, fontFamily: 'Manrope,sans-serif', cursor: 'pointer' }}
+            >
+              <option value="">All Status</option>
+              <option value="Present">Present</option>
+              <option value="Late">Late</option>
+              <option value="Absent">Absent</option>
+              <option value="Leave">Leave</option>
+            </select>
+            <input type="date" value={date} onChange={e => setDate(e.target.value)}
+              style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f1f5f9', fontSize: 12, fontFamily: 'Manrope,sans-serif' }} />
+          </div>
         </div>
         {records.length === 0
           ? <div style={{ padding: 40, textAlign: 'center', color: '#334155', fontSize: 13 }}>No records for {date}</div>
           : <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead><tr style={{ background: 'rgba(255,255,255,0.02)' }}>
-                {['Employee ID', 'Status', 'Check In', 'Check Out', 'Duration', 'Device', 'IP', 'Action'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', fontSize: 9, fontWeight: 800, color: '#334155', textAlign: 'left', letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>{h}</th>
+                {[
+                  { label: 'Employee ID', key: 'emp_id' },
+                  { label: 'Status', key: 'status' },
+                  { label: 'Check In', key: 'in' },
+                  { label: 'Check Out', key: 'out' },
+                  { label: 'Duration', key: 'duration' },
+                  { label: 'Device', key: 'device_in' },
+                  { label: 'IP', key: 'ip_in' },
+                  { label: 'Action', key: null }
+                ].map(h => (
+                  <th 
+                    key={h.label} 
+                    onClick={() => h.key && requestSort(h.key)}
+                    style={{ 
+                      padding: '10px 14px', fontSize: 9, fontWeight: 800, color: '#334155', textAlign: 'left', 
+                      letterSpacing: 1, borderBottom: '1px solid rgba(255,255,255,0.05)',
+                      cursor: h.key ? 'pointer' : 'default', userSelect: 'none'
+                    }}
+                  >
+                    {h.label} {h.key ? (sortConfig.key === h.key ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅') : ''}
+                  </th>
                 ))}
               </tr></thead>
               <tbody>
-                {records.map(r => (
+                {sortedRecords.map(r => (
                   <tr key={r.emp_id} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                     <td style={{ padding: '10px 14px', fontSize: 12, fontWeight: 700, color: '#94a3b8', fontFamily: 'monospace' }}>{r.emp_id}</td>
                     <td style={{ padding: '10px 14px' }}>
@@ -1784,20 +1857,48 @@ const AdminAnnouncements = ({ members }) => {
   const [title, setTitle] = React.useState('');
   const [msg, setMsg] = React.useState('');
   const [target, setTarget] = React.useState('all');
+  const [alertType, setAlertType] = React.useState('info');
   const [toast, setToast] = React.useState(null);
   const [history, setHistory] = React.useState([]);
 
-  const showToast = (m, type = 'ok') => { setToast({ msg: m, type }); setTimeout(() => setToast(null), 3000); };
+  const ALERT_TYPES = [
+    { value: 'info',    label: '🔵 Info',    color: '#3b82f6', bg: 'rgba(59,130,246,0.12)',  border: 'rgba(59,130,246,0.3)' },
+    { value: 'success', label: '🟢 Success', color: '#10b981', bg: 'rgba(16,185,129,0.12)',  border: 'rgba(16,185,129,0.3)' },
+    { value: 'warning', label: '🟡 Warning', color: '#f59e0b', bg: 'rgba(245,158,11,0.12)',  border: 'rgba(245,158,11,0.3)' },
+    { value: 'urgent',  label: '🔴 Urgent',  color: '#ef4444', bg: 'rgba(239,68,68,0.12)',   border: 'rgba(239,68,68,0.3)' },
+  ];
+  const getAlertStyle = (type) => ALERT_TYPES.find(t => t.value === type) || ALERT_TYPES[0];
+
+  const showToast = (m, type = 'ok') => { setToast({ msg: m, type }); setTimeout(() => setToast(null), 3500); };
 
   const fetchHistory = () => fetch('/api/admin/announcements/history').then(r => r.json()).then(d => setHistory(Array.isArray(d) ? d : []));
   React.useEffect(() => { fetchHistory(); }, []);
 
+  const formatTs = (ts) => {
+    try {
+      const d = typeof ts === 'number' ? new Date(ts * 1000) : new Date(ts);
+      return isNaN(d.getTime()) ? '—' : d.toLocaleString();
+    } catch { return '—'; }
+  };
+
+  const handleDelete = async (h) => {
+    if (!window.confirm('এই announcement টি সব member দের notification থেকে মুছে ফেলবেন?')) return;
+    const res = await fetch('/api/admin/announcements/delete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ timestamp: h.timestamp })
+    });
+    const d = await res.json();
+    if (d.ok) { showToast(`✅ Deleted (${d.deleted_count} records removed)`); fetchHistory(); }
+    else showToast(d.error || 'Delete failed', 'error');
+  };
+
   const send = async () => {
     if (!msg.trim()) return showToast('Please enter a message', 'error');
-    const r = await fetch('/api/admin/announcements', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, message: msg, target }) });
+    const r = await fetch('/api/admin/announcements', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, message: msg, target, alert_type: alertType }) });
     const d = await r.json();
     if (d.ok) {
-      showToast('Announcement sent!');
+      showToast('✅ Announcement sent!');
       setTitle('');
       setMsg('');
       fetchHistory();
@@ -1814,32 +1915,60 @@ const AdminAnnouncements = ({ members }) => {
         <div className="emp-card-header"><div className="emp-card-title">Send Announcement</div></div>
         <div style={{ padding: 20 }}>
           <Field label="TITLE"><Input value={title} onChange={setTitle} placeholder="Monthly update..." /></Field>
+          <Field label="ALERT TYPE">
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {ALERT_TYPES.map(t => (
+                <button key={t.value} onClick={() => setAlertType(t.value)}
+                  style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${alertType === t.value ? t.border : 'rgba(255,255,255,0.08)'}`, background: alertType === t.value ? t.bg : 'rgba(255,255,255,0.03)', color: alertType === t.value ? t.color : '#64748b', fontSize: 11, fontWeight: 800, cursor: 'pointer', transition: 'all 0.2s', fontFamily: 'inherit' }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </Field>
           <Field label="SEND TO">
             <Select value={target} onChange={setTarget} options={['all', ...TEAMS]} />
           </Field>
           <Field label="MESSAGE">
             <textarea value={msg} onChange={e => setMsg(e.target.value)} rows={5} placeholder="Write your message here..."
-              style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 9, color: '#f1f5f9', fontSize: 13, fontFamily: 'Manrope,sans-serif', resize: 'vertical', boxSizing: 'border-box' }} />
+              style={{ width: '100%', padding: '10px 12px', background: 'rgba(255,255,255,0.04)', border: `1px solid ${getAlertStyle(alertType).border}`, borderRadius: 9, color: '#f1f5f9', fontSize: 13, fontFamily: 'Manrope,sans-serif', resize: 'vertical', boxSizing: 'border-box', transition: 'border-color 0.2s' }} />
           </Field>
-          <Btn onClick={send} color="#10b981">Send to {target === 'all' ? `All (${members.length})` : target}</Btn>
+          <Btn onClick={send} color={getAlertStyle(alertType).color}>Send to {target === 'all' ? `All (${members.length})` : target}</Btn>
         </div>
       </div>
 
       {/* History List */}
       <div className="emp-card" style={{ display: 'flex', flexDirection: 'column' }}>
-        <div className="emp-card-header"><div className="emp-card-title">Announcement History</div></div>
+        <div className="emp-card-header">
+          <div className="emp-card-title">Announcement History</div>
+          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>{history.length} total</div>
+        </div>
         <div style={{ padding: '0 20px 20px', flex: 1, overflowY: 'auto', maxHeight: '500px' }}>
           {history.length === 0 ? (
             <div style={{ padding: 40, textAlign: 'center', color: '#475569', fontSize: 13 }}>No announcements sent yet.</div>
           ) : history.map((h, i) => (
             <div key={i} style={{ padding: '14px 0', borderBottom: i < history.length - 1 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9' }}>{h.title}</div>
-                <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600 }}>{new Date(h.timestamp * 1000).toLocaleString()}</div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 6 }}>
+                <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9', flex: 1 }}>{h.title || '(No Title)'}</div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+                  <div style={{ fontSize: 10, color: '#64748b', fontWeight: 600, whiteSpace: 'nowrap' }}>{formatTs(h.timestamp)}</div>
+                  <button
+                    onClick={() => handleDelete(h)}
+                    style={{ background: 'rgba(239,68,68,0.10)', border: '1px solid rgba(239,68,68,0.22)', borderRadius: 7, color: '#f87171', fontSize: 10, fontWeight: 900, padding: '4px 10px', cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.5px', whiteSpace: 'nowrap', fontFamily: 'inherit' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.28)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.55)'; e.currentTarget.style.color = '#fca5a5'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(239,68,68,0.10)'; e.currentTarget.style.borderColor = 'rgba(239,68,68,0.22)'; e.currentTarget.style.color = '#f87171'; }}
+                  >🗑 DELETE</button>
+                </div>
               </div>
-              <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.5, marginBottom: 8 }}>{h.text}</div>
-              <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, background: h.target === 'all' ? 'rgba(59,130,246,0.1)' : 'rgba(245,158,11,0.1)', color: h.target === 'all' ? '#60a5fa' : '#f59e0b', border: `1px solid ${h.target === 'all' ? 'rgba(59,130,246,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
-                Sent to: {h.target}
+              <div style={{ fontSize: 12, color: '#94a3b8', lineHeight: 1.6, marginBottom: 8 }}>{h.text}</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                {(() => { const s = getAlertStyle(h.alert_type || 'info'); return (
+                  <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
+                    {h.alert_type || 'info'}
+                  </div>
+                ); })()}
+                <div style={{ display: 'inline-block', fontSize: 9, fontWeight: 900, textTransform: 'uppercase', padding: '2px 8px', borderRadius: 20, background: h.target === 'all' ? 'rgba(59,130,246,0.1)' : 'rgba(245,158,11,0.1)', color: h.target === 'all' ? '#60a5fa' : '#f59e0b', border: `1px solid ${h.target === 'all' ? 'rgba(59,130,246,0.2)' : 'rgba(245,158,11,0.2)'}` }}>
+                  Sent to: {h.target || 'all'}
+                </div>
               </div>
             </div>
           ))}
@@ -1853,6 +1982,7 @@ const AdminLeaveRequests = () => {
   const [requests, setRequests] = React.useState([]);
   const [filter, setFilter] = React.useState('Pending');
   const [toast, setToast] = React.useState(null);
+  const [search, setSearch] = React.useState('');
 
   const load = (s) => fetch(`/api/admin/leave-requests?status=${s}`).then(r => r.json()).then(d => setRequests(Array.isArray(d) ? d : []));
   React.useEffect(() => { load(filter); }, [filter]);
@@ -1866,24 +1996,39 @@ const AdminLeaveRequests = () => {
     else showToast(d.error || 'Error', 'error');
   };
 
+  const filteredRequests = React.useMemo(() => {
+    return requests.filter(r => {
+      if (search && !r.emp_id?.toLowerCase().includes(search.toLowerCase()) && !r.reason?.toLowerCase().includes(search.toLowerCase())) return false;
+      return true;
+    });
+  }, [requests, search]);
+
   const statusColor = { Pending: '#f59e0b', Approved: '#10b981', Rejected: '#ef4444' };
 
   return (
     <div>
       {toast && <Toast msg={toast.msg} type={toast.type} />}
       <div className="emp-card">
-        <div className="emp-card-header">
+        <div className="emp-card-header" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <div className="emp-card-title">Leave Requests</div>
-          <div style={{ display: 'flex', gap: 6 }}>
-            {['Pending', 'Approved', 'Rejected'].map(s => (
-              <button key={s} onClick={() => setFilter(s)} style={{ padding: '5px 14px', borderRadius: 99, border: '1px solid', borderColor: filter === s ? statusColor[s] + '66' : 'rgba(255,255,255,0.07)', background: filter === s ? statusColor[s] + '18' : 'transparent', color: filter === s ? statusColor[s] : '#475569', fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'Manrope,sans-serif' }}>{s}</button>
-            ))}
+          <div style={{ display: 'flex', gap: 8, marginLeft: 'auto', alignItems: 'center' }}>
+            <input 
+              placeholder="Search employee or reason..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)}
+              style={{ padding: '6px 12px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#fff', fontSize: 12, fontFamily: 'Manrope,sans-serif', width: 180 }}
+            />
+            <div style={{ display: 'flex', gap: 6 }}>
+              {['Pending', 'Approved', 'Rejected'].map(s => (
+                <button key={s} onClick={() => setFilter(s)} style={{ padding: '5px 14px', borderRadius: 99, border: '1px solid', borderColor: filter === s ? statusColor[s] + '66' : 'rgba(255,255,255,0.07)', background: filter === s ? statusColor[s] + '18' : 'transparent', color: filter === s ? statusColor[s] : '#475569', fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'Manrope,sans-serif' }}>{s}</button>
+              ))}
+            </div>
           </div>
         </div>
-        {requests.length === 0
-          ? <div style={{ padding: 40, textAlign: 'center', color: '#334155', fontSize: 13 }}>No {filter.toLowerCase()} requests</div>
+        {filteredRequests.length === 0
+          ? <div style={{ padding: 40, textAlign: 'center', color: '#334155', fontSize: 13 }}>No {filter.toLowerCase()} requests found</div>
           : <div>
-            {requests.map(r => (
+            {filteredRequests.map(r => (
               <div key={r.key} style={{ padding: '14px 20px', borderBottom: '1px solid rgba(255,255,255,0.04)', display: 'grid', gridTemplateColumns: '1fr auto auto auto', gap: 16, alignItems: 'center' }}>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{r.emp_id}</div>
@@ -1908,6 +2053,7 @@ const AdminSettings = () => {
   const [toast, setToast] = React.useState(null);
   const [config, setConfig] = React.useState({ dept_target: 36000, team_targets: {} });
   const [shifts, setShifts] = React.useState({ "GEO Rankers": "08:00", "Rank Riser": "07:00", "Dark Rankers": "15:00", "Search Apex": "22:00" });
+  const [dbServices, setDbServices] = React.useState({ selected: [], available: [] });
   const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
@@ -1917,6 +2063,10 @@ const AdminSettings = () => {
 
     fetch('/api/admin/shifts').then(r => r.json()).then(d => {
       if (!d.error && Object.keys(d).length > 0) setShifts(d);
+    }).catch(e => console.error(e));
+
+    fetch('/api/admin/dashboard-services').then(r => r.json()).then(d => {
+      if (!d.error) setDbServices(d);
     }).catch(e => console.error(e));
   }, []);
 
@@ -1945,14 +2095,21 @@ const AdminSettings = () => {
         body: JSON.stringify(shifts)
       });
 
+      // Save Dashboard Services
+      const r3 = await fetch('/api/admin/dashboard-services', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ services: dbServices.selected })
+      });
+
       const d1 = await r1.json();
       const d2 = await r2.json();
+      const d3 = await r3.json();
 
-      if (d1.ok && d2.ok) {
+      if (d1.ok && d2.ok && d3.ok) {
         showToast('Settings saved! Triggering dashboard sync...', 'ok');
         // Auto-sync after save so dashboard reflects changes
         await sync();
-        showToast('Dashboard updated with new targets!', 'ok');
+        showToast('Dashboard updated with new settings!', 'ok');
       } else {
         showToast('Error saving settings', 'error');
       }
@@ -2040,7 +2197,7 @@ const AdminSettings = () => {
         {/* Shift Timings Card */}
         <div className="settings-card full-width">
           <div className="card-tag">ATTENDANCE</div>
-          <div className="card-title">Shift Schedules (15 min grace period)</div>
+          <div className="card-title">Shift Schedules (25 min grace period)</div>
           <div className="shifts-grid">
             {['GEO Rankers', 'Rank Riser', 'Search Apex', 'Dark Rankers'].map((team, i) => (
               <div key={team} className="team-input-card">
@@ -2056,6 +2213,25 @@ const AdminSettings = () => {
                 />
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Dashboard Services Card */}
+        <div className="settings-card full-width">
+          <div className="card-tag">DASHBOARD UI</div>
+          <div className="card-title">Active Service Lines on Dashboard</div>
+          <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 16 }}>Select the services you want to track individually on the main dashboard (data fetched from live sheet).</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            {dbServices.available.map(svc => {
+              const isActive = dbServices.selected.includes(svc);
+              return (
+                <div key={svc} 
+                     onClick={() => setDbServices(prev => ({ ...prev, selected: isActive ? prev.selected.filter(s => s !== svc) : [...prev.selected, svc] }))}
+                     style={{ padding: '8px 16px', borderRadius: 8, cursor: 'pointer', border: `1px solid ${isActive ? '#3b82f6' : 'rgba(255,255,255,0.1)'}`, background: isActive ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.03)', color: isActive ? '#60a5fa' : '#cbd5e1', fontSize: 13, fontWeight: 600, transition: 'all 0.2s' }}>
+                  {isActive ? '✓ ' : '+ '}{svc}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -2543,7 +2719,7 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
                   </div>
                   <div style={{ flex: 1 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: m.id === user.id ? '#3b82f6' : '#e2e8f0' }}>{m.name} {m.id === user.id && '(Me)'}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: m.id === user.id ? '#3b82f6' : '#e2e8f0' }}>{m.fullName || m.name} {m.id === user.id && '(Me)'}</span>
                       <span style={{ fontSize: 12, fontWeight: 900, color: mp >= 70 ? '#10b981' : mp >= 40 ? '#f59e0b' : '#ef4444' }}>{fmt(m.deliveredAmt)}</span>
                     </div>
                     <MiniBar value={mp} color={mp >= 70 ? '#10b981' : mp >= 40 ? '#f59e0b' : '#ef4444'} />
@@ -2571,7 +2747,7 @@ const OverviewDashboard = ({ user, members: rawMembers, deptSummary, pct, da, ds
                   <div style={{ width: 48, height: 48, borderRadius: 16, background: avatarGradient(m.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 800, color: '#fff', margin: '0 auto 12px', overflow: 'hidden', border: '2px solid rgba(255,255,255,0.1)' }}>
                     {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : getInitials(m.name)}
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.name}</div>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{m.fullName || m.name}</div>
                   <div style={{ fontSize: 11, color: '#64748b', marginBottom: 8 }}>{m.team}</div>
                   <div style={{ fontSize: 16, fontWeight: 900, color: '#10b981' }}>{fmt(m.deliveredAmt)}</div>
                   <div style={{ fontSize: 10, fontWeight: 800, color: mp >= 70 ? '#10b981' : mp >= 40 ? '#f59e0b' : '#ef4444', marginTop: 4 }}>{mp}%</div>
@@ -2601,58 +2777,198 @@ const AdminProjects = () => {
   const [search, setSearch] = React.useState('');
   const [month, setMonth] = React.useState(new Date().toISOString().slice(0, 7)); // YYYY-MM
   const [availableMonths, setAvailableMonths] = React.useState([]);
+  const [serviceLine, setServiceLine] = React.useState('');
+  const [deliveredBy, setDeliveredBy] = React.useState('');
+  const [serviceOptions, setServiceOptions] = React.useState([]);
+  const [memberOptions, setMemberOptions] = React.useState([]);
+
+  const [colFilters, setColFilters] = React.useState({
+    date: '',
+    order: '',
+    service: '',
+    client: '',
+    assign: '',
+    status: '',
+    remark: '',
+    amount: ''
+  });
+
+  const [sortConfig, setSortConfig] = React.useState({ key: null, direction: 'asc' });
 
   React.useEffect(() => {
     fetch('/api/months').then(r => r.json()).then(d => setAvailableMonths(Array.isArray(d) ? d : []));
+    // Load distinct service lines from live data
+    fetch('/api/admin/all-projects?month=&q=')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          const svcs = [...new Set(data.map(p => p.service).filter(Boolean))].sort();
+          const mems = [...new Set(data.map(p => p.assign).filter(Boolean))].sort();
+          setServiceOptions(svcs);
+          setMemberOptions(mems);
+        }
+      });
   }, []);
 
   React.useEffect(() => {
     setLoading(true);
-    fetch(`/api/admin/all-projects?month=${month}&q=${search}`)
+    const params = new URLSearchParams({ month, q: search });
+    if (serviceLine) params.set('service', serviceLine);
+    if (deliveredBy) params.set('assign', deliveredBy);
+    fetch(`/api/admin/all-projects?${params.toString()}`)
       .then(r => r.json())
       .then(data => {
         setProjects(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, [month, search]);
+  }, [month, search, serviceLine, deliveredBy]);
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const filteredProjects = React.useMemo(() => {
+    return projects.filter(p => {
+      if (colFilters.date && !p.date?.toLowerCase().includes(colFilters.date.toLowerCase())) return false;
+      if (colFilters.order && !p.order?.toLowerCase().includes(colFilters.order.toLowerCase())) return false;
+      if (colFilters.service && p.service !== colFilters.service) return false;
+      if (colFilters.client && !p.client?.toLowerCase().includes(colFilters.client.toLowerCase())) return false;
+      if (colFilters.assign && !p.assign?.toLowerCase().includes(colFilters.assign.toLowerCase())) return false;
+      if (colFilters.status && p.status !== colFilters.status) return false;
+      const instructionVal = p.instruction || p.link || '';
+      if (colFilters.remark && !instructionVal.toLowerCase().includes(colFilters.remark.toLowerCase())) return false;
+      if (colFilters.amount && !String(p.amtX || '').includes(colFilters.amount)) return false;
+      return true;
+    });
+  }, [projects, colFilters]);
+
+  const sortedProjects = React.useMemo(() => {
+    let sortableItems = [...filteredProjects];
+    if (sortConfig.key !== null) {
+      sortableItems.sort((a, b) => {
+        let aVal = a[sortConfig.key];
+        let bVal = b[sortConfig.key];
+
+        if (sortConfig.key === 'remark') {
+          aVal = a.instruction || a.link || '';
+          bVal = b.instruction || b.link || '';
+        }
+
+        if (sortConfig.key === 'amtX') {
+          aVal = parseFloat(aVal) || 0;
+          bVal = parseFloat(bVal) || 0;
+        }
+
+        if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredProjects, sortConfig]);
 
   const fmt = (v) => '$' + Number(v || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+  const selStyle = { padding: '10px 16px', background: '#0c1424', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#fff', fontWeight: 700, fontSize: 12, fontFamily: 'Manrope, sans-serif', cursor: 'pointer' };
+
+  const colInputStyle = {
+    width: '100%',
+    padding: '6px 10px',
+    background: 'rgba(255,255,255,0.02)',
+    border: '1px solid rgba(255,255,255,0.06)',
+    borderRadius: '8px',
+    color: '#fff',
+    fontSize: '11px',
+    fontFamily: 'Manrope, sans-serif',
+    outline: 'none',
+    boxSizing: 'border-box',
+    transition: 'all 0.2s'
+  };
+
+  const colSelectStyle = {
+    width: '100%',
+    padding: '5px 8px',
+    background: '#0c1424',
+    border: '1px solid rgba(255,255,255,0.06)',
+    borderRadius: '8px',
+    color: '#fff',
+    fontSize: '11px',
+    fontFamily: 'Manrope, sans-serif',
+    outline: 'none',
+    cursor: 'pointer',
+    boxSizing: 'border-box'
+  };
+
+  const hasColFilters = Object.values(colFilters).some(Boolean);
 
   return (
     <div className="admin-projects">
-      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: 1, minWidth: 300 }}>
+      {/* ── Filter Row 1: Search + Month ── */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: 1, minWidth: 260 }}>
           <span style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
           <input
-            placeholder="Search all projects (Order, Client, Team, Member...)"
+            placeholder="Search by order, client, member..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            style={{
-              width: '100%', padding: '12px 14px 12px 42px', background: 'rgba(255,255,255,0.03)',
-              border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, color: '#fff',
-              fontSize: 13, fontFamily: 'Manrope, sans-serif'
-            }}
+            style={{ width: '100%', padding: '11px 14px 11px 42px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 10, color: '#fff', fontSize: 13, fontFamily: 'Manrope, sans-serif', boxSizing: 'border-box' }}
           />
         </div>
-        <select
-          value={month}
-          onChange={e => setMonth(e.target.value)}
-          style={{
-            padding: '12px 20px', background: '#0c1424', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: 12, color: '#fff', fontWeight: 700, fontSize: 13, fontFamily: 'Manrope, sans-serif'
-          }}
-        >
-          <option value="">All Time</option>
-          {availableMonths.map(m => <option key={m} value={m}>{m}</option>)}
+        <select value={month} onChange={e => setMonth(e.target.value)} style={selStyle}>
+          <option value="" style={{ background: '#0c1424', color: '#fff' }}>📅 All Time</option>
+          {availableMonths.map(m => <option key={m} value={m} style={{ background: '#0c1424', color: '#fff' }}>{m}</option>)}
         </select>
+      </div>
+
+      {/* ── Filter Row 2: Service Line + Delivered By ── */}
+      <div style={{ display: 'flex', gap: 12, marginBottom: 20, flexWrap: 'wrap', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, whiteSpace: 'nowrap' }}>Service Line:</span>
+          <select value={serviceLine} onChange={e => setServiceLine(e.target.value)} style={{ ...selStyle, minWidth: 160 }}>
+            <option value="" style={{ background: '#0c1424', color: '#fff' }}>All Services</option>
+            {serviceOptions.map(s => <option key={s} value={s} style={{ background: '#0c1424', color: '#fff' }}>{s}</option>)}
+          </select>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: 1, whiteSpace: 'nowrap' }}>Delivered By:</span>
+          <select value={deliveredBy} onChange={e => setDeliveredBy(e.target.value)} style={{ ...selStyle, minWidth: 160 }}>
+            <option value="" style={{ background: '#0c1424', color: '#fff' }}>All Members</option>
+            {memberOptions.map(m => <option key={m} value={m} style={{ background: '#0c1424', color: '#fff' }}>{m}</option>)}
+          </select>
+        </div>
+        {(serviceLine || deliveredBy) && (
+          <button onClick={() => { setServiceLine(''); setDeliveredBy(''); }}
+            style={{ padding: '8px 14px', borderRadius: 8, border: '1px solid rgba(239,68,68,0.3)', background: 'rgba(239,68,68,0.08)', color: '#f87171', fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit' }}>
+            ✕ Clear Filters
+          </button>
+        )}
+        <div style={{ marginLeft: 'auto', fontSize: 11, color: '#475569', fontWeight: 700 }}>
+          {filteredProjects.length} of {projects.length} records
+        </div>
       </div>
 
       <div className="emp-card" style={{ padding: 0, overflow: 'hidden' }}>
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div className="emp-card-title">📦 Master Project Archive</div>
-          <div style={{ fontSize: 12, fontWeight: 900, color: '#3b82f6', background: 'rgba(59,130,246,0.1)', padding: '6px 14px', borderRadius: 10 }}>
-            {projects.length} RECORDS
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {hasColFilters && (
+              <button 
+                onClick={() => setColFilters({ date: '', order: '', service: '', client: '', assign: '', status: '', remark: '', amount: '' })}
+                style={{ 
+                  padding: '6px 12px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', 
+                  borderRadius: 8, color: '#f87171', fontSize: 11, fontWeight: 800, cursor: 'pointer', fontFamily: 'inherit'
+                }}
+              >
+                ✕ Clear Column Filters
+              </button>
+            )}
+            <div style={{ fontSize: 12, fontWeight: 900, color: '#3b82f6', background: 'rgba(59,130,246,0.1)', padding: '6px 14px', borderRadius: 10 }}>
+              {sortedProjects.length} OF {projects.length} RECORDS
+            </div>
           </div>
         </div>
         
@@ -2660,73 +2976,180 @@ const AdminProjects = () => {
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ background: 'rgba(255,255,255,0.02)', textAlign: 'left' }}>
-                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>DATE</th>
-                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>ORDER & INSTRUCTION</th>
-                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>CLIENT</th>
-                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>ASSIGNED TO</th>
-                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>STATUS</th>
-                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>MEMBER REMARK</th>
-                <th style={{ padding: '16px 24px', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, textAlign: 'right' }}>AMOUNT</th>
+                <th onClick={() => requestSort('date')} style={{ padding: '12px 14px', width: '9%', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', userSelect: 'none' }}>
+                  DATE {sortConfig.key === 'date' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                </th>
+                <th onClick={() => requestSort('order')} style={{ padding: '12px 14px', width: '21%', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', userSelect: 'none' }}>
+                  ORDER ID & REMARKS {sortConfig.key === 'order' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                </th>
+                <th onClick={() => requestSort('service')} style={{ padding: '12px 14px', width: '11%', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', userSelect: 'none' }}>
+                  SERVICE LINE {sortConfig.key === 'service' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                </th>
+                <th onClick={() => requestSort('client')} style={{ padding: '12px 14px', width: '11%', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', userSelect: 'none' }}>
+                  CLIENT {sortConfig.key === 'client' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                </th>
+                <th onClick={() => requestSort('assign')} style={{ padding: '12px 14px', width: '14%', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', userSelect: 'none' }}>
+                  DELIVERED BY {sortConfig.key === 'assign' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                </th>
+                <th onClick={() => requestSort('status')} style={{ padding: '12px 14px', width: '11%', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', userSelect: 'none' }}>
+                  STATUS {sortConfig.key === 'status' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                </th>
+                <th onClick={() => requestSort('remark')} style={{ padding: '12px 14px', width: '13%', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', userSelect: 'none' }}>
+                  INSTRUCTION SHEET {sortConfig.key === 'remark' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                </th>
+                <th onClick={() => requestSort('amtX')} style={{ padding: '12px 14px', width: '10%', color: '#64748b', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1, textAlign: 'right', cursor: 'pointer', userSelect: 'none' }}>
+                  AMOUNT {sortConfig.key === 'amtX' ? (sortConfig.direction === 'asc' ? '▲' : '▼') : '⇅'}
+                </th>
+              </tr>
+              {/* ── Column Filters Row ── */}
+              <tr style={{ background: 'rgba(0,0,0,0.15)', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                <td style={{ padding: '6px 10px' }}>
+                  <input 
+                    value={colFilters.date} 
+                    onChange={e => setColFilters({ ...colFilters, date: e.target.value })}
+                    placeholder="Filter Date..."
+                    style={colInputStyle}
+                  />
+                </td>
+                <td style={{ padding: '6px 10px' }}>
+                  <input 
+                    value={colFilters.order} 
+                    onChange={e => setColFilters({ ...colFilters, order: e.target.value })}
+                    placeholder="Filter Order..."
+                    style={colInputStyle}
+                  />
+                </td>
+                <td style={{ padding: '6px 10px' }}>
+                  <select 
+                    value={colFilters.service} 
+                    onChange={e => setColFilters({ ...colFilters, service: e.target.value })}
+                    style={colSelectStyle}
+                  >
+                    <option value="" style={{ background: '#0c1424', color: '#fff' }}>All</option>
+                    {serviceOptions.map(s => <option key={s} value={s} style={{ background: '#0c1424', color: '#fff' }}>{s}</option>)}
+                  </select>
+                </td>
+                <td style={{ padding: '6px 10px' }}>
+                  <input 
+                    value={colFilters.client} 
+                    onChange={e => setColFilters({ ...colFilters, client: e.target.value })}
+                    placeholder="Filter Client..."
+                    style={colInputStyle}
+                  />
+                </td>
+                <td style={{ padding: '6px 10px' }}>
+                  <input 
+                    value={colFilters.assign} 
+                    onChange={e => setColFilters({ ...colFilters, assign: e.target.value })}
+                    placeholder="Filter Member..."
+                    style={colInputStyle}
+                  />
+                </td>
+                <td style={{ padding: '6px 10px' }}>
+                  <select 
+                    value={colFilters.status} 
+                    onChange={e => setColFilters({ ...colFilters, status: e.target.value })}
+                    style={colSelectStyle}
+                  >
+                    <option value="" style={{ background: '#0c1424', color: '#fff' }}>All</option>
+                    <option value="Delivered" style={{ background: '#0c1424', color: '#fff' }}>Delivered</option>
+                    <option value="In Progress" style={{ background: '#0c1424', color: '#fff' }}>In Progress</option>
+                    <option value="WIP" style={{ background: '#0c1424', color: '#fff' }}>WIP</option>
+                    <option value="Revision" style={{ background: '#0c1424', color: '#fff' }}>Revision</option>
+                    <option value="Cancelled" style={{ background: '#0c1424', color: '#fff' }}>Cancelled</option>
+                  </select>
+                </td>
+                <td style={{ padding: '6px 10px' }}>
+                  <input 
+                    value={colFilters.remark} 
+                    onChange={e => setColFilters({ ...colFilters, remark: e.target.value })}
+                    placeholder="Filter Instruction..."
+                    style={colInputStyle}
+                  />
+                </td>
+                <td style={{ padding: '6px 10px', textAlign: 'right' }}>
+                  <input 
+                    value={colFilters.amount} 
+                    onChange={e => setColFilters({ ...colFilters, amount: e.target.value })}
+                    placeholder="Amount..."
+                    style={{ ...colInputStyle, textAlign: 'right' }}
+                  />
+                </td>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="7" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>Loading archives...</td></tr>
-              ) : projects.length === 0 ? (
-                <tr><td colSpan="7" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>No archived projects found for this period.</td></tr>
-              ) : projects.map((p, i) => (
+                <tr><td colSpan="8" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>Loading archives...</td></tr>
+              ) : sortedProjects.length === 0 ? (
+                <tr><td colSpan="8" style={{ padding: 100, textAlign: 'center', color: '#475569', fontWeight: 700 }}>No archived projects found for this period.</td></tr>
+              ) : sortedProjects.map((p, i) => (
                 <tr key={i} style={{ 
                   borderBottom: '1px solid rgba(255,255,255,0.03)', 
-                  transition: 'background 0.2s, transform 0.1s',
+                  transition: 'background 0.2s',
                   cursor: 'default'
                 }} 
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
-                  <td style={{ padding: '16px 24px', color: '#94a3b8', fontWeight: 600 }}>{p.date}</td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div>
-                        <div style={{ fontWeight: 800, color: '#f1f5f9' }}>{p.order}</div>
-                        <div style={{ fontSize: 11, color: '#64748b', fontWeight: 700 }}>{p.service}</div>
-                      </div>
-                      {(p.instruction || p.link) && (
-                        <a href={p.instruction || p.link} target="_blank" rel="noreferrer" style={{ 
-                          width: 28, height: 28, borderRadius: 8, background: 'rgba(59,130,246,0.1)', 
-                          display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                          textDecoration: 'none', color: '#3b82f6', fontSize: 12, border: '1px solid rgba(59,130,246,0.2)',
-                          transition: 'all 0.2s'
-                        }} 
-                        onMouseEnter={e => { e.currentTarget.style.background = '#3b82f6'; e.currentTarget.style.color = '#fff'; }}
-                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.1)'; e.currentTarget.style.color = '#3b82f6'; }}
-                        title={p.instruction ? "Open Instruction Sheet" : "Open Order Link"}>📄</a>
-                      )}
+                  <td style={{ padding: '12px 14px', color: '#94a3b8', fontWeight: 600, whiteSpace: 'nowrap' }}>{p.date}</td>
+                  <td style={{ padding: '12px 14px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+                      <div style={{ fontWeight: 800, color: '#f1f5f9' }}>{p.order}</div>
+                      {Array.isArray(p.userRemarks) && p.userRemarks.length > 0 ? (
+                        <div style={{ fontSize: 10, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }} title={p.userRemarks.map(r => `[${r.date}] ${r.text}`).join('\n')}>
+                          <span style={{ color: '#3b82f6' }}>💬</span>
+                          <span style={{ fontStyle: 'italic', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {p.userRemarks[0].text}
+                          </span>
+                        </div>
+                      ) : (typeof p.userRemarks === 'string' && p.userRemarks) ? (
+                        <div style={{ fontSize: 10, color: '#64748b', display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span style={{ color: '#3b82f6' }}>💬</span>
+                          <span style={{ fontStyle: 'italic', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {p.userRemarks}
+                          </span>
+                        </div>
+                      ) : null}
                     </div>
                   </td>
-                  <td style={{ padding: '16px 24px', color: '#e2e8f0', fontWeight: 800 }}>{p.client}</td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ color: '#f1f5f9', fontWeight: 700 }}>{p.assign}</div>
+                  {/* SERVICE LINE */}
+                  <td style={{ padding: '12px 14px' }}>
+                    {p.service ? (
+                      <span style={{ padding: '3px 9px', borderRadius: 7, fontSize: 10, fontWeight: 800, background: 'rgba(139,92,246,0.1)', color: '#a78bfa', border: '1px solid rgba(139,92,246,0.2)', whiteSpace: 'nowrap' }}>
+                        {p.service}
+                      </span>
+                    ) : <span style={{ color: '#334155' }}>—</span>}
                   </td>
-                  <td style={{ padding: '16px 24px' }}>
+                  <td style={{ padding: '12px 14px', color: '#e2e8f0', fontWeight: 800 }}>{p.client}</td>
+                  {/* DELIVERED BY */}
+                  <td style={{ padding: '12px 14px' }}>
+                    <div style={{ color: '#f1f5f9', fontWeight: 700 }}>{p.assign || '—'}</div>
+                    {p.deliveredDate && <div style={{ fontSize: 10, color: '#475569', fontWeight: 600, marginTop: 2 }}>{p.deliveredDate}</div>}
+                  </td>
+                  <td style={{ padding: '12px 14px' }}>
                     <span style={{ 
                       padding: '4px 10px', borderRadius: 8, fontSize: 10, fontWeight: 900,
-                      background: p.status === 'Delivered' ? 'rgba(16,185,129,0.1)' : 'rgba(245,158,11,0.1)',
-                      color: p.status === 'Delivered' ? '#10b981' : '#f59e0b',
-                      border: `1px solid ${p.status === 'Delivered' ? 'rgba(16,185,129,0.2)' : 'rgba(245,158,11,0.2)'}`
+                      background: p.status === 'Delivered' ? 'rgba(16,185,129,0.1)' : p.status === 'Revision' ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)',
+                      color: p.status === 'Delivered' ? '#10b981' : p.status === 'Revision' ? '#f87171' : '#f59e0b',
+                      border: `1px solid ${p.status === 'Delivered' ? 'rgba(16,185,129,0.2)' : p.status === 'Revision' ? 'rgba(239,68,68,0.2)' : 'rgba(245,158,11,0.2)'}`
                     }}>{p.status}</span>
                   </td>
-                  <td style={{ padding: '16px 24px' }}>
-                    <div style={{ fontSize: 11, color: '#94a3b8', fontStyle: 'italic', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {Array.isArray(p.userRemarks) && p.userRemarks.length > 0 ? (
-                        <span title={p.userRemarks.map(r => `[${r.date}] ${r.text}`).join('\n')}>
-                          <strong style={{ color: '#3b82f6', fontStyle: 'normal' }}>{p.userRemarks[0].date}:</strong> {p.userRemarks[0].text}
-                        </span>
-                      ) : (
-                        p.userRemarks || '—'
-                      )}
-                    </div>
+                  <td style={{ padding: '12px 14px' }}>
+                    {p.instruction || p.link ? (
+                      <a href={p.instruction || p.link} target="_blank" rel="noreferrer" style={{ 
+                         display: 'inline-flex', alignItems: 'center', gap: 6,
+                         padding: '6px 12px', borderRadius: 8, background: 'rgba(59,130,246,0.1)', 
+                         textDecoration: 'none', color: '#3b82f6', fontSize: 11, fontWeight: 800, border: '1px solid rgba(59,130,246,0.2)',
+                         transition: 'all 0.2s', whiteSpace: 'nowrap'
+                       }} 
+                       onMouseEnter={e => { e.currentTarget.style.background = '#3b82f6'; e.currentTarget.style.color = '#fff'; }}
+                       onMouseLeave={e => { e.currentTarget.style.background = 'rgba(59,130,246,0.1)'; e.currentTarget.style.color = '#3b82f6'; }}
+                       title="Open Instruction Sheet">
+                        📄 Open Sheet ↗
+                      </a>
+                    ) : <span style={{ color: '#334155' }}>—</span>}
                   </td>
-                  <td style={{ padding: '16px 24px', textAlign: 'right', fontWeight: 900, color: p.status === 'Delivered' ? '#10b981' : '#f1f5f9' }}>
+                  <td style={{ padding: '12px 14px', textAlign: 'right', fontWeight: 900, color: p.status === 'Delivered' ? '#10b981' : '#f1f5f9' }}>
                     {fmt(p.amtX)}
                   </td>
                 </tr>
@@ -2738,6 +3161,7 @@ const AdminProjects = () => {
     </div>
   );
 };
+
 
 const LifetimePerformanceGraph = ({ user }) => {
   const [history, setHistory] = React.useState([]);

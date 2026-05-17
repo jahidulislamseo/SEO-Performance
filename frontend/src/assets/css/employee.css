@@ -1815,6 +1815,11 @@
   cursor: pointer;
 }
 
+.att-select option {
+  background: #0c1424;
+  color: #fff;
+}
+
 .att-select:focus {
   outline: none;
 }
@@ -2077,6 +2082,11 @@
   font-size: 13px;
   font-weight: 700;
   outline: none;
+}
+
+.att-selector option {
+  background: #0c1424;
+  color: #fff;
 }
 
 .att-grid-7 {

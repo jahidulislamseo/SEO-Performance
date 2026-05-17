@@ -42,7 +42,7 @@ def verify():
         except: return 0.0
     
     df['amount_x'] = df['amount_x'].apply(clean_amt).fillna(0.0)
-    df = df[df['service'].str.contains('SEO|SMM', case=False, na=False)]
+    df = df[df['service'].str.contains('SEO|SMM|Cross Function CMS', case=False, na=False)]
     
     cur_y = time.strftime("%Y")
     cur_m = time.strftime("%m")
@@ -88,8 +88,18 @@ def verify():
     db_teams = team_sums.get("teams", {})
     
     for team, tag in TEAM_TAG_MAP.items():
-        t_df = df_curr[df_curr['op_dept'].astype(str).str.strip().str.lower() == tag.lower()]
-        sheet_amt = t_df[t_df['status'] == 'Delivered']['amount_x'].sum()
+        # Get the official members of this team
+        team_members = list(db["members"].find({"team": team, "isOfficial": True}))
+        team_member_names = {m["name"].strip().lower() for m in team_members}
+        
+        sheet_amt = 0.0
+        for _, r in df_curr[df_curr['status'] == 'Delivered'].iterrows():
+            assignees = [a.strip().lower() for a in str(r['assign']).split('/') if a.strip()]
+            matched_members = [a for a in assignees if a in team_member_names]
+            if matched_members:
+                share = r['amount_x'] / len(assignees)
+                sheet_amt += share * len(matched_members)
+                
         db_amt = db_teams.get(team, {}).get("deliveredAmt", 0.0)
         
         icon = "✅" if abs(sheet_amt - db_amt) < 0.01 else "❌"

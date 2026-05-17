@@ -48,7 +48,7 @@ const Leaderboard = ({ members = [], target = 1100 }) => {
                       >
                         {m.avatar ? <img src={m.avatar} style={{ width: '100%', height: '100%', objectFit: 'cover' }} alt="" /> : getInitials(m.name)}
                       </div>
-                      <span style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>{m.name}</span>
+                      <span style={{ fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap' }}>{m.fullName || m.name}</span>
                     </div>
                   </td>
                   <td><span className="team-tag">{m.team}</span></td>

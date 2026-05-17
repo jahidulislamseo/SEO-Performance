@@ -39,7 +39,7 @@ def verify_members():
     
     # 2. Filter exactly like agent_engine
     df['amount_x'] = df['amount_x'].apply(safe_float).fillna(0.0)
-    df = df[df['service'].str.contains('SEO|SMM', case=False, na=False)]
+    df = df[df['service'].str.contains('SEO|SMM|Cross Function CMS', case=False, na=False)]
     
     cur_y = time.strftime("%Y")
     cur_m = time.strftime("%m")
