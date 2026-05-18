@@ -105,11 +105,9 @@ def backup_to_db(df, db):
             # We still need a date for the month bucket, fallback to del_date if order_date is missing
             bucket_date = order_date if order_date else str(p.get("del_date") or "")
             
-            # Roll over last day of month to next month
+            # Use order date directly — no roll-over, April 30 stays in April
             try:
                 dt = pd.to_datetime(bucket_date, errors='coerce')
-                if pd.notna(dt) and dt.is_month_end:
-                    dt += pd.Timedelta(days=1)
                 month_bucket = dt.strftime("%Y-%m") if pd.notna(dt) else "Unknown"
             except:
                 month_bucket = bucket_date[:7] if len(bucket_date) >= 7 else "Unknown"
@@ -181,9 +179,7 @@ def process_and_save(df, db):
     # so filtering by del_date would exclude May orders still in WIP/pending delivery
     df['calc_date'] = pd.to_datetime(df['date'].astype(str), errors='coerce')
     
-    # Roll over last day of month to the 1st of the next month
-    mask_last_day = df['calc_date'].dt.is_month_end
-    df.loc[mask_last_day, 'calc_date'] = df.loc[mask_last_day, 'calc_date'] + pd.Timedelta(days=1)
+    # No roll-over: each order date is used as-is, so April 30 rows stay in April
     
     # Filter only for the current month
     current_start = pd.Timestamp(f"{cur_y}-{cur_m_padded}-01")
