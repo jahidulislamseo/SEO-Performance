@@ -105,10 +105,16 @@ def backup_to_db(df, db):
             # We still need a date for the month bucket, fallback to del_date if order_date is missing
             bucket_date = order_date if order_date else str(p.get("del_date") or "")
             
-            # Use order date directly — no roll-over, April 30 stays in April
+            # Date logic with special rollover rule for C_Forward_SAA Sales
+            emp_name = str(p.get("emp_name") or "").strip()
             try:
                 dt = pd.to_datetime(bucket_date, errors='coerce')
-                month_bucket = dt.strftime("%Y-%m") if pd.notna(dt) else "Unknown"
+                if pd.notna(dt):
+                    if emp_name == "C_Forward_SAA Sales" and dt.is_month_end:
+                        dt += pd.Timedelta(days=1)
+                    month_bucket = dt.strftime("%Y-%m")
+                else:
+                    month_bucket = "Unknown"
             except:
                 month_bucket = bucket_date[:7] if len(bucket_date) >= 7 else "Unknown"
 
@@ -175,11 +181,14 @@ def process_and_save(df, db):
     cur_y = time.strftime("%Y")
     cur_m_padded = time.strftime("%m")
 
-    # Use order date (col D) for all rows — delivery dates can be future months
-    # so filtering by del_date would exclude May orders still in WIP/pending delivery
+    # Use order date (col D) for all rows
     df['calc_date'] = pd.to_datetime(df['date'].astype(str), errors='coerce')
     
-    # No roll-over: each order date is used as-is, so April 30 rows stay in April
+    # Special rollover rule for C_Forward_SAA Sales
+    if 'emp_name' in df.columns:
+        mask_c_forward = (df['emp_name'].astype(str).str.strip() == "C_Forward_SAA Sales")
+        mask_month_end = df['calc_date'].dt.is_month_end == True
+        df.loc[mask_c_forward & mask_month_end, 'calc_date'] += pd.Timedelta(days=1)
     
     # Filter only for the current month
     current_start = pd.Timestamp(f"{cur_y}-{cur_m_padded}-01")
