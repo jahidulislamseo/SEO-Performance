@@ -13,3 +13,9 @@ data/
 geo_data.json
 geo_dashboard.html
 scratch/
+node_modules/
+*/node_modules/
+.env
+*.env*
+!.env.example
+

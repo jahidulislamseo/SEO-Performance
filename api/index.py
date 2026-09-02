@@ -810,22 +810,31 @@ def attendance_checkout():
 def get_notifications():
     emp_id = request.args.get("id")
     if not emp_id: return jsonify([]), 400
-    db = get_db()
-    notifs = list(db["notifications"].find({"$or": [{"emp_id": emp_id}, {"emp_id": "all"}]}, {"_id": 0}).sort("timestamp", -1).limit(20))
-    return jsonify(notifs)
+    try:
+        db = get_db()
+        notifs = list(db["notifications"].find({"$or": [{"emp_id": emp_id}, {"emp_id": "all"}]}, {"_id": 0}).sort("timestamp", -1).limit(20))
+        return jsonify(notifs)
+    except Exception as e:
+        return jsonify([]), 200
 
 @app.route("/api/notifications/mark-read", methods=["POST"])
 def mark_notifs_read():
     data = request.get_json(force=True)
     emp_id = data.get("id")
     if not emp_id: return jsonify({"error": "missing id"}), 400
-    db = get_db()
-    db["notifications"].update_many({"emp_id": {"$in": [emp_id, "all"]}, "read": False}, {"$set": {"read": True}})
-    return jsonify({"ok": True})
+    try:
+        db = get_db()
+        db["notifications"].update_many({"emp_id": {"$in": [emp_id, "all"]}, "read": False}, {"$set": {"read": True}})
+        return jsonify({"ok": True})
+    except Exception as e:
+        return jsonify({"ok": False, "error": str(e)}), 200
 
 @app.route("/api/leave-requests", methods=["GET", "POST"])
 def leave_requests():
-    db = get_db()
+    try:
+        db = get_db()
+    except Exception as e:
+        return jsonify([]) if request.method == "GET" else jsonify({"error": str(e)}), 200
     if request.method == "GET":
         emp_id = request.args.get("id")
         query = {"emp_id": emp_id} if emp_id else {}

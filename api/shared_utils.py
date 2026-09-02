@@ -93,11 +93,22 @@ COL = {
 
 # ─── DATABASE ───────────────────────────────────────────────
 _mongo_client = None
+_mongo_failed = False
 
 def get_db():
-    global _mongo_client
+    global _mongo_client, _mongo_failed
+    if _mongo_failed:
+        raise ConnectionError("MongoDB unavailable (DNS/network error). Check your MONGO_URI or VPN.")
     if _mongo_client is None:
-        _mongo_client = MongoClient(MONGO_URI, server_api=ServerApi('1'), connectTimeoutMS=5000, serverSelectionTimeoutMS=5000)
+        try:
+            _mongo_client = MongoClient(MONGO_URI, server_api=ServerApi('1'), connectTimeoutMS=5000, serverSelectionTimeoutMS=5000)
+            # Force a connection check
+            _mongo_client.admin.command('ping')
+        except Exception as e:
+            _mongo_failed = True
+            _mongo_client = None
+            print(f"[DB] MongoDB connection failed: {e}")
+            raise ConnectionError(f"MongoDB unavailable: {e}") from e
     return _mongo_client[DB_NAME]
 
 # ─── UTILS ──────────────────────────────────────────────────
