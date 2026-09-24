@@ -1,21 +1,37 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+dist/
+build/
+.eggs/
 
-# Sensitive Data
-credentials.json
+# Environment
 .env
+.env.local
+.env.production
+*.env
 
-# Local Data Files
-*.xlsx
-data/
-geo_data.json
-geo_dashboard.html
-scratch/
-node_modules/
-*/node_modules/
-.env
-*.env*
-!.env.example
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Database
+*.db
+*.sqlite3
